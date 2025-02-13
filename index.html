@@ -4,22 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Indiana Legislature Bill Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="./styles.css" rel="stylesheet">
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel" src="index.js"></script>
-    <script type="text/babel">
-        // Use React 18's createRoot API
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(
-            <React.StrictMode>
-                <App />
-            </React.StrictMode>
-        );
-    </script>
+    <div class="container">
+        <h1 class="title">Indiana Legislature Bill Tracker</h1>
+        <div class="search-container">
+            <div class="relative">
+                <input
+                    type="text"
+                    class="input"
+                    id="searchInput"
+                    placeholder="Enter legislator name..."
+                />
+                <ul class="autocomplete-dropdown" id="autocompleteDropdown"></ul>
+            </div>
+            <button class="button" id="searchButton">Search</button>
+        </div>
+        <div id="loading" class="loading hidden">Loading...</div>
+        <div id="results" class="space-y-6"></div>
+        <div id="noResults" class="no-results hidden">No bills found for your search.</div>
+    </div>
+    <script src="./index.js"></script>
 </body>
 </html>

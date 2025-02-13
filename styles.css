@@ -1,0 +1,149 @@
+/* Global styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.container {
+    padding: 16px;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #2d3748;
+}
+
+/* Search bar styles */
+.search-container {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+    position: relative;
+}
+
+.input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease;
+    text-align: left;
+    box-sizing: border-box;
+    width: 600px; /* Make the input bar longer */
+}
+
+.input:focus {
+    border-color: #4CAF50;
+}
+
+.button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #45a049;
+}
+
+/* Autocomplete dropdown styles */
+.autocomplete-dropdown {
+    position: absolute;
+    z-index: 10;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: calc(100% - 8px); /* Adjust width to account for the gap */
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    top: 100%; /* Position the dropdown below the input */
+    left: 0;
+    display: none;
+}
+
+.autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.autocomplete-item:hover {
+    background-color: #f1f1f1;
+}
+
+/* Loading and no-results styles */
+.loading {
+    text-align: center;
+    padding: 16px;
+    font-size: 18px;
+    color: #666;
+}
+
+.no-results {
+    text-align: center;
+    padding: 16px;
+    color: #666;
+}
+
+/* Bill card styles */
+.bill-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bill-card summary {
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    color: #2d3748;
+}
+
+.bill-card details[open] summary {
+    margin-bottom: 8px;
+}
+
+.bill-card p {
+    margin: 8px 0;
+    color: #4a5568;
+}
+
+.bill-card ul {
+    list-style-type: disc;
+    padding-left: 24px;
+    margin: 8px 0;
+}
+
+.bill-card li {
+    margin-bottom: 4px;
+    color: #555;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.space-y-6 > * + * {
+    margin-top: 24px;
+}
