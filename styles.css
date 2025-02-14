@@ -147,3 +147,41 @@ body {
 .space-y-6 > * + * {
     margin-top: 24px;
 }
+
+#wordCloud {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+/* Analytics Container */
+.analytics-container {
+    display: flex;
+    gap: 24px; /* Space between the two sections */
+    margin-bottom: 24px;
+}
+
+/* Overview Section (Left Side) */
+.overview-section {
+    flex: 1; /* Takes up 1/3 of the available space */
+    max-width: 30%; /* Limit width to 30% of the container */
+}
+
+/* Legislator-Specific Section (Right Side) */
+.legislator-section {
+    flex: 2; /* Takes up 2/3 of the available space */
+    max-width: 70%; /* Limit width to 70% of the container */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analytics-container {
+        flex-direction: column; /* Stack sections vertically on smaller screens */
+    }
+
+    .overview-section,
+    .legislator-section {
+        max-width: 100%; /* Full width on smaller screens */
+    }
+}

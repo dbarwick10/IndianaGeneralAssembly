@@ -1,4 +1,3 @@
-// server.js
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
@@ -7,16 +6,16 @@ import 'dotenv/config';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS
+// Enable CORS and JSON parsing
 app.use(cors());
-
-// Middleware to parse JSON
 app.use(express.json());
 
-// Function to fetch data from MyIGA API with error handling
+// Enhanced fetch function
 const fetchIGAData = async (year, endpoint) => {
+    const url = `https://api.iga.in.gov/${year}/${endpoint}`;
+    
     try {
-        const response = await fetch(`https://api.iga.in.gov/${year}/${endpoint}`, {
+        const response = await fetch(url, {
             method: "GET",
             headers: {
                 "Accept": "application/json",
@@ -26,176 +25,45 @@ const fetchIGAData = async (year, endpoint) => {
         });
 
         if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+        return data;
     } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error(`Error fetching from ${url}:`, error);
         throw error;
     }
 };
-
-// Route to fetch all bills
-app.get("/bills", async (req, res) => {
-    try {
-        const { number } = req.query;
-        const endpoint = number ? `bills?number=${number}` : "bills";
-        const data = await fetchIGAData("2023", endpoint); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch data from MyIGA API" });
-    }
-});
-
-// Route to fetch a specific bill by ID
-app.get("/bills/:billId", async (req, res) => {
-    try {
-        const billId = req.params.billId;
-        const data = await fetchIGAData("2023", `bills/${billId}`); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch bill details" });
-    }
-});
-
-// Route to fetch all legislators
-app.get("/legislators", async (req, res) => {
-    try {
-        const data = await fetchIGAData("2023", "legislators"); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch data from MyIGA API" });
-    }
-});
-
-// Route to fetch a specific legislator by user ID
-app.get("/legislators/:userId", async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        const data = await fetchIGAData("2023", `legislators/${userId}`); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch legislator details" });
-    }
-});
-
-// Route to fetch committee reports
-app.get("/committee-reports", async (req, res) => {
-    try {
-        const data = await fetchIGAData("2023", "committee-reports"); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch committee reports" });
-    }
-});
-
-// Route to fetch a specific committee report by name
-app.get("/committee-reports/:name", async (req, res) => {
-    try {
-        const name = req.params.name;
-        const data = await fetchIGAData("2023", `committee-reports/${name}`); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch committee report details" });
-    }
-});
-
-// Route to fetch all historical tables
-app.get("/historical-tables", async (req, res) => {
-    try {
-        const data = await fetchIGAData("2023", "historical-tables"); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch historical tables" });
-    }
-});
-
-// Route to fetch a specific historical table by RNS detail
-app.get("/historical-tables/:rnsDetail", async (req, res) => {
-    try {
-        const rnsDetail = req.params.rnsDetail;
-        const data = await fetchIGAData("2023", `historical-tables/${rnsDetail}`); // Replace "2023" with the desired year or make it dynamic
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch historical table details" });
-    }
-});
-
-// Route to fetch bills for a specific legislator
-app.get("/:year/legislators/:userId/bills", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch legislator bills" });
-    }
-});
-
-// Route to fetch authored bills for a specific legislator
-app.get("/:year/legislators/:userId/bills/authored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/authored`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch authored bills" });
-    }
-});
-
-// Route to fetch coauthored bills for a specific legislator
-app.get("/:year/legislators/:userId/bills/coauthored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/coauthored`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch coauthored bills" });
-    }
-});
-
-// Route to fetch sponsored bills for a specific legislator
-app.get("/:year/legislators/:userId/bills/sponsored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/sponsored`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch sponsored bills" });
-    }
-});
-
-// Route to fetch cosponsored bills for a specific legislator
-app.get("/:year/legislators/:userId/bills/cosponsored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/cosponsored`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch cosponsored bills" });
-    }
-});
 
 // Route to fetch all bills for a specific year
 app.get("/:year/bills", async (req, res) => {
     try {
         const { year } = req.params;
-        const data = await fetchIGAData(year, `bills?session=${year}`);
-        res.json(data);
+        const data = await fetchIGAData(year, "bills");
+        
+        if (!data || !data.items) {
+            console.error('Invalid response format:', data);
+            return res.status(500).json({ 
+                error: "Invalid response format from IGA API",
+                details: "Response missing items array"
+            });
+        }
+        
+        console.log(`Successfully fetched ${data.items.length} bills for ${year}`);
+        
+        res.json({
+            items: data.items,
+            count: data.items.length,
+            year: year
+        });
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch bills" });
-    }
-});
-
-// Route to fetch actions for a specific bill
-app.get("/:year/bills/:name/actions", async (req, res) => {
-    try {
-        const { year, name } = req.params;
-        const data = await fetchIGAData(year, `bills/${name}/actions`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch bill actions" });
+        console.error('Error in /:year/bills endpoint:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch bills",
+            details: error.message
+        });
     }
 });
 
@@ -206,8 +74,125 @@ app.get("/:year/bills/:name", async (req, res) => {
         const data = await fetchIGAData(year, `bills/${name}`);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch bill details" });
+        console.error('Error fetching bill details:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch bill details",
+            details: error.message
+        });
     }
+});
+
+// Route to fetch actions for a specific bill
+app.get("/:year/bills/:name/actions", async (req, res) => {
+    try {
+        const { year, name } = req.params;
+        const data = await fetchIGAData(year, `bills/${name}/actions`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching bill actions:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch bill actions",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch all legislators
+app.get("/legislators", async (req, res) => {
+    try {
+        const data = await fetchIGAData("2023", "legislators");
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching legislators:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch legislators",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch bills for a specific legislator
+app.get("/:year/legislators/:userId/bills", async (req, res) => {
+    try {
+        const { year, userId } = req.params;
+        const data = await fetchIGAData(year, `legislators/${userId}/bills`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching legislator bills:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch legislator bills",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch authored bills for a specific legislator
+app.get("/:year/legislators/:userId/bills/authored", async (req, res) => {
+    try {
+        const { year, userId } = req.params;
+        const data = await fetchIGAData(year, `legislators/${userId}/bills/authored`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching authored bills:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch authored bills",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch coauthored bills for a specific legislator
+app.get("/:year/legislators/:userId/bills/coauthored", async (req, res) => {
+    try {
+        const { year, userId } = req.params;
+        const data = await fetchIGAData(year, `legislators/${userId}/bills/coauthored`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching coauthored bills:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch coauthored bills",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch sponsored bills for a specific legislator
+app.get("/:year/legislators/:userId/bills/sponsored", async (req, res) => {
+    try {
+        const { year, userId } = req.params;
+        const data = await fetchIGAData(year, `legislators/${userId}/bills/sponsored`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching sponsored bills:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch sponsored bills",
+            details: error.message
+        });
+    }
+});
+
+// Route to fetch cosponsored bills for a specific legislator
+app.get("/:year/legislators/:userId/bills/cosponsored", async (req, res) => {
+    try {
+        const { year, userId } = req.params;
+        const data = await fetchIGAData(year, `legislators/${userId}/bills/cosponsored`);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching cosponsored bills:', error);
+        res.status(500).json({ 
+            error: "Failed to fetch cosponsored bills",
+            details: error.message
+        });
+    }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({
+        error: "Internal server error",
+        details: err.message
+    });
 });
 
 // Start server
