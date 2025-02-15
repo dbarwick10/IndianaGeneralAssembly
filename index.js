@@ -6,6 +6,8 @@ let searchTerm = '';
 let suggestions = [];
 let openBills = {};
 let allBills = new Set();
+const billDetailsCache = new Map();
+const billActionsCache = new Map();
 
 // Initialize the application
 window.onload = async () => {
@@ -402,11 +404,19 @@ const displayAnalytics = () => {
 };
 // API Functions
 const fetchBillDetails = async (billName) => {
+    // Check cache first
+    if (billDetailsCache.has(billName)) {
+        return billDetailsCache.get(billName);
+    }
+
     try {
         const year = document.getElementById('yearInput').value;
         const response = await fetch(`http://localhost:3000/${year}/bills/${billName}`);
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
+        
+        // Store in cache
+        billDetailsCache.set(billName, data);
         return data;
     } catch (error) {
         console.error('Error fetching bill details:', error);
@@ -415,11 +425,19 @@ const fetchBillDetails = async (billName) => {
 };
 
 const fetchBillActions = async (billName) => {
+    // Check cache first
+    if (billActionsCache.has(billName)) {
+        return billActionsCache.get(billName);
+    }
+
     try {
         const year = document.getElementById('yearInput').value;
         const response = await fetch(`http://localhost:3000/${year}/bills/${billName}/actions`);
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
+        
+        // Store in cache
+        billActionsCache.set(billName, data.items || []);
         return data.items || [];
     } catch (error) {
         console.error('Error fetching bill actions:', error);
@@ -431,56 +449,48 @@ const fetchBillsByLegislator = async (legislatorLink) => {
     try {
         const year = document.getElementById('yearInput').value;
         const userId = legislatorLink.split('/').pop();
-        const billsUrl = `http://localhost:3000/${year}/legislators/${userId}/bills`;
-        const billsResponse = await fetch(billsUrl);
-        if (!billsResponse.ok) throw new Error(`Error ${billsResponse.status}: ${billsResponse.statusText}`);
-        const billsData = await billsResponse.json();
+        
+        // Fetch all bill types in parallel
+        const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
+        const billsByType = await Promise.all(
+            types.map(async (type) => {
+                const response = await fetch(`http://localhost:3000/${year}/legislators/${userId}/bills/${type}`);
+                if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const data = await response.json();
+                return { type, bills: data.items || [] };
+            })
+        );
 
-        const fetchBillsByType = async (type) => {
-            const response = await fetch(`http://localhost:3000/${year}/legislators/${userId}/bills/${type}`);
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-            const data = await response.json();
-            return data.items || [];
-        };
+        // Create batches of 10 bills each for parallel processing
+        const batchSize = 10;
+        const allBills = billsByType.flatMap(({ type, bills }) => 
+            bills.map(bill => ({ ...bill, type }))
+        );
 
-        // Fetch all bills by type
-        const [authored, coauthored, sponsored, cosponsored] = await Promise.all([
-            fetchBillsByType('authored'),
-            fetchBillsByType('coauthored'),
-            fetchBillsByType('sponsored'),
-            fetchBillsByType('cosponsored'),
-        ]);
+        const batches = [];
+        for (let i = 0; i < allBills.length; i += batchSize) {
+            batches.push(allBills.slice(i, i + batchSize));
+        }
 
-        // Fetch details for all bills
-        const fetchDetailsForBills = async (billsList, type) => {
+        // Process batches in parallel
+        await Promise.all(batches.map(async (batch) => {
             const detailedBills = await Promise.all(
-                billsList.map(async (bill) => {
+                batch.map(async (bill) => {
                     const [details, actions] = await Promise.all([
                         fetchBillDetails(bill.billName),
                         fetchBillActions(bill.billName)
                     ]);
-                    return { ...bill, type, details, actions };
+                    return { ...bill, details, actions };
                 })
             );
-            return detailedBills;
-        };
 
-        // Fetch details for all bill types concurrently
-        const [
-            detailedAuthored,
-            detailedCoauthored,
-            detailedSponsored,
-            detailedCosponsored
-        ] = await Promise.all([
-            fetchDetailsForBills(authored, 'authored'),
-            fetchDetailsForBills(coauthored, 'coauthored'),
-            fetchDetailsForBills(sponsored, 'sponsored'),
-            fetchDetailsForBills(cosponsored, 'cosponsored')
-        ]);
+            // Add new bills to the global `bills` Set
+            detailedBills.forEach(bill => bills.add(JSON.stringify(bill)));
+            
+            // Update UI after each batch
+            renderBills();
+        }));
 
-        // Add new bills to the global `bills` Set
-        [...detailedAuthored, ...detailedCoauthored, ...detailedSponsored, ...detailedCosponsored]
-            .forEach(bill => bills.add(JSON.stringify(bill)));
     } catch (error) {
         console.error('Error fetching bills:', error);
         document.getElementById('noResults').classList.remove('hidden');
@@ -606,15 +616,29 @@ const handleBillClick = async (billName, type) => {
     openBills[billName] = !openBills[billName];
 
     if (openBills[billName]) {
-        const bill = Array.from(bills).find((b) => JSON.parse(b).billName === billName);
-        if (bill && (!JSON.parse(bill).details || !JSON.parse(bill).actions)) {
-            const [details, actions] = await Promise.all([
-                fetchBillDetails(billName),
-                fetchBillActions(billName),
-            ]);
+        const billString = Array.from(bills).find((b) => JSON.parse(b).billName === billName);
+        if (billString) {
+            const bill = JSON.parse(billString);
+            if (!bill.details || !bill.actions) {
+                // Show loading indicator for this specific bill
+                const billElement = document.querySelector(`[data-bill-name="${billName}"]`);
+                if (billElement) {
+                    billElement.querySelector('.loading-indicator')?.classList.remove('hidden');
+                }
 
-            bills.delete(bill);
-            bills.add(JSON.stringify({ ...JSON.parse(bill), details, actions }));
+                const [details, actions] = await Promise.all([
+                    fetchBillDetails(billName),
+                    fetchBillActions(billName)
+                ]);
+
+                bills.delete(billString);
+                bills.add(JSON.stringify({ ...bill, details, actions }));
+
+                // Hide loading indicator
+                if (billElement) {
+                    billElement.querySelector('.loading-indicator')?.classList.add('hidden');
+                }
+            }
         }
     }
 
@@ -653,40 +677,19 @@ document.getElementById('autocompleteDropdown').addEventListener('click', (e) =>
     }
 });
 
-window.addEventListener('DOMContentLoaded', () => {
-    // console.log('DOM fully loaded'); // Debugging
-
-    // Add event listener for yearInput
-    const yearInput = document.getElementById('yearInput');
-    if (yearInput) {
-        yearInput.addEventListener('change', async () => {
-            console.log('Year input changed'); // Debugging
-            const year = yearInput.value;
-            console.log('Selected year:', year); // Debugging
-            await fetchAllBillsForYear(year); // Fetch all bills for the new year
-            clearResults(); // Clear existing results
-
-            // Fetch bills for the searched legislator(s)
-            const names = searchTerm.split(',').map((name) => name.trim());
-            const uniqueLegislators = names.map((name) =>
-                legislators.find((l) =>
-                    abbreviateTitle(l.fullName).toLowerCase() === name.toLowerCase()
-                )
-            ).filter(Boolean);
-
-            if (uniqueLegislators.length > 0) {
-                await Promise.all(uniqueLegislators.map((legislator) =>
-                    fetchBillsByLegislator(legislator.link)
-                ));
-            }
-
-            // Display analytics after fetching all bills
-            displayAnalytics();
-        });
-    } else {
-        console.error('yearInput element not found'); // Debugging
-    }
+document.getElementById('yearInput').addEventListener('change', async () => {
+    clearCaches();
+    const year = document.getElementById('yearInput').value;
+    await fetchAllBillsForYear(year);
+    clearResults();
 });
+
+const clearCaches = () => {
+    billDetailsCache.clear();
+    billActionsCache.clear();
+    bills.clear();
+    openBills = {};
+};
 
 document.getElementById('searchButton').addEventListener('click', async () => {
     const year = document.getElementById('yearInput').value;
