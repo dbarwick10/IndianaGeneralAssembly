@@ -91,7 +91,7 @@ const stopWords = new Set([
 
 // Fetch all bills for the specified year
 const fetchAllBillsForYear = async (year) => {
-    // console.log('fetchAllBillsForYear called with year:', year); // Debugging
+    console.log('fetchAllBillsForYear called with year:', year); // Debugging
     try {
         const billsUrl = `http://localhost:3000/${year}/bills`;
         // console.log('Fetching bills from:', billsUrl); // Debugging
@@ -102,7 +102,7 @@ const fetchAllBillsForYear = async (year) => {
         // console.log('Initial bills response:', data); // Debugging
 
         // Extract bill names from the items array
-        const billNames = data.items.map(item => {
+        let billNames = data.items.map(item => {
             if (typeof item === 'string') {
                 return item; // If items are strings, use them directly
             } else if (item.billName) {
@@ -111,6 +111,11 @@ const fetchAllBillsForYear = async (year) => {
                 throw new Error('Invalid item format in API response');
             }
         });
+
+        // Filter to only include SB and HB bills
+        billNames = billNames.filter(billName => 
+            billName.startsWith('SB') || billName.startsWith('HB')
+        );
 
         // console.log('Bill names:', billNames); // Debugging
 
@@ -445,12 +450,16 @@ const fetchBillActions = async (billName) => {
     }
 };
 
+// Improve the fetchBillsByLegislator function
 const fetchBillsByLegislator = async (legislatorLink) => {
     try {
         const year = document.getElementById('yearInput').value;
         const userId = legislatorLink.split('/').pop();
-        
-        // Fetch all bill types in parallel
+
+        // Show loading indicator
+        document.getElementById('loading').classList.remove('hidden');
+
+        // Initial fetch to get bill names
         const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
         const billsByType = await Promise.all(
             types.map(async (type) => {
@@ -461,39 +470,64 @@ const fetchBillsByLegislator = async (legislatorLink) => {
             })
         );
 
-        // Create batches of 10 bills each for parallel processing
-        const batchSize = 10;
-        const allBills = billsByType.flatMap(({ type, bills }) => 
-            bills.map(bill => ({ ...bill, type }))
+        // Flatten the bills array
+        const simpleBills = billsByType.flatMap(({ type, bills }) => 
+            bills.filter(bill => bill.billName.startsWith('SB') || bill.billName.startsWith('HB'))
+                 .map(bill => ({ ...bill, type }))
         );
 
-        const batches = [];
-        for (let i = 0; i < allBills.length; i += batchSize) {
-            batches.push(allBills.slice(i, i + batchSize));
-        }
+        // Calculate total number of bills
+        const totalBills = simpleBills.length;
+        let processedBills = 0;
 
-        // Process batches in parallel
-        await Promise.all(batches.map(async (batch) => {
-            const detailedBills = await Promise.all(
-                batch.map(async (bill) => {
-                    const [details, actions] = await Promise.all([
-                        fetchBillDetails(bill.billName),
-                        fetchBillActions(bill.billName)
-                    ]);
-                    return { ...bill, details, actions };
-                })
-            );
+        // Add to bills set and render immediately to show something to the user
+        simpleBills.forEach(bill => bills.add(JSON.stringify(bill)));
+        renderBills();
 
-            // Add new bills to the global `bills` Set
-            detailedBills.forEach(bill => bills.add(JSON.stringify(bill)));
-            
-            // Update UI after each batch
-            renderBills();
-        }));
+        // Load details in the background in smaller batches
+        const loadDetailsInBackground = async () => {
+            const batchSize = 5; // Smaller batch size
+            const batches = [];
+            for (let i = 0; i < simpleBills.length; i += batchSize) {
+                batches.push(simpleBills.slice(i, i + batchSize));
+            }
+
+            for (const batch of batches) {
+                const detailedBills = await Promise.all(
+                    batch.map(async (bill) => {
+                        const details = await fetchBillDetails(bill.billName);
+                        return { ...bill, details };
+                    })
+                );
+
+                detailedBills.forEach(bill => {
+                    // Update the bill in the set
+                    bills.delete(JSON.stringify({ ...bill, details: undefined }));
+                    bills.add(JSON.stringify(bill));
+                });
+
+                // Update progress
+                processedBills += batch.length;
+                updateLoadingProgress(processedBills, totalBills);
+
+                // Update UI after each batch
+                renderBills();
+
+                // Small delay to prevent browser from freezing
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Hide loading when all batches are done
+            document.getElementById('loading').classList.add('hidden');
+        };
+
+        // Start background loading
+        loadDetailsInBackground();
 
     } catch (error) {
         console.error('Error fetching bills:', error);
         document.getElementById('noResults').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
     }
 };
 
@@ -611,39 +645,26 @@ const renderBills = () => {
     `;
 };
 
-// Event Handlers
+// Modify handleBillClick to lazy load actions
 const handleBillClick = async (billName, type) => {
     openBills[billName] = !openBills[billName];
-
+  
     if (openBills[billName]) {
-        const billString = Array.from(bills).find((b) => JSON.parse(b).billName === billName);
-        if (billString) {
-            const bill = JSON.parse(billString);
-            if (!bill.details || !bill.actions) {
-                // Show loading indicator for this specific bill
-                const billElement = document.querySelector(`[data-bill-name="${billName}"]`);
-                if (billElement) {
-                    billElement.querySelector('.loading-indicator')?.classList.remove('hidden');
-                }
-
-                const [details, actions] = await Promise.all([
-                    fetchBillDetails(billName),
-                    fetchBillActions(billName)
-                ]);
-
-                bills.delete(billString);
-                bills.add(JSON.stringify({ ...bill, details, actions }));
-
-                // Hide loading indicator
-                if (billElement) {
-                    billElement.querySelector('.loading-indicator')?.classList.add('hidden');
-                }
-            }
+      const billString = Array.from(bills).find((b) => JSON.parse(b).billName === billName);
+      if (billString) {
+        const bill = JSON.parse(billString);
+        if (!bill.actions) {
+          // Only fetch actions when expanded
+          const actions = await fetchBillActions(billName);
+          
+          bills.delete(billString);
+          bills.add(JSON.stringify({ ...bill, actions }));
         }
+      }
     }
-
+  
     renderBills();
-};
+  };
 
 // Event Listeners
 document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -691,6 +712,12 @@ const clearCaches = () => {
     openBills = {};
 };
 
+const updateLoadingProgress = (current, total) => {
+    const percentage = Math.round((current / total) * 100);
+    document.getElementById('loadingProgress').textContent = percentage;
+    document.getElementById('progressIndicator').style.width = `${percentage}%`;
+};
+
 document.getElementById('searchButton').addEventListener('click', async () => {
     const year = document.getElementById('yearInput').value;
     if (!year) {
@@ -712,17 +739,22 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('noResults').classList.add('hidden');
 
-        // Fetch bills for all legislators concurrently
+        // Reset progress
+        updateLoadingProgress(0, 1);
+
+        // Fetch and display bills first
         await Promise.all(uniqueLegislators.map((legislator) =>
             fetchBillsByLegislator(legislator.link)
         ));
 
-        // After all bills are fetched, render them and display analytics
         renderBills();
-        displayAnalytics(); // Display analytics once for all legislators
 
-        loading = false;
-        document.getElementById('loading').classList.add('hidden');
+        // Calculate analytics after rendering bills
+        setTimeout(() => {
+            displayAnalytics();
+            loading = false;
+            document.getElementById('loading').classList.add('hidden');
+        }, 100);
     } else {
         document.getElementById('noResults').classList.remove('hidden');
     }

@@ -29,7 +29,13 @@
             </div>
             <button class="button" id="searchButton">Search</button>
         </div>
-        <div id="loading" class="loading hidden">Loading...</div>
+        <div id="loading" class="loading hidden">
+            <p>Loading...</p>
+                <p>Loading bills... <span id="loadingProgress">0</span>%</p>
+                <div class="progress-bar">
+                  <div id="progressIndicator" style="width: 0%"></div>
+                </div>
+        </div>
         <div id="results" class="space-y-6"></div>
         <div id="noResults" class="no-results hidden">No bills found for your search.</div>
     </div>
