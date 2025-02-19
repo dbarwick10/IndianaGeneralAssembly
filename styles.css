@@ -9,7 +9,7 @@ body {
 
 .container {
     padding: 16px;
-    max-width: 960px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -38,7 +38,7 @@ body {
     transition: border-color 0.3s ease;
     text-align: left;
     box-sizing: border-box;
-    width: 600px; /* Make the input bar longer */
+    width: 600px;
 }
 
 .input:focus {
@@ -67,12 +67,12 @@ body {
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: calc(100% - 8px); /* Adjust width to account for the gap */
+    width: calc(100% - 8px);
     max-height: 200px;
     overflow-y: auto;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-top: 4px;
-    top: 100%; /* Position the dropdown below the input */
+    top: 100%;
     left: 0;
     display: none;
 }
@@ -102,14 +102,19 @@ body {
     color: #666;
 }
 
-/* Bill card styles */
+/* Bill card and Analytics styles */
 .bill-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.bill-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .bill-card summary {
@@ -117,68 +122,88 @@ body {
     cursor: pointer;
     font-size: 18px;
     color: #2d3748;
+    padding: 8px 0;
 }
 
 .bill-card details[open] summary {
-    margin-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #edf2f7;
 }
 
 .bill-card p {
     margin: 8px 0;
     color: #4a5568;
+    line-height: 1.5;
 }
 
 .bill-card ul {
     list-style-type: disc;
     padding-left: 24px;
-    margin: 8px 0;
+    margin: 12px 0;
 }
 
 .bill-card li {
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     color: #555;
+    line-height: 1.4;
 }
 
-/* Utility classes */
-.hidden {
-    display: none;
-}
-
-.space-y-6 > * + * {
-    margin-top: 24px;
-}
-
-#wordCloud {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 10px;
-    background-color: #f9f9f9;
-}
-
-/* Analytics Container */
+/* Analytics specific styles */
 .analytics-container {
     display: flex;
-    gap: 24px; /* Space between the two sections */
-    margin-bottom: 24px;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-/* Overview Section (Left Side) */
-.overview-section {
-    flex: 1; /* Takes up 1/3 of the available space */
-    max-width: 30%; /* Limit width to 30% of the container */
+.grid {
+    display: grid;
+    gap: 16px;
 }
 
-/* Legislator-Specific Section (Right Side) */
-.legislator-section {
-    flex: 2; /* Takes up 2/3 of the available space */
-    max-width: 70%; /* Limit width to 70% of the container */
+.grid-cols-1 {
+    grid-template-columns: repeat(1, 1fr);
 }
 
+@media (min-width: 768px) {
+    .md\:grid-cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.space-y-1 > * + * {
+    margin-top: 4px;
+}
+
+.space-y-4 > * + * {
+    margin-top: 16px;
+}
+
+.space-y-8 > * + * {
+    margin-top: 12px;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.mb-2 {
+    margin-bottom: 8px;
+}
+
+/* Progress bar styles */
 .progress-bar {
     width: 100%;
     background-color: #e0e0e0;
     border-radius: 4px;
     overflow: hidden;
+    margin: 8px 0;
 }
 
 #progressIndicator {
@@ -187,14 +212,77 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .analytics-container {
-        flex-direction: column; /* Stack sections vertically on smaller screens */
-    }
+/* Word Cloud container */
+#wordCloud {
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: white;
+    min-height: 300px;
+}
 
-    .overview-section,
-    .legislator-section {
-        max-width: 100%; /* Full width on smaller screens */
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.gap-4 {
+    gap: 16px;
+}
+
+.h-64 {
+    height: 256px;
+}
+
+/* Additional analytics styling */
+.analytics-section {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.analytics-section h4 {
+    color: #2d3748;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 4px;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #718096;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .container {
+        padding: 12px;
     }
+    
+    .input {
+        width: 100%;
+    }
+    
+    .bill-card {
+        padding: 16px;
+    }
+}
+
+/* Add hover states for interactive elements */
+.bill-card details summary:hover {
+    color: #4CAF50;
+}
+
+.metric-card {
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
 }

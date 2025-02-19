@@ -5,9 +5,33 @@ let loading = false;
 let searchTerm = '';
 let suggestions = [];
 let openBills = {};
-let allBills = new Set();
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
+
+const stopWords = new Set([
+    'with', 'that', 'this', 'and', 'the', 'for', 'are', 'from', 'has', 'have', 
+    'was', 'were', 'will', 'which', 'their', 'they', 'them', 'there', 'been', 
+    'its', 'than', 'what', 'when', 'where', 'who', 'whom', 'why', 'how', 'about', 
+    'into', 'over', 'under', 'after', 'before', 'between', 'out', 'above', 'below', 
+    'through', 'during', 'until', 'against', 'along', 'among', 'because', 'since', 
+    'without', 'within', 'while', 'same', 'such', 'other', 'each', 'any', 'some', 
+    'only', 'just', 'also', 'both', 'either', 'neither', 'not', 'no', 'yes', 'so', 
+    'too', 'very', 'now', 'then', 'here', 'there', 'where', 'again', 'once', 'more', 
+    'most', 'less', 'least', 'many', 'much', 'few', 'fewer', 'little', 'lot', 'lots', 
+    'somewhat', 'somehow', 'someone', 'something', 'somewhere', 'anyone', 'anything', 
+    'anywhere', 'everyone', 'everything', 'everywhere', 'none', 'nothing', 'nowhere', 
+    'whatever', 'whenever', 'wherever', 'whoever', 'whomever', 'whose', 'whether', 
+    'either', 'neither', 'nor', 'although', 'though', 'even', 'if', 'unless', 'until', 
+    'whether', 'while', 'whereas', 'whenever', 'wherever', 'whatever', 'whoever', 
+    'whomever', 'whose', 'whichever', 'however', 'therefore', 'thus', 'hence', 
+    'accordingly', 'consequently', 'meanwhile', 'furthermore', 'moreover', 'nevertheless', 
+    'nonetheless', 'otherwise', 'similarly', 'thereafter', 'thereby', 'therefore', 
+    'therein', 'thereof', 'thereto', 'thereupon', 'whereby', 'wherein', 'whereupon', 
+    'wherever', 'whichever', 'whoever', 'whomever', 'whose', 'within', 'without', 
+    'would', 'could', 'should', 'might', 'must', 'shall', 'may', 'can', 'cannot', 
+    'couldnt', 'wouldnt', 'shouldnt', 'mustnt', 'shant', 'mightnt', 'neednt', 'oughtnt', 
+    'dare', 'dares', 'dared', 'daring', 'let', 'lets', 'letting', 'let', 'like', 'likes'
+]);
 
 // Initialize the application
 window.onload = async () => {
@@ -17,10 +41,6 @@ window.onload = async () => {
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
         legislators = data.items || []; // Ensure the response has an `items` array
-
-        const defaultYear = document.getElementById('yearInput').value;
-        await fetchAllBillsForYear(defaultYear);
-        console.log('Preloaded bills for year:', defaultYear); // Debugging
     } catch (error) {
         console.error('Error during page load:', error);
     }
@@ -56,357 +76,697 @@ const clearResults = () => {
     bills = new Set();
     openBills = {};
 
-    // Optionally, clear the analytics if displayed
-    const analyticsElement = document.querySelector('.bill-card h2.title');
-    if (analyticsElement && analyticsElement.textContent === 'Legislative Analytics') {
-        analyticsElement.parentElement.remove();
+    // Remove all analytics containers
+    const analyticsContainers = document.querySelectorAll('.analytics-container');
+    analyticsContainers.forEach(container => container.remove());
+    
+    // Remove word cloud container
+    const wordCloudContainer = document.querySelector('.bill-card .title');
+    if (wordCloudContainer && wordCloudContainer.textContent === 'Word Cloud') {
+        wordCloudContainer.closest('.bill-card').remove();
     }
 };
 
 // Analytics Functions
-const stopWords = new Set([
-    'with', 'that', 'this', 'and', 'the', 'for', 'are', 'from', 'has', 'have', 
-    'was', 'were', 'will', 'which', 'their', 'they', 'them', 'there', 'been', 
-    'its', 'than', 'what', 'when', 'where', 'who', 'whom', 'why', 'how', 'about', 
-    'into', 'over', 'under', 'after', 'before', 'between', 'out', 'above', 'below', 
-    'through', 'during', 'until', 'against', 'along', 'among', 'because', 'since', 
-    'without', 'within', 'while', 'same', 'such', 'other', 'each', 'any', 'some', 
-    'only', 'just', 'also', 'both', 'either', 'neither', 'not', 'no', 'yes', 'so', 
-    'too', 'very', 'now', 'then', 'here', 'there', 'where', 'again', 'once', 'more', 
-    'most', 'less', 'least', 'many', 'much', 'few', 'fewer', 'little', 'lot', 'lots', 
-    'somewhat', 'somehow', 'someone', 'something', 'somewhere', 'anyone', 'anything', 
-    'anywhere', 'everyone', 'everything', 'everywhere', 'none', 'nothing', 'nowhere', 
-    'whatever', 'whenever', 'wherever', 'whoever', 'whomever', 'whose', 'whether', 
-    'either', 'neither', 'nor', 'although', 'though', 'even', 'if', 'unless', 'until', 
-    'whether', 'while', 'whereas', 'whenever', 'wherever', 'whatever', 'whoever', 
-    'whomever', 'whose', 'whichever', 'however', 'therefore', 'thus', 'hence', 
-    'accordingly', 'consequently', 'meanwhile', 'furthermore', 'moreover', 'nevertheless', 
-    'nonetheless', 'otherwise', 'similarly', 'thereafter', 'thereby', 'therefore', 
-    'therein', 'thereof', 'thereto', 'thereupon', 'whereby', 'wherein', 'whereupon', 
-    'wherever', 'whichever', 'whoever', 'whomever', 'whose', 'within', 'without', 
-    'would', 'could', 'should', 'might', 'must', 'shall', 'may', 'can', 'cannot', 
-    'couldnt', 'wouldnt', 'shouldnt', 'mustnt', 'shant', 'mightnt', 'neednt', 'oughtnt', 
-    'dare', 'dares', 'dared', 'daring', 'let', 'lets', 'letting', 'let', 'like', 'likes'
-]);
-
-// Fetch all bills for the specified year
-const fetchAllBillsForYear = async (year) => {
-    console.log('fetchAllBillsForYear called with year:', year); // Debugging
-    try {
-        const billsUrl = `http://localhost:3000/${year}/bills`;
-        // console.log('Fetching bills from:', billsUrl); // Debugging
-        const response = await fetch(billsUrl);
-        // console.log('Response status:', response.status); // Debugging
-        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-        const data = await response.json();
-        // console.log('Initial bills response:', data); // Debugging
-
-        // Extract bill names from the items array
-        let billNames = data.items.map(item => {
-            if (typeof item === 'string') {
-                return item; // If items are strings, use them directly
-            } else if (item.billName) {
-                return item.billName; // If items are objects, extract billName
-            } else {
-                throw new Error('Invalid item format in API response');
-            }
-        });
-
-        // Filter to only include SB and HB bills
-        billNames = billNames.filter(billName => 
-            billName.startsWith('SB') || billName.startsWith('HB')
-        );
-
-        // console.log('Bill names:', billNames); // Debugging
-
-        // Fetch details for each bill
-        const detailedBills = await Promise.all(
-            billNames.map(async (billName) => {
-                const billUrl = `http://localhost:3000/${year}/bills/${billName}`;
-                // console.log(`Fetching details for bill ${billName} from ${billUrl}`); // Debugging
-                const billResponse = await fetch(billUrl);
-                if (!billResponse.ok) throw new Error(`Error fetching ${billName}: ${billResponse.status}`);
-                const billDetails = await billResponse.json();
-                return { ...billDetails, billName };
-            })
-        );
-
-        allBills = new Set(detailedBills.map(bill => JSON.stringify(bill)));
-        // console.log('All Bills Set:', allBills); // Debugging
-        return detailedBills;
-    } catch (error) {
-        console.error('Error in fetchAllBillsForYear:', error);
-        throw error;
-    }
-};
-
 const getLegislatorMetrics = (billsSet) => {
     const metrics = {
         totalBills: 0,
         billsByChamberAndParty: {
-            senate: { republican: 0, democrat: 0 },
-            house: { republican: 0, democrat: 0 },
+            senate: { republican: 0, democrat: 0, independent: 0 },
+            house: { republican: 0, democrat: 0, independent: 0 }
         },
         billsByType: {
             authored: 0,
             coauthored: 0,
             sponsored: 0,
-            cosponsored: 0,
+            cosponsored: 0
         },
-        bipartisanBills: 0,
-        partyCollaboration: {},
-        activeLegislators: new Set(),
-        mostActiveAuthors: [],
-        successRate: {
+        bipartisanMetrics: {
+            totalBipartisanBills: 0,
+            bipartisanPercentage: 0,
+            crossPartyCollaborations: {},
+            averageCollaboratorsPerBill: 0
+        },
+        legislatorActivity: {
+            activeLegislators: new Set(),
+            mostFrequentCollaborators: {}
+        },
+        successMetrics: {
             total: 0,
             passed: 0,
-            byParty: {},
+            vetoed: 0,
+            pending: 0,
+            averageTimeToPassage: 0
         },
-        wordFrequency: {},
+        committeeDynamics: {
+            mostActiveCommittees: {},
+            averageTimeInCommittee: 0,
+            totalCommitteeTime: 0,
+            committeeCount: 0
+        },
+        temporalAnalysis: {
+            billsPerMonth: {},
+            seasonalTrends: {}
+        },
+        amendmentAnalysis: {
+            totalAmendments: 0,
+            successfulAmendments: 0,
+            amendmentsByParty: {}
+        },
+        wordFrequency: {}
     };
 
-    const billsArray = Array.from(billsSet).map(bill => JSON.parse(bill));
+    try {
+        const billsArray = Array.from(billsSet).map(bill => JSON.parse(bill));
+        metrics.totalBills = billsArray.length;
 
-    billsArray.forEach(bill => {
-        metrics.totalBills++;
+        // Process each bill
+        billsArray.forEach(bill => {
+            // Count bills by type
+            if (bill.type) {
+                metrics.billsByType[bill.type]++;
+            }
 
-        // Determine chamber (Senate or House) based on bill name
-        const chamber = bill.billName.toLowerCase().startsWith('s') ? 'senate' : 'house';
+            if (!bill.details) return;
 
-        // Determine party based on the primary author
-        let party = null;
-        if (bill.authors?.length > 0) {
-            const primaryAuthor = bill.authors[0];
-            party = primaryAuthor.party.toLowerCase().includes('republican') ? 'republican' : 'democrat';
-        }
+            // Chamber and Party Analysis
+            const chamber = bill.billName.startsWith('S') ? 'senate' : 'house';
+            if (bill.details.authors?.[0]) {
+                const primaryAuthor = bill.details.authors[0];
+                const party = getPartyCategory(primaryAuthor.party);
+                metrics.billsByChamberAndParty[chamber][party]++;
+            }
 
-        // Track bills by chamber and party
-        if (party) {
-            metrics.billsByChamberAndParty[chamber][party]++;
-        }
+            // Collect all participants
+            const participants = [
+                ...(bill.details.authors || []),
+                ...(bill.details.coauthors || []),
+                ...(bill.details.sponsors || []),
+                ...(bill.details.cosponsors || [])
+            ];
 
-        // Track bills by type (if applicable)
-        if (bill.type) {
-            metrics.billsByType[bill.type]++;
-        }
+            // Track active legislators
+            participants.forEach(participant => {
+                if (participant.fullName) {
+                    metrics.legislatorActivity.activeLegislators.add(participant.fullName);
+                }
+            });
 
-        // Track all participants (authors, coauthors, sponsors, cosponsors)
-        const allParticipants = [
-            ...(bill.authors || []),
-            ...(bill.coauthors || []),
-            ...(bill.sponsors || []),
-            ...(bill.cosponsors || []),
-        ];
+            // Bipartisan Analysis
+            if (participants.length > 1) {
+                const uniqueParties = new Set(participants.map(p => getPartyCategory(p.party)));
+                if (uniqueParties.size > 1) {
+                    metrics.bipartisanMetrics.totalBipartisanBills++;
+                    
+                    // Track cross-party collaborations
+                    const partyArray = Array.from(uniqueParties);
+                    for (let i = 0; i < partyArray.length - 1; i++) {
+                        for (let j = i + 1; j < partyArray.length; j++) {
+                            const key = [partyArray[i], partyArray[j]].sort().join('-');
+                            metrics.bipartisanMetrics.crossPartyCollaborations[key] = 
+                                (metrics.bipartisanMetrics.crossPartyCollaborations[key] || 0) + 1;
+                        }
+                    }
+                }
 
-        // Add all participants to active legislators
-        allParticipants.forEach(legislator => {
-            if (legislator.fullName) {
-                metrics.activeLegislators.add(legislator.fullName);
+                // Track collaborator relationships
+                for (let i = 0; i < participants.length - 1; i++) {
+                    for (let j = i + 1; j < participants.length; j++) {
+                        if (participants[i].fullName && participants[j].fullName) {
+                            const key = [participants[i].fullName, participants[j].fullName]
+                                .sort()
+                                .join('-');
+                            metrics.legislatorActivity.mostFrequentCollaborators[key] = 
+                                (metrics.legislatorActivity.mostFrequentCollaborators[key] || 0) + 1;
+                        }
+                    }
+                }
+
+                metrics.bipartisanMetrics.averageCollaboratorsPerBill += participants.length;
+            }
+
+            // Bill Status and Actions Analysis
+            if (bill.actions?.length > 0) {
+                const actions = bill.actions;
+                metrics.successMetrics.total++;
+                
+                // Determine bill status
+                const isPassedOrSigned = actions.some(action => {
+                    const desc = action.description.toLowerCase();
+                    return desc.includes('public law') || 
+                           desc.includes('signed by governor') ||
+                           desc.includes('enacted') ||
+                           desc.includes('chaptered');
+                });
+                
+                const isVetoed = actions.some(action => 
+                    action.description.toLowerCase().includes('veto'));
+                
+                if (isPassedOrSigned) {
+                    metrics.successMetrics.passed++;
+                    
+                    // Calculate time to passage
+                    const firstAction = new Date(actions[0].date);
+                    const lastAction = new Date(actions[actions.length - 1].date);
+                    const daysToPassage = (lastAction - firstAction) / (1000 * 60 * 60 * 24);
+                    metrics.successMetrics.averageTimeToPassage += daysToPassage;
+                } else if (isVetoed) {
+                    metrics.successMetrics.vetoed++;
+                } else {
+                    metrics.successMetrics.pending++;
+                }
+
+                // Committee Analysis
+                let lastCommitteeStart = null;
+                let currentCommittee = null;
+
+                actions.forEach(action => {
+                    const desc = action.description.toLowerCase();
+                    const actionDate = new Date(action.date);
+                    
+                    // Committee tracking
+                    if (desc.includes('committee')) {
+                        const committee = extractCommittee(action.description);
+                        if (committee) {
+                            metrics.committeeDynamics.mostActiveCommittees[committee] = 
+                                (metrics.committeeDynamics.mostActiveCommittees[committee] || 0) + 1;
+                            
+                            if (lastCommitteeStart && currentCommittee) {
+                                const committeeTime = actionDate - lastCommitteeStart;
+                                metrics.committeeDynamics.totalCommitteeTime += committeeTime;
+                                metrics.committeeDynamics.committeeCount++;
+                            }
+                            
+                            lastCommitteeStart = actionDate;
+                            currentCommittee = committee;
+                        }
+                    }
+
+                    // Amendment tracking
+                    if (desc.includes('amendment')) {
+                        metrics.amendmentAnalysis.totalAmendments++;
+                        
+                        // Check for successful amendments
+                        if (desc.includes('prevailed') || 
+                            desc.includes('adopted') || 
+                            (desc.includes('passed') && !desc.includes('failed'))) {
+                            metrics.amendmentAnalysis.successfulAmendments++;
+                        }
+                        
+                        // Track amendment by party if author is mentioned
+                        const amendmentAuthorMatch = desc.match(/Amendment #\d+ \(([^)]+)\)/);
+                        if (amendmentAuthorMatch) {
+                            const authorName = amendmentAuthorMatch[1];
+                            // Find the legislator in participants list to get their party
+                            const author = participants.find(p => p.fullName.includes(authorName));
+                            if (author) {
+                                const party = getPartyCategory(author.party);
+                                metrics.amendmentAnalysis.amendmentsByParty[party] = 
+                                    (metrics.amendmentAnalysis.amendmentsByParty[party] || 0) + 1;
+                            }
+                        }
+                    }
+
+                    // Temporal Analysis
+                    const monthKey = `${actionDate.getFullYear()}-${String(actionDate.getMonth() + 1).padStart(2, '0')}`;
+                    metrics.temporalAnalysis.billsPerMonth[monthKey] = 
+                        (metrics.temporalAnalysis.billsPerMonth[monthKey] || 0) + 1;
+
+                    const month = String(actionDate.getMonth() + 1).padStart(2, '0');
+                    metrics.temporalAnalysis.seasonalTrends[month] = 
+                        (metrics.temporalAnalysis.seasonalTrends[month] || 0) + 1;
+                });
+            }
+
+            // Word Frequency Analysis
+            if (bill.details?.latestVersion?.digest) {
+                const words = bill.details.latestVersion.digest.toLowerCase()
+                    .match(/\b\w+\b/g) || [];
+                
+                words.forEach(word => {
+                    if (word.length > 3 && !stopWords.has(word)) {
+                        metrics.wordFrequency[word] = (metrics.wordFrequency[word] || 0) + 1;
+                    }
+                });
             }
         });
 
-        // Check for bipartisan collaboration
-        const parties = new Set(allParticipants.map(l => l.party).filter(Boolean));
-        if (parties.size > 1) {
-            metrics.bipartisanBills++;
+        // Calculate final metrics
+        if (metrics.totalBills > 0) {
+            metrics.bipartisanMetrics.bipartisanPercentage = 
+                (metrics.bipartisanMetrics.totalBipartisanBills / metrics.totalBills) * 100;
 
-            // Track party collaborations
-            const partyArray = Array.from(parties);
-            for (let i = 0; i < partyArray.length; i++) {
-                for (let j = i + 1; j < partyArray.length; j++) {
-                    const collaborationKey = [partyArray[i], partyArray[j]].sort().join('-');
-                    metrics.partyCollaboration[collaborationKey] =
-                        (metrics.partyCollaboration[collaborationKey] || 0) + 1;
-                }
+            metrics.bipartisanMetrics.averageCollaboratorsPerBill /= metrics.totalBills;
+
+            if (metrics.successMetrics.passed > 0) {
+                metrics.successMetrics.averageTimeToPassage /= metrics.successMetrics.passed;
+            }
+
+            if (metrics.committeeDynamics.committeeCount > 0) {
+                metrics.committeeDynamics.averageTimeInCommittee = 
+                    metrics.committeeDynamics.totalCommitteeTime / 
+                    metrics.committeeDynamics.committeeCount / 
+                    (1000 * 60 * 60 * 24); // Convert to days
             }
         }
 
-        // Track bill success
-        const actions = bill.actions || []; // Ensure actions is always an array
-        if (actions.length > 0) {
-            const passed = actions.some(action =>
-                action.description.toLowerCase().includes('public law')
-            );
-            if (passed) {
-                metrics.successRate.passed++;
-            }
-        }
+        // Sort collaborator relationships
+        metrics.legislatorActivity.mostFrequentCollaborators = 
+            Object.entries(metrics.legislatorActivity.mostFrequentCollaborators)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 10)
+                .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
 
-        // Extract words from digest
-        if (bill.latestVersion?.digest) {
-            const words = bill.latestVersion.digest
-                .toLowerCase()
-                .match(/\b\w+\b/g) || [];
-            words.forEach(word => {
-                if (word.length > 3) { // Ignore short words
-                    metrics.wordFrequency[word] = (metrics.wordFrequency[word] || 0) + 1;
-                }
-            });
-        }
-    });
+        // Sort committee activity
+        metrics.committeeDynamics.mostActiveCommittees = 
+            Object.entries(metrics.committeeDynamics.mostActiveCommittees)
+                .sort(([, a], [, b]) => b - a)
+                .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
 
-    // Calculate most active authors
-    const authorCount = {};
-    billsArray.forEach(bill => {
-        if (bill.authors) {
-            bill.authors.forEach(author => {
-                authorCount[author.fullName] = (authorCount[author.fullName] || 0) + 1;
-            });
-        }
-    });
-
-    metrics.mostActiveAuthors = Object.entries(authorCount)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }));
-
-    // Calculate success rate by party
-    billsArray.forEach(bill => {
-        if (bill.authors) {
-            bill.authors.forEach(author => {
-                if (author.party) {
-                    const party = author.party.toLowerCase().includes('republican') ? 'republican' : 'democrat';
-                    if (!metrics.successRate.byParty[party]) {
-                        metrics.successRate.byParty[party] = { total: 0, passed: 0 };
-                    }
-                    metrics.successRate.byParty[party].total++;
-
-                    const actions = bill.actions || []; // Ensure actions is always an array
-                    if (actions.length > 0) {
-                        const passed = actions.some(action =>
-                            action.description.toLowerCase().includes('public law')
-                        );
-                        if (passed) {
-                            metrics.successRate.byParty[party].passed++;
-                        }
-                    }
-                    // const actions = bill.actions || []; // Ensure actions is always an array
-                    // if (actions.some(action =>
-                    //     action.description.toLowerCase().includes('public law')
-                    // )) {
-                    //     metrics.successRate.byParty[party].passed++;
-                    // }
-                }
-            });
-        }
-    });
+    } catch (error) {
+        console.error('Error in getLegislatorMetrics:', error);
+    }
 
     return metrics;
 };
 
+const getPartyCategory = (party) => {
+    if (!party) return 'independent';
+    const partyLower = party.toLowerCase();
+    if (partyLower.includes('republican')) return 'republican';
+    if (partyLower.includes('democrat')) return 'democrat';
+    return 'independent';
+};
+
+const extractCommittee = (description) => {
+    const patterns = [
+        /(?:referred to|in|from) (?:the )?([A-Za-z, ]+?) Committee/i,
+        /([A-Za-z, ]+?) Committee/i,
+        /Committee on ([A-Za-z, ]+)/i
+    ];
+    
+    for (const pattern of patterns) {
+        const match = description.match(pattern);
+        if (match) {
+            return match[1].trim();
+        }
+    }
+    return null;
+};
+
+const getAllParticipants = (bill) => {
+    return [
+        ...(bill.authors || []),
+        ...(bill.coauthors || []),
+        ...(bill.sponsors || []),
+        ...(bill.cosponsors || [])
+    ];
+};
+
+const trackPartyCollaborations = (parties, collaborations) => {
+    const partyArray = Array.from(parties);
+    for (let i = 0; i < partyArray.length; i++) {
+        for (let j = i + 1; j < partyArray.length; j++) {
+            const key = [partyArray[i], partyArray[j]].sort().join('-');
+            collaborations[key] = (collaborations[key] || 0) + 1;
+        }
+    }
+};
+
+const trackCollaboratorRelationships = (participants, relationships) => {
+    participants.forEach((p1, i) => {
+        participants.slice(i + 1).forEach(p2 => {
+            const key = [p1.fullName, p2.fullName].sort().join('-');
+            relationships[key] = (relationships[key] || 0) + 1;
+        });
+    });
+};
+
+const analyzeSuccessRate = (bill, successMetrics) => {
+    successMetrics.total++;
+    
+    const actions = bill.actions || [];
+    const isPublicLaw = actions.some(a => 
+        a.description.toLowerCase().includes('public law'));
+    const isVetoed = actions.some(a => 
+        a.description.toLowerCase().includes('veto'));
+    
+    if (isPublicLaw) successMetrics.passed++;
+    else if (isVetoed) successMetrics.vetoed++;
+    else successMetrics.pending++;
+
+    // Track passage time if bill passed
+    if (isPublicLaw && actions.length >= 2) {
+        const firstAction = new Date(actions[0].date);
+        const lastAction = new Date(actions[actions.length - 1].date);
+        successMetrics.averageTimeToPassage += 
+            (lastAction - firstAction) / (1000 * 60 * 60 * 24); // Convert to days
+    }
+};
+
+const analyzeCommitteeActivity = (actions, committeeDynamics) => {
+    let lastCommittee = null;
+    let committeeStartTime = null;
+
+    actions.forEach(action => {
+        const desc = action.description.toLowerCase();
+        if (desc.includes('committee')) {
+            const committee = extractCommittee(action.description);
+            if (committee) {
+                committeeDynamics.mostActiveCommittees[committee] = 
+                    (committeeDynamics.mostActiveCommittees[committee] || 0) + 1;
+                
+                if (lastCommittee && committeeStartTime) {
+                    const timeInCommittee = new Date(action.date) - committeeStartTime;
+                    committeeDynamics.averageTimeInCommittee += timeInCommittee;
+                }
+                
+                lastCommittee = committee;
+                committeeStartTime = new Date(action.date);
+            }
+        }
+    });
+};
+
+const analyzeTemporalPatterns = (actions, temporalAnalysis) => {
+    actions.forEach(action => {
+        const date = new Date(action.date);
+        const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        temporalAnalysis.billsPerMonth[monthKey] = 
+            (temporalAnalysis.billsPerMonth[monthKey] || 0) + 1;
+    });
+};
+
+const analyzeContent = (digest, metrics) => {
+    const words = digest.toLowerCase().match(/\b\w+\b/g) || [];
+    words.forEach(word => {
+        if (word.length > 3 && !stopWords.has(word)) {
+            metrics.wordFrequency[word] = (metrics.wordFrequency[word] || 0) + 1;
+        }
+    });
+};
+
+const analyzeAmendments = (actions, amendmentAnalysis) => {
+    actions.forEach(action => {
+        const desc = action.description.toLowerCase();
+        if (desc.includes('amendment')) {
+            amendmentAnalysis.totalAmendments++;
+            if (desc.includes('adopted') || desc.includes('passed') || desc.includes('prevailed')) {
+                amendmentAnalysis.successfulAmendments++;
+            }
+        }
+    });
+};
+
+const finalizeMetrics = (metrics, totalBills) => {
+    // Calculate bipartisan percentage
+    metrics.bipartisanMetrics.bipartisanPercentage = 
+        (metrics.bipartisanMetrics.totalBipartisanBills / totalBills) * 100;
+
+    // Calculate average collaborators
+    metrics.bipartisanMetrics.averageCollaboratorsPerBill /= totalBills;
+
+    // Calculate average time metrics
+    if (metrics.successMetrics.passed > 0) {
+        metrics.successMetrics.averageTimeToPassage /= metrics.successMetrics.passed;
+    }
+
+    // Sort and limit most frequent collaborators
+    metrics.legislatorActivity.mostFrequentCollaborators = 
+        Object.entries(metrics.legislatorActivity.mostFrequentCollaborators)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10)
+            .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+
+    // Calculate seasonal trends
+    const monthlyAverages = {};
+    Object.entries(metrics.temporalAnalysis.billsPerMonth).forEach(([monthKey, count]) => {
+        const month = monthKey.split('-')[1];
+        monthlyAverages[month] = (monthlyAverages[month] || 0) + count;
+    });
+    metrics.temporalAnalysis.seasonalTrends = monthlyAverages;
+};
+
+const processWordCloud = (wordFrequency) => {
+    // Debug: Log initial word count
+    console.log('Initial word count:', Object.keys(wordFrequency).length);
+    
+    const commonLegislativeTerms = new Set(['bill', 'senate', 'house', 'amends', 'concerning', 'provides', 'requires']);
+    
+    // More lenient filtering
+    const filteredWords = Object.entries(wordFrequency)
+        .filter(([word]) => {
+            const isValid = 
+                !stopWords.has(word) && 
+                !commonLegislativeTerms.has(word) &&
+                word.length > 2 && // Reduced from 3 to 2
+                /^[a-z]+$/i.test(word); // Made case insensitive
+            
+            return isValid;
+        });
+    
+    // Debug: Log filtered word count
+    console.log('Filtered word count:', filteredWords.length);
+    
+    if (filteredWords.length === 0) {
+        // Debug: Log a sample of original words to see what we're filtering out
+        console.log('Sample of original words:', 
+            Object.entries(wordFrequency)
+                .slice(0, 10)
+                .map(([word, count]) => `${word}: ${count}`)
+        );
+        return [];
+    }
+    
+    return filteredWords
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 30)
+        .map(([word, count]) => {
+            const scaledCount = Math.log(count + 1) * 20;
+            return [word, scaledCount];
+        });
+};
+
 const displayAnalytics = () => {
-    // console.log('All Bills:', allBills); // Log all bills
-    // console.log('Searched Bills:', bills); // Log searched bills
+    // Remove existing analytics
+    const existingAnalytics = document.querySelectorAll('.analytics-container, .bill-card');
+    existingAnalytics.forEach(container => {
+        if (container.querySelector('.title')?.textContent === 'Word Cloud' ||
+            container.querySelector('.title')?.textContent.includes('Combined Analytics')) {
+            container.remove();
+        }
+    });
 
-    // Metrics for all bills (overview)
-    const allBillsMetrics = getLegislatorMetrics(allBills);
+    // Combine bills from all searched legislators
+    const combinedBills = new Set();
+    bills.forEach(bill => combinedBills.add(bill));
 
-    // Metrics for searched bills (legislator-specific)
-    const searchedBillsMetrics = getLegislatorMetrics(bills);
+    // Calculate metrics
+    const metrics = getLegislatorMetrics(combinedBills);
 
-    // Extract the year and legislator(s) searched for
+    // Get search context
     const year = document.getElementById('yearInput').value;
     const searchedLegislators = searchTerm.split(',').map(name => name.trim());
 
     // Generate the analytics HTML
     const analyticsHTML = `
-        <div class="analytics-container">
-            <!-- Overview of All Bills by Party -->
-            <div class="overview-section">
-                <div class="bill-card">
-                    <h3 class="title">Overview of All Bills by Party (${year})</h3>
+        <div class="analytics-container space-y-8">
+            <!-- Overview Section -->
+            <div class="bill-card">
+                <h3 class="title">Legislative Overview for ${searchedLegislators.join(' & ')} (${year})</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Bill Distribution</h4>
+                        <div class="space-y-1">
+                            <p>Total Bills: ${metrics.totalBills}</p>
+                            <p>Authored: ${metrics.billsByType.authored}</p>
+                            <p>Coauthored: ${metrics.billsByType.coauthored}</p>
+                            <p>Sponsored: ${metrics.billsByType.sponsored}</p>
+                            <p>Cosponsored: ${metrics.billsByType.cosponsored}</p>
+                        </div>
+                    </div>
                     
-                    <!-- Bill Distribution by Chamber and Party -->
-                    <h4>Bill Distribution by Chamber and Party:</h4>
-                    <p>Total Bills: ${allBillsMetrics.totalBills}</p>
-                    
-                    <h5>Senate:</h5>
-                    <p>Republican: ${allBillsMetrics.billsByChamberAndParty.senate.republican} bills</p>
-                    <p>Democrat: ${allBillsMetrics.billsByChamberAndParty.senate.democrat} bills</p>
-                    
-                    <h5>House:</h5>
-                    <p>Republican: ${allBillsMetrics.billsByChamberAndParty.house.republican} bills</p>
-                    <p>Democrat: ${allBillsMetrics.billsByChamberAndParty.house.democrat} bills</p>
-                    
-                    <!-- Bipartisan Collaboration -->
-                    <h4>Bipartisan Collaboration:</h4>
-                    <p>Bipartisan Bills: ${allBillsMetrics.bipartisanBills}</p>
-                    ${Object.entries(allBillsMetrics.partyCollaboration)
-                        .map(([parties, count]) => 
-                            `<p>${parties}: ${count} bills</p>`
-                        ).join('')}
+                    <div>
+                        <h4 class="font-semibold mb-2">Chamber Activity</h4>
+                        <div class="space-y-1">
+                            <p>Senate Bills (R): ${metrics.billsByChamberAndParty.senate.republican}</p>
+                            <p>Senate Bills (D): ${metrics.billsByChamberAndParty.senate.democrat}</p>
+                            <p>House Bills (R): ${metrics.billsByChamberAndParty.house.republican}</p>
+                            <p>House Bills (D): ${metrics.billsByChamberAndParty.house.democrat}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold mb-2">Success Metrics</h4>
+                        <div class="space-y-1">
+                            <p>Passed: ${metrics.successMetrics.passed} (${((metrics.successMetrics.passed / metrics.successMetrics.total) * 100).toFixed(1)}%)</p>
+                            <p>Pending: ${metrics.successMetrics.pending}</p>
+                            <p>Vetoed: ${metrics.successMetrics.vetoed}</p>
+                            <p>Avg. Days to Passage: ${metrics.successMetrics.averageTimeToPassage.toFixed(1)}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Legislator-Specific Analytics -->
-            <div class="legislator-section">
-                <div class="bill-card">
-                    <h3 class="title">Analytics for ${searchedLegislators.join(', ')} (${year})</h3>
+            <!-- Bipartisan Analysis -->
+            <div class="bill-card">
+                <h3 class="title">Bipartisan Collaboration Analysis</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Bipartisan Metrics</h4>
+                        <div class="space-y-1">
+                            <p>Bipartisan Bills: ${metrics.bipartisanMetrics.totalBipartisanBills}</p>
+                            <p>Bipartisan Percentage: ${metrics.bipartisanMetrics.bipartisanPercentage.toFixed(1)}%</p>
+                            <p>Avg. Collaborators per Bill: ${metrics.bipartisanMetrics.averageCollaboratorsPerBill.toFixed(1)}</p>
+                        </div>
+                    </div>
                     
-                    <h4>Bill Types:</h4>
-                    <p>Authored: ${searchedBillsMetrics.billsByType.authored}</p>
-                    <p>Coauthored: ${searchedBillsMetrics.billsByType.coauthored}</p>
-                    <p>Sponsored: ${searchedBillsMetrics.billsByType.sponsored}</p>
-                    <p>Cosponsored: ${searchedBillsMetrics.billsByType.cosponsored}</p>
-                    
-                    <h4>Most Active Authors:</h4>
-                    <ol>
-                        ${searchedBillsMetrics.mostActiveAuthors
-                            .map(({name, count}) => 
-                                `<li>${abbreviateTitle(name)}: ${count} bills</li>`
-                            ).join('')}
-                    </ol>
-                    
-                    <h4>Success Rate:</h4>
-                    <p>Overall: ${((searchedBillsMetrics.successRate.passed/searchedBillsMetrics.successRate.total)*100).toFixed(1)}%</p>
-                    ${Object.entries(searchedBillsMetrics.successRate.byParty)
-                        .map(([party, stats]) => 
-                            `<p>${party}: ${((stats.passed/stats.total)*100).toFixed(1)}% (${stats.passed}/${stats.total})</p>`
-                        ).join('')}
-                    
-                    <h4>Collaboration Metrics:</h4>
-                    <p>Total Active Legislators: ${searchedBillsMetrics.activeLegislators.size}</p>
-                    <h4>Party Collaboration:</h4>
-                    ${Object.entries(searchedBillsMetrics.partyCollaboration)
-                        .map(([parties, count]) => 
-                            `<p>${parties}: ${count} bills</p>`
-                        ).join('')}
+                    <div>
+                        <h4 class="font-semibold mb-2">Cross-Party Collaborations</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.bipartisanMetrics.crossPartyCollaborations)
+                                .map(([parties, count]) => 
+                                    `<p>${parties}: ${count} bills</p>`
+                                ).join('')}
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Word Cloud -->
-        <div class="bill-card">
-            <h3 class="title">Word Cloud</h3>
-            <div id="wordCloud" style="width: 100%; height: 300px;"></div>
+            <!-- Committee Activity -->
+            <div class="bill-card">
+                <h3 class="title">Committee Dynamics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Most Active Committees</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.committeeDynamics.mostActiveCommittees)
+                                .sort(([, a], [, b]) => b - a)
+                                .slice(0, 5)
+                                .map(([committee, count]) => 
+                                    `<p>${committee}: ${count} bills</p>`
+                                ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Committee Timing</h4>
+                        <p>Average Time in Committee: ${(metrics.committeeDynamics.averageTimeInCommittee / (1000 * 60 * 60 * 24)).toFixed(1)} days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temporal Analysis -->
+            <div class="bill-card">
+                <h3 class="title">Temporal Patterns</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Monthly Activity</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.temporalAnalysis.billsPerMonth)
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([month, count]) => 
+                                    `<p>${month}: ${count} bills</p>`
+                                ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Seasonal Trends</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.temporalAnalysis.seasonalTrends)
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([month, count]) => 
+                                    `<p>Month ${month}: ${count} bills</p>`
+                                ).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Amendment Analysis -->
+            <div class="bill-card">
+                <h3 class="title">Amendment Analysis</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Amendment Statistics</h4>
+                        <div class="space-y-1">
+                            <p>Total Amendments: ${metrics.amendmentAnalysis.totalAmendments}</p>
+                            <p>Successful Amendments: ${metrics.amendmentAnalysis.successfulAmendments}</p>
+                            <p>Success Rate: ${((metrics.amendmentAnalysis.successfulAmendments / metrics.amendmentAnalysis.totalAmendments) * 100 || 0).toFixed(1)}%</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Party-wise Amendments</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.amendmentAnalysis.amendmentsByParty || {})
+                                .map(([party, count]) => 
+                                    `<p>${party}: ${count} amendments</p>`
+                                ).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Most Active Legislators -->
+            <div class="bill-card">
+                <h3 class="title">Top Collaborations</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Most Frequent Collaborator Pairs</h4>
+                        <div class="space-y-1">
+                            ${Object.entries(metrics.legislatorActivity.mostFrequentCollaborators)
+                                .slice(0, 5)
+                                .map(([pair, count]) => 
+                                    `<p>${pair.split('-').map(name => abbreviateTitle(name)).join(' & ')}: ${count} collaborations</p>`
+                                ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Active Legislators</h4>
+                        <p>Total Active Legislators: ${metrics.legislatorActivity.activeLegislators.size}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Word Cloud -->
+            <div class="bill-card">
+                <h3 class="title">Word Cloud</h3>
+                <div id="wordCloud" class="h-64"></div>
+            </div>
         </div>
     `;
 
-    // Insert the analytics HTML into the DOM
+    // Insert analytics HTML
     const resultsElement = document.getElementById('results');
     resultsElement.insertAdjacentHTML('beforebegin', analyticsHTML);
 
-    // Generate the word cloud (using searched bills)
+    // Generate word cloud
     const wordCloudElement = document.getElementById('wordCloud');
-    const wordList = Object.entries(searchedBillsMetrics.wordFrequency)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 50) // Limit to top 50 words
-        .map(([word, count]) => [word, count]);
+    const wordList = processWordCloud(metrics.wordFrequency);
 
     if (wordList.length > 0) {
         WordCloud(wordCloudElement, {
             list: wordList,
-            gridSize: 10,
-            weightFactor: 10,
+            gridSize: 16,
+            weightFactor: 1,
             fontFamily: 'Arial, sans-serif',
-            color: 'random-dark',
-            backgroundColor: '#f0f0f0',
+            color: '#2563eb',
+            backgroundColor: 'transparent',
             rotateRatio: 0.5,
+            rotationSteps: 2,
+            shape: 'circle',
+            minSize: 10,
+            drawOutOfBound: false,
+            shrinkToFit: true,
         });
     } else {
-        wordCloudElement.innerHTML = "<p>No words found in digests.</p>";
+        wordCloudElement.innerHTML = "<p>No significant words found in bill digests.</p>";
     }
 };
+
 // API Functions
 const fetchBillDetails = async (billName) => {
     // Check cache first
@@ -450,7 +810,6 @@ const fetchBillActions = async (billName) => {
     }
 };
 
-// Improve the fetchBillsByLegislator function
 const fetchBillsByLegislator = async (legislatorLink) => {
     try {
         const year = document.getElementById('yearInput').value;
@@ -486,12 +845,12 @@ const fetchBillsByLegislator = async (legislatorLink) => {
 
         // Load details in the background in smaller batches
         const loadDetailsInBackground = async () => {
-            const batchSize = 5; // Smaller batch size
+            const batchSize = 5;
             const batches = [];
             for (let i = 0; i < simpleBills.length; i += batchSize) {
                 batches.push(simpleBills.slice(i, i + batchSize));
             }
-
+        
             for (const batch of batches) {
                 const detailedBills = await Promise.all(
                     batch.map(async (bill) => {
@@ -499,25 +858,21 @@ const fetchBillsByLegislator = async (legislatorLink) => {
                         return { ...bill, details };
                     })
                 );
-
+        
                 detailedBills.forEach(bill => {
-                    // Update the bill in the set
                     bills.delete(JSON.stringify({ ...bill, details: undefined }));
                     bills.add(JSON.stringify(bill));
                 });
-
-                // Update progress
+        
                 processedBills += batch.length;
                 updateLoadingProgress(processedBills, totalBills);
-
-                // Update UI after each batch
                 renderBills();
-
-                // Small delay to prevent browser from freezing
+        
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
-
-            // Hide loading when all batches are done
+        
+            // Only display analytics after all bills are loaded
+            displayAnalytics();
             document.getElementById('loading').classList.add('hidden');
         };
 
@@ -700,8 +1055,6 @@ document.getElementById('autocompleteDropdown').addEventListener('click', (e) =>
 
 document.getElementById('yearInput').addEventListener('change', async () => {
     clearCaches();
-    const year = document.getElementById('yearInput').value;
-    await fetchAllBillsForYear(year);
     clearResults();
 });
 
@@ -725,7 +1078,7 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         return;
     }
 
-    clearResults(); // Clear existing results
+    clearResults();
 
     const names = searchTerm.split(',').map((name) => name.trim());
     const uniqueLegislators = names.map((name) =>
@@ -739,22 +1092,15 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('noResults').classList.add('hidden');
 
-        // Reset progress
         updateLoadingProgress(0, 1);
 
-        // Fetch and display bills first
+        // Remove the setTimeout and separate displayAnalytics call
         await Promise.all(uniqueLegislators.map((legislator) =>
             fetchBillsByLegislator(legislator.link)
         ));
 
         renderBills();
-
-        // Calculate analytics after rendering bills
-        setTimeout(() => {
-            displayAnalytics();
-            loading = false;
-            document.getElementById('loading').classList.add('hidden');
-        }, 100);
+        // Analytics will be displayed by loadDetailsInBackground after all bills are loaded
     } else {
         document.getElementById('noResults').classList.remove('hidden');
     }
