@@ -9,12 +9,14 @@ const PORT = process.env.PORT || 3000;
 // Enable CORS and JSON parsing
 app.use(cors({
     origin: function(origin, callback) {
+        console.log('Incoming origin:', origin);
         const allowedOrigins = [
             'http://127.0.0.1:5500',        
             'http://localhost:5500',
-            ,'https://dbarwick10.github.io',
+            'https://dbarwick10.github.io',
             'https://dbarwick10.github.io/IndianaGeneralAssembly',
-            'https://indianageneralassembly-production.up.railway.app'
+            'https://indianageneralassembly-production.up.railway.app',
+            null 
         ];
         
         if (!origin) return callback(null, true);
@@ -33,11 +35,10 @@ app.use(cors({
         'Authorization', 
         'Origin', 
         'Access-Control-Allow-Origin', 
-        'Accept',
-        'Client-ID',
-        'client-id'
+        'Accept'
     ]
 }));
+
 app.use(express.json());
 
 // Enhanced fetch function
