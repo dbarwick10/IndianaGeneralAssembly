@@ -12,7 +12,9 @@ app.use(cors({
         const allowedOrigins = [
             'http://127.0.0.1:5500',        
             'http://localhost:5500',
-            'https://indianageneralassembly-production.up.railway.app/'
+            ,'https://dbarwick10.github.io',
+            'https://dbarwick10.github.io/IndianaGeneralAssembly',
+            'https://indianageneralassembly-production.up.railway.app'
         ];
         
         if (!origin) return callback(null, true);
