@@ -7,11 +7,13 @@ let suggestions = [];
 let openBills = {};
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
+const teseting = false;
+const url = testing ? 'http://localhost:3000' : 'indianageneralassembly-production.up.railway.app';
 
 // Initialize the application
 window.onload = async () => {
     try {
-        const response = await fetch(`http://localhost:3000/legislators`);
+        const response = await fetch(`${url}/legislators`);
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
         legislators = data.items || [];
@@ -141,7 +143,7 @@ const fetchBillDetails = async (billName) => {
 
     try {
         const year = document.getElementById('yearInput').value;
-        const response = await fetch(`http://localhost:3000/${year}/bills/${billName}`);
+        const response = await fetch(`${url}/${year}/bills/${billName}`);
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
         billDetailsCache.set(billName, data);
@@ -159,7 +161,7 @@ const fetchBillActions = async (billName) => {
 
     try {
         const year = document.getElementById('yearInput').value;
-        const response = await fetch(`http://localhost:3000/${year}/bills/${billName}/actions`);
+        const response = await fetch(`${url}/${year}/bills/${billName}/actions`);
         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
         const data = await response.json();
         const actions = data.items || [];
@@ -180,7 +182,7 @@ const fetchBillsByLegislator = async (legislatorLink) => {
         const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
         const billsByType = await Promise.all(
             types.map(async (type) => {
-                const response = await fetch(`http://localhost:3000/${year}/legislators/${userId}/bills/${type}`);
+                const response = await fetch(`${url}/${year}/legislators/${userId}/bills/${type}`);
                 if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
                 const data = await response.json();
                 return { type, bills: data.items || [] };
