@@ -86,6 +86,7 @@ body {
 /* View Toggle styles */
 .view-toggle {
     display: flex;
+    padding-right: 20px;
     align-items: center;
     gap: 8px;
     margin-left: auto;
@@ -543,7 +544,7 @@ input:checked + .slider:before {
     .stat-label {
         color: #9ca3af;
     }
-    
+
     .percentage-bar {
         background: #374151;
     }

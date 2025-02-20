@@ -715,7 +715,7 @@ document.getElementById('yearInput').addEventListener('change', async () => {
 
 document.getElementById('viewToggle').addEventListener('change', () => {
     const label = document.getElementById('viewLabel');
-    label.textContent = document.getElementById('viewToggle').checked ? 'Stats View' : 'Bill View';
+    // label.textContent = document.getElementById('viewToggle').checked ? 'Stats View' : 'Bill View';
     
     if (bills.size > 0) {
         updateView();
