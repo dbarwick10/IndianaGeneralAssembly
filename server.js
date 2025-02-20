@@ -7,7 +7,35 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Enable CORS and JSON parsing
-app.use(cors());
+app.use(cors({
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            'http://127.0.0.1:5500',        
+            'http://localhost:5500',
+            'https://indianageneralassembly-production.up.railway.app/'
+        ];
+        
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('Origin not allowed:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Origin', 
+        'Access-Control-Allow-Origin', 
+        'Accept',
+        'Client-ID',
+        'client-id'
+    ]
+}));
 app.use(express.json());
 
 // Enhanced fetch function
