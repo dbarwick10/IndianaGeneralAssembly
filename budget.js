@@ -86,6 +86,58 @@ const data = [
       'Distributions': 253.6
     },
     {
+      year: 2018,
+      'General Government': 621.1,
+      'Corrections': 736.6,
+      'Other Public Safety': 266.0,
+      'Conservation and Environment': 79.9,
+      'Economic Development': 97.6,
+      'Transportation': 47.0,
+      'FSSA Administration': 16.6,
+      'Medicaid': 2106.6,
+      'Mental Health and Addictions': 270.8,
+      'Family Resources': 131.1,
+      'Aging Services': 61.2,
+      'Disability and Rehabilitative Services': 120.3,
+      'Department of Child Services': 629.3,
+      'Public Health': 31.8,
+      'Other Health and Human Services': 91.5,
+      'State Student Assistance': 354.0,
+      'Other Higher Education': 1581.3,
+      'Education Administration': 34.7,
+      'Tuition Support': 7075.6,
+      'Other Local Schools': 211.4,
+      'Teacher Retirement': 887.9,
+      'Other Education': 8.4,
+      'Distributions': 66.3
+  },
+  {
+      year: 2019,
+      'General Government': 621.8,
+      'Corrections': 739.4,
+      'Other Public Safety': 281.7,
+      'Conservation and Environment': 82.0,
+      'Economic Development': 117.3,
+      'Transportation': 48.0,
+      'FSSA Administration': 16.6,
+      'Medicaid': 2364.4,
+      'Mental Health and Addictions': 275.6,
+      'Family Resources': 131.1,
+      'Aging Services': 61.2,
+      'Disability and Rehabilitative Services': 120.3,
+      'Department of Child Services': 679.3,
+      'Public Health': 31.8,
+      'Other Health and Human Services': 91.5,
+      'State Student Assistance': 338.8,
+      'Other Higher Education': 1623.2,
+      'Education Administration': 39.8,
+      'Tuition Support': 7198.6,
+      'Other Local Schools': 214.7,
+      'Teacher Retirement': 913.9,
+      'Other Education': 8.4,
+      'Distributions': 66.3
+      },
+    {
       year: 2020,
       'General Government': 642.2,
       'Corrections': 758.8,
@@ -242,7 +294,7 @@ const data = [
       'Distributions': 50.5
     },
     {
-      year: 2026,
+      year: '2026*',
       'General Government': 997.6,
       'Corrections': 1058.7,
       'Other Public Safety': 419.0,
@@ -268,7 +320,7 @@ const data = [
       'Distributions': 50.5
     },
     {
-      year: 2027,
+      year: '2027*',
       'General Government': 976.6,
       'Corrections': 1054.7,
       'Other Public Safety': 413.2,
@@ -294,20 +346,107 @@ const data = [
       'Distributions': 50.5
     }
   ];
-const descriptions = {
-'General Government': {
-    category: 'Administration',
-    trend: 'Growing',
-    description: 'Core state operations',
-    examples: 'Governor, Legislature, Courts, Elections'
-},
-'Corrections': {
-    category: 'Public Safety',
-    trend: 'Growing',
-    description: 'Prison system and rehabilitation',
-    examples: 'State prisons, Parole, Prison education'
-},
-// Add descriptions for all other line items...
+
+const lineItemDescriptions = {
+    // Administration & Development
+    'General Government': {
+        description: 'Core state operations and administrative functions',
+        examples: 'Governor\'s office, Legislature, Courts, Elections, Administrative services, State buildings'
+    },
+    'Conservation and Environment': {
+        description: 'Natural resource management and environmental protection programs',
+        examples: 'State parks, Environmental regulations, Conservation programs, Water quality monitoring, Fish & wildlife'
+    },
+    'Economic Development': {
+        description: 'Programs to promote business growth and workforce development',
+        examples: 'Job training, Business incentives, Tourism promotion, Community development grants, Workforce programs'
+    },
+    'Transportation': {
+        description: 'Transportation planning and administrative operations',
+        examples: 'DMV operations, Transportation planning, Traffic studies, Public transit administration'
+    },
+    'Distributions': {
+        description: 'Shared revenues and support for local governments',
+        examples: 'Local government aid, Revenue sharing, Gaming distributions, Special district funding'
+    },
+
+    // Public Safety
+    'Corrections': {
+        description: 'Prison system operations and rehabilitation programs',
+        examples: 'State prisons, Parole system, Rehabilitation programs, Prison education, Staff training'
+    },
+    'Other Public Safety': {
+        description: 'Law enforcement and emergency management services',
+        examples: 'State Police, Emergency Management, Homeland Security, Fire Marshal, Criminal investigations'
+    },
+
+    // Education
+    'Tuition Support': {
+        description: 'State funding for K-12 public education',
+        examples: 'Per-pupil funding, Special education support, Complexity grants, Full-day kindergarten'
+    },
+    'Other Higher Education': {
+        description: 'Support for state colleges and universities',
+        examples: 'University operations, Research funding, Campus improvements, Technology initiatives'
+    },
+    'Teacher Retirement': {
+        description: 'Pension and retirement benefits for educators',
+        examples: 'Teacher pensions, Retirement fund contributions, Healthcare benefits, Administrative costs'
+    },
+    'State Student Assistance': {
+        description: 'Financial aid programs for higher education',
+        examples: '21st Century Scholars, Frank O\'Bannon Grants, Adult Student Aid, Merit-based scholarships'
+    },
+    'Education Administration': {
+        description: 'Oversight and management of education programs',
+        examples: 'Department of Education operations, Assessment programs, Data systems, Program evaluation'
+    },
+    'Other Local Schools': {
+        description: 'Additional support for K-12 education programs',
+        examples: 'Career education, STEM initiatives, School safety grants, Technology programs'
+    },
+    'Other Education': {
+        description: 'Miscellaneous education support programs',
+        examples: 'Library services, Educational television, Vocational programs, Professional development'
+    },
+
+    // Health & Human Services
+    'Medicaid': {
+        description: 'Healthcare coverage for eligible low-income residents',
+        examples: 'Medical services, Prescription drugs, Long-term care, Disability services, Children\'s health'
+    },
+    'Mental Health and Addictions': {
+        description: 'Behavioral health and substance abuse services',
+        examples: 'State hospitals, Addiction treatment, Crisis services, Prevention programs, Community mental health'
+    },
+    'Family Resources': {
+        description: 'Support services for families and children',
+        examples: 'TANF benefits, Food assistance, Child care support, Employment services'
+    },
+    'Aging Services': {
+        description: 'Programs supporting elderly residents',
+        examples: 'Senior services, Home care, Meals programs, Adult protective services, Community centers'
+    },
+    'Disability and Rehabilitative Services': {
+        description: 'Support for individuals with disabilities',
+        examples: 'Disability benefits, Vocational rehabilitation, Independent living services, Support programs'
+    },
+    'Department of Child Services': {
+        description: 'Child welfare and protection programs',
+        examples: 'Foster care, Adoption services, Child protection, Family preservation, Case management'
+    },
+    'Public Health': {
+        description: 'Population health and disease prevention programs',
+        examples: 'Immunizations, Health screening, Disease control, Health education, Emergency preparedness'
+    },
+    'Other Health and Human Services': {
+        description: 'Additional health and social service programs',
+        examples: 'Veterans services, Community health centers, Special population programs, Health research'
+    },
+    'FSSA Administration': {
+        description: 'Management of Family and Social Services programs',
+        examples: 'Program oversight, Eligibility systems, Quality control, Policy development, Staff training'
+    }
 };
 
 // Helper functions
@@ -319,19 +458,48 @@ return `$${value.toFixed(0)}M`;
 };
 
 const getCategoryColor = (item) => {
-const categoryColors = {
-    'Education': '#2563eb',
-    'Health & Human Services': '#16a34a',
-    'Public Safety': '#dc2626',
-    'Administration & Development': '#7c3aed'
-};
-
-for (const [category, items] of Object.entries(categories)) {
-    if (items.includes(item)) {
-    return categoryColors[category];
+  const categoryColors = {
+    'Education': {
+      'Tuition Support': '#2563eb',         // Bright blue
+      'Other Higher Education': '#9333ea',   // Purple
+      'Teacher Retirement': '#0891b2',       // Cyan
+      'State Student Assistance': '#4f46e5', // Indigo
+      'Education Administration': '#1d4ed8',  // Darker blue
+      'Other Local Schools': '#7c3aed',      // Violet
+      'Other Education': '#3b82f6'           // Light blue
+    },
+    'Health & Human Services': {
+      'Medicaid': '#16a34a',                // Green
+      'Mental Health and Addictions': '#059669', // Emerald
+      'Family Resources': '#15803d',         // Dark green
+      'Aging Services': '#22c55e',          // Lime green
+      'Disability and Rehabilitative Services': '#10b981', // Teal
+      'Department of Child Services': '#047857', // Dark teal
+      'Public Health': '#4ade80',           // Light green
+      'Other Health and Human Services': '#84cc16', // Yellow-green
+      'FSSA Administration': '#65a30d'       // Olive
+    },
+    'Public Safety': {
+      'Corrections': '#eab308',             // Yellow
+      'Other Public Safety': '#facc15'       // Bright yellow
+    },
+    'Administration & Development': {
+      'General Government': '#dc2626',      // Red
+      'Economic Development': '#ef4444',    // Bright red
+      'Transportation': '#f97316',          // Orange
+      'Conservation and Environment': '#ea580c', // Dark orange
+      'Distributions': '#b91c1c'            // Dark red
     }
-}
-return '#666666';
+  };
+
+  // Find the category and return the specific color
+  for (const [category, items] of Object.entries(categoryColors)) {
+    if (item in items) {
+      return items[item];
+    }
+  }
+  
+  return '#666666'; // Default color for uncategorized items
 };
 
 // Elements
@@ -351,64 +519,114 @@ if (event.target.classList.contains('category-button')) {
 }
 });
 
+function highlightDataset(label) {
+  chart.data.datasets.forEach(dataset => {
+    if (dataset.label === label) {
+      dataset.borderWidth = 4;
+      dataset.borderColor = getCategoryColor(label);
+      dataset.backgroundColor = getCategoryColor(label);
+      dataset.opacity = 1;
+    } else {
+      dataset.borderWidth = 1;
+      dataset.borderColor = 'rgba(200, 200, 200, 0.3)';
+      dataset.backgroundColor = 'rgba(200, 200, 200, 0.1)';
+      dataset.opacity = 0.3;
+    }
+  });
+  chart.update();
+}
+
+function resetDatasets() {
+  chart.data.datasets.forEach(dataset => {
+    dataset.borderWidth = 1;
+    dataset.borderColor = getCategoryColor(dataset.label);
+    dataset.backgroundColor = getCategoryColor(dataset.label);
+    dataset.opacity = 1;
+  });
+  chart.update();
+}
+
 // Initialize the chart
 function initializeChart(selectedCategory) {
-    const datasets = getDatasetsByCategory(selectedCategory);
+  const datasets = getDatasetsByCategory(selectedCategory);
   
-    chart = new Chart(chartContainer, {
-      type: 'line',
-      data: {
-        labels: data.map(d => d.year),
-        datasets: datasets
+  datasets.forEach(dataset => {
+    dataset.borderWidth = 1;
+    dataset.tension = 0.1;
+    dataset.fill = false;
+    dataset.pointRadius = 1.5;
+    dataset.pointHoverRadius = 4;
+  });
+
+  chart = new Chart(chartContainer, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.year),
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 300
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
+      scales: {
         x: {
-            type: 'category',
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027']
-            },
-          y: {
-            ticks: {
-              callback: formatValue
+          type: 'category',
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          },
+          ticks: {
+            callback: formatValue
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          mode: 'nearest',
+          intersect: false,
+          callbacks: {
+            label: (context) => {
+              const item = context.dataset.label;
+              const currentValue = context.parsed.y;
+              const previousYear = data.find((d) => d.year === context.label - 1);
+              const previousValue = previousYear ? previousYear[item] : null;
+              const yearChange = previousValue
+                ? ((currentValue - previousValue) / previousValue * 100).toFixed(1)
+                : null;
+
+              let label = `${item}: ${formatValue(currentValue)}`;
+              if (yearChange) {
+                label += ` (${yearChange}% change from previous year)`;
+              }
+              return label;
             }
           }
         },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const item = context.dataset.label;
-                const currentValue = context.parsed.y;
-                const previousYear = data.find((d) => d.year === context.label - 1);
-                const previousValue = previousYear ? previousYear[item] : null;
-                const yearChange = previousValue
-                  ? ((currentValue - previousValue) / previousValue * 100).toFixed(1)
-                  : null;
-  
-                let label = `${item}: ${formatValue(currentValue)}`;
-                if (yearChange) {
-                  label += ` (${yearChange}% change from previous year)`;
-                }
-                return label;
-              }
-            }
-          },
-          legend: {
-            display: false,
-            position: 'top'
-          }
+        legend: {
+          display: false
         }
+      },
+      hover: {
+        mode: 'nearest',
+        intersect: false,
+        animationDuration: 150
       }
-    });
-  }
+    }
+  });
+}
 
 // Update the chart
 function updateChart(selectedCategory) {
-const datasets = getDatasetsByCategory(selectedCategory);
-chart.data.datasets = datasets;
-chart.update();
+  const datasets = getDatasetsByCategory(selectedCategory);
+  chart.data.datasets = datasets;
+  resetDatasets();
+  chart.update();
 }
 
 // Get datasets by category
@@ -449,86 +667,211 @@ Object.keys(categories).forEach((category) => {
 
 // Update active button
 function updateActiveButton(selectedCategory) {
-const buttons = categoryButtons.querySelectorAll('.category-button');
-buttons.forEach((button) => {
+  const buttons = categoryButtons.querySelectorAll('.category-button');
+  buttons.forEach((button) => {
     if (button.dataset.category === selectedCategory) {
-    button.classList.add('active');
+      button.classList.add('active');
     } else {
-    button.classList.remove('active');
+      button.classList.remove('active');
     }
-});
+  });
+  
+  // Reset highlighting
+  resetDatasets();
+  
+  // Close expanded items
+  document.querySelectorAll('.legend-item-entry.expanded').forEach(item => {
+    item.classList.remove('expanded');
+  });
 }
 
 // Create legend
-function createLegend() {
-const categoryGroups = {};
-
-Object.keys(data[0])
-    .filter((key) => key !== 'year')
-    .forEach((item) => {
-    let category = 'Other';
-    for (const [cat, catItems] of Object.entries(categories)) {
-        if (catItems.includes(item)) {
-        category = cat;
-        break;
-        }
+// Add these new utility functions
+function highlightDataset(label) {
+  chart.data.datasets.forEach(dataset => {
+    if (dataset.label === label) {
+      dataset.borderWidth = 4;
+      dataset.borderColor = getCategoryColor(label);
+      dataset.backgroundColor = getCategoryColor(label);
+      dataset.opacity = 1;
+    } else {
+      dataset.borderWidth = 2;
+      dataset.borderColor = 'rgba(200, 200, 200, 0.3)';
+      dataset.backgroundColor = 'rgba(200, 200, 200, 0.1)';
+      dataset.opacity = 0.5;
     }
-    if (!categoryGroups[category]) {
-        categoryGroups[category] = [];
-    }
-    categoryGroups[category].push(item);
-    });
-
-Object.entries(categoryGroups).forEach(([category, items]) => {
-    const legendItem = document.createElement('div');
-    legendItem.classList.add('legend-item');
-
-    const legendItemTitle = document.createElement('div');
-    legendItemTitle.classList.add('legend-item-title');
-    legendItemTitle.textContent = category;
-    legendItem.appendChild(legendItemTitle);
-
-    items.forEach((item) => {
-    const legendItemEntry = document.createElement('div');
-    legendItemEntry.classList.add('legend-item-entry');
-
-    const legendItemColor = document.createElement('div');
-    legendItemColor.classList.add('legend-item-color');
-    legendItemColor.style.backgroundColor = getCategoryColor(item);
-    legendItemEntry.appendChild(legendItemColor);
-
-    const legendItemLabel = document.createElement('div');
-    legendItemLabel.classList.add('legend-item-label');
-    legendItemLabel.textContent = item;
-    legendItemEntry.appendChild(legendItemLabel);
-
-    const itemData = data.map((year) => ({
-        year: year.year,
-        value: year[item]
-    }));
-
-    const startValue = itemData[0].value;
-    const endValue = itemData[itemData.length - 1].value;
-    const growth = ((endValue - startValue) / startValue * 100).toFixed(1);
-
-    const legendItemValue = document.createElement('div');
-    legendItemValue.classList.add('legend-item-value');
-    legendItemValue.textContent = `2027: ${formatValue(endValue)} (${growth}% since 2018)`;
-    legendItemEntry.appendChild(legendItemValue);
-
-    legendItem.appendChild(legendItemEntry);
-    });
-
-    legendContainer.appendChild(legendItem);
-});
+  });
+  chart.update();
 }
+
+function resetDatasets() {
+  chart.data.datasets.forEach(dataset => {
+    dataset.borderWidth = 2;
+    dataset.borderColor = getCategoryColor(dataset.label);
+    dataset.backgroundColor = getCategoryColor(dataset.label);
+    dataset.opacity = .8;
+  });
+  chart.update();
+}
+
+// Complete createLegend function with highlighting
+function createLegend() {
+  const legendContainer = document.getElementById('legendContainer');
+  legendContainer.innerHTML = '';
+
+  const leftColumn = document.createElement('div');
+  leftColumn.classList.add('legend-item');
+
+  const rightColumn = document.createElement('div');
+  rightColumn.classList.add('legend-item');
+
+  const rightColumnCategories = ['Health & Human Services', 'Public Safety'];
+  const leftColumnCategories = Object.keys(categories).filter(cat => !rightColumnCategories.includes(cat));
+
+  const createEntries = (items) => {
+    return items
+      .sort((a, b) => {
+        const valueA = data[data.length - 1][a];
+        const valueB = data[data.length - 1][b];
+        return valueB - valueA;
+      })
+      .map(item => {
+        const entry = document.createElement('div');
+        entry.classList.add('legend-item-entry');
+        
+        const colorBox = document.createElement('div');
+        colorBox.classList.add('legend-item-color');
+        colorBox.style.backgroundColor = getCategoryColor(item);
+        entry.appendChild(colorBox);
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.classList.add('legend-item-content');
+
+        const mainLine = document.createElement('div');
+        mainLine.classList.add('legend-item-main');
+
+        const label = document.createElement('div');
+        label.classList.add('legend-item-label');
+        label.textContent = item;
+        mainLine.appendChild(label);
+
+        const startValue = data[0][item];
+        const endValue = data[data.length - 1][item];
+        const growth = ((endValue - startValue) / startValue * 100).toFixed(1);
+
+        const value = document.createElement('div');
+        value.classList.add('legend-item-value');
+        const firstYear = data[0].year;
+        const lastYear = data[data.length - 1].year;
+        value.textContent = `FY ${lastYear}: ${formatValue(endValue)} (${growth}% since FY ${firstYear})`;
+        mainLine.appendChild(value);
+
+        contentWrapper.appendChild(mainLine);
+
+        if (lineItemDescriptions[item]) {
+          const description = document.createElement('div');
+          description.classList.add('legend-item-description');
+          
+          const descText = document.createElement('div');
+          descText.classList.add('description-text');
+          descText.textContent = lineItemDescriptions[item].description;
+          description.appendChild(descText);
+
+          const examples = document.createElement('div');
+          examples.classList.add('description-examples');
+          examples.textContent = `Examples: ${lineItemDescriptions[item].examples}`;
+          description.appendChild(examples);
+
+          contentWrapper.appendChild(description);
+
+          // Add click handler with highlighting
+          entry.addEventListener('click', () => {
+            const wasExpanded = entry.classList.contains('expanded');
+            
+            // Reset all entries
+            document.querySelectorAll('.legend-item-entry.expanded').forEach(item => {
+              if (item !== entry) {
+                item.classList.remove('expanded');
+              }
+            });
+            
+            // Toggle current entry
+            entry.classList.toggle('expanded', !wasExpanded);
+            
+            // Update chart highlighting
+            if (!wasExpanded) {
+              highlightDataset(item);
+            } else {
+              resetDatasets();
+            }
+          });
+        }
+
+        entry.appendChild(contentWrapper);
+        return entry;
+      });
+  };
+
+  // Create left column
+  leftColumnCategories.forEach(category => {
+    const categorySection = document.createElement('div');
+    categorySection.classList.add('legend-group');
+
+    const title = document.createElement('div');
+    title.classList.add('legend-group-title');
+    title.textContent = category;
+    categorySection.appendChild(title);
+
+    createEntries(categories[category]).forEach(entry => categorySection.appendChild(entry));
+    leftColumn.appendChild(categorySection);
+  });
+
+  // Create right column
+  rightColumnCategories.forEach(category => {
+    const categorySection = document.createElement('div');
+    categorySection.classList.add('legend-group');
+
+    const title = document.createElement('div');
+    title.classList.add('legend-group-title');
+    title.textContent = category;
+    categorySection.appendChild(title);
+
+    createEntries(categories[category]).forEach(entry => categorySection.appendChild(entry));
+    rightColumn.appendChild(categorySection);
+  });
+
+  legendContainer.appendChild(leftColumn);
+  legendContainer.appendChild(rightColumn);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Highlight active nav link based on current page
+  const currentPath = window.location.pathname;
+  const billTrackerLink = document.getElementById('billTracker');
+  const budgetLink = document.getElementById('budget');
+  
+  if (currentPath.includes('index.html')) {
+      billTrackerLink.classList.add('active');
+  } else if (currentPath.includes('budget.html')) {
+      budgetLink.classList.add('active');
+  }
+});
 
 // Initialize the app
 function initialize() {
-    createCategoryButtons();
-    createLegend();
-    initializeChart('all');
-    updateActiveButton('all');
+  createCategoryButtons();
+  createLegend();
+  initializeChart('all');
+  updateActiveButton('all');
+
+  // Add event listeners
+  document.getElementById('categoryButtons').addEventListener('click', (event) => {
+      if (event.target.classList.contains('category-button')) {
+          const selectedCategory = event.target.dataset.category;
+          updateChart(selectedCategory);
+          updateActiveButton(selectedCategory);
+      }
+  });
 }
 
 initialize();

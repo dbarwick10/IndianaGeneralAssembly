@@ -614,11 +614,11 @@ const renderBills = () => {
                                             ${bill.billName} - ${bill.description}
                                             ${hasBillPassedChamber(bill) ? 
                                                 `<span class="status-tag passed">Passed Chamber${
-                                                    timing?.daysToPassChamber ? ` (${timing.daysToPassChamber} days)` : ''
+                                                    timing?.daysToPassChamber ? ` in ${timing.daysToPassChamber} days` : ''
                                                 }</span>` : ''}
                                             ${hasBillBecomeLaw(bill) ? 
                                                 `<span class="status-tag law">Became Law${
-                                                    timing?.daysToBecomeLaw ? ` (${timing.daysToBecomeLaw} days)` : ''
+                                                    timing?.daysToBecomeLaw ? ` in ${timing.daysToBecomeLaw} days` : ''
                                                 }</span>` : ''}
                                         </div>
                                         ${bill.details ? `
@@ -845,6 +845,19 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         updateView();
     } else {
         document.getElementById('noResults').classList.remove('hidden');
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Highlight active nav link based on current page
+    const currentPath = window.location.pathname;
+    const billTrackerLink = document.getElementById('billTracker');
+    const budgetLink = document.getElementById('budget');
+    
+    if (currentPath.includes('index.html')) {
+        billTrackerLink.classList.add('active');
+    } else if (currentPath.includes('budget.html')) {
+        budgetLink.classList.add('active');
     }
 });
 

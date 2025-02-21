@@ -1,28 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Budget Line Items</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Line Items</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
-    <div class="card">
-        <div class="card-header">
-        <h2 class="card-title">Indiana Budget Line Items</h2>
-        <div id="categoryButtons" class="category-buttons"></div>
+      <header class="nav-header">
+        <nav class="nav-container">
+            <div class="nav-logo">
+                <span>Indiana Legislative Tools</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link" id="billTracker">Bill Tracker</a>
+                <a href="budget.html" class="nav-link" id="budget">Budget View</a>
+            </div>
+        </nav>
+    </header>
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">Indiana Budget Line Items</h1>
+                <div id="categoryButtons" class="category-buttons"></div>
+            </div>
+            <div class="card-content">
+                <div class="chart-container">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+                <div id="legendContainer" class="legend-container"></div>
+            </div>
         </div>
-        <div class="card-content">
-            <div class="chart-container">
-                <canvas id="chartCanvas"></canvas>
-        </div>
-        <div id="legendContainer" class="legend-container"></div>
-        </div>
-    </div>
+        <footer class="footer">
+            <div class="footer-note">
+                <span>*</span> Note: Years 2026 and 2027 represent proposed budget figures, not actual appropriations
+            </div>
+        </footer>
     </div>
 
-  <script src="budget.js"></script>
+    <script src="budget.js"></script>
 </body>
 </html>
