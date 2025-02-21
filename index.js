@@ -55,8 +55,10 @@ const getPartyBreakdown = (legislators) => {
     }, { total: 0, democrat: 0, republican: 0 });
 };
 
+
 const formatPartyBreakdown = (breakdown) => {
-    return `${breakdown.total} total (${breakdown.democrat}D / ${breakdown.republican}R)`;
+    const test = breakdown.democrat ? `${breakdown.democrat}D | ${breakdown.republican}R` : `${breakdown.republican}R`;
+    return `${test}`;
 };
 
 const clearResults = () => {
