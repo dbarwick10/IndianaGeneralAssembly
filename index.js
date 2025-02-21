@@ -7,7 +7,7 @@ let suggestions = [];
 let openBills = {};
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
-const testing = false;
+const testing = true;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -64,6 +64,40 @@ const clearResults = () => {
     document.getElementById('noResults').classList.add('hidden');
     bills = new Set();
     openBills = {};
+};
+
+const generateWordCloud = (bills) => {
+    // Common stop words to filter out
+    const stopWords = new Set([
+        'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+        'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
+        'will', 'with', 'the', 'concerning', 'regarding', 'various', 'matters',
+        'provides', 'requires', 'establishes', 'amends', 'repeals', 'relating', 'state',
+        'county', 'prior', 'bill', 'bills', 'act', 'acts', 'law', 'laws', 'public', 'code',
+        'amend', 'certain', 'make', 'makes', 'relating', 'relates', 'relating', 'relates',
+        'town'
+    ]);
+
+    const text = bills
+        .map(bill => `${bill.description || ''} ${bill.details?.title || ''}`)
+        .join(' ')
+        .toLowerCase()
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+        .replace(/\d+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const words = text.split(' ')
+        .filter(word => word.length > 3 && !stopWords.has(word))
+        .reduce((acc, word) => {
+            acc[word] = (acc[word] || 0) + 1;
+            return acc;
+        }, {});
+
+    return Object.entries(words)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 100) 
+        .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
 };
 
 const hasBillPassedChamber = (bill) => {
@@ -140,7 +174,6 @@ const fetchBillDetails = async (billName) => {
     if (billDetailsCache.has(billName)) {
         return billDetailsCache.get(billName);
     }
-
     try {
         const year = document.getElementById('yearInput').value;
         const response = await fetch(`${url}/${year}/bills/${billName}`);
@@ -250,37 +283,17 @@ const fetchBillsByLegislator = async (legislatorLink) => {
 };
 
 // Stats Functions
-const analyzeAmendments = (bill, legislatorNames) => {
-    if (!bill.actions || !legislatorNames || !Array.isArray(legislatorNames)) return null;
-
-    // Get names without title for matching
-    const searchNames = legislatorNames.map(name => 
-        name.replace(/^(Rep\.|Senator)\s+/, '').toLowerCase()
-    );
-
-    const amendments = bill.actions.filter(action => {
-        const desc = action.description.toLowerCase();
-        return desc.includes('amendment') && desc.includes('roll call') &&
-            searchNames.some(name => desc.includes(name.toLowerCase()));
-    });
-
-    return amendments.reduce((acc, action) => {
-        const desc = action.description.toLowerCase();
-        if (desc.includes('failed') || desc.includes('defeated')) {
-            acc.failed++;
-        } else if (desc.includes('prevailed') || desc.includes('passed')) {
-            acc.passed++;
-        }
-        return acc;
-    }, { passed: 0, failed: 0 });
-};
-
 const getAmendmentStats = (bills, legislatorNames) => {
+    if (!Array.isArray(bills)) {
+        console.error('Bills is not an array:', bills);
+        return { total: 0, passed: 0, failed: 0, passRate: '0.0', failRate: '0.0' };
+    }
+
     const amendmentResults = bills.reduce((acc, bill) => {
-        const billAmendments = analyzeAmendments(bill, legislatorNames);
-        if (billAmendments) {
-            acc.passed += billAmendments.passed;
-            acc.failed += billAmendments.failed;
+        const amendmentStats = analyzeAmendments(bill, legislatorNames);
+        if (amendmentStats) {
+            acc.passed += amendmentStats.passed;
+            acc.failed += amendmentStats.failed;
         }
         return acc;
     }, { passed: 0, failed: 0 });
@@ -296,21 +309,60 @@ const getAmendmentStats = (bills, legislatorNames) => {
     };
 };
 
+// Enhanced analyzeAmendments with more specific amendment detection
+const analyzeAmendments = (bill, legislatorNames) => {
+    if (!bill.actions || !Array.isArray(legislatorNames)) {
+        return null;
+    }
+
+    // Clean up legislator names for matching
+    const searchNames = legislatorNames.map(name => 
+        name.replace(/^(Rep\.|Senator|Sen\.|Representative)\s+/, '')
+            .toLowerCase()
+            .trim()
+    );
+
+    // Find amendments related to the specified legislators
+    const amendments = bill.actions.filter(action => {
+        const desc = action.description.toLowerCase();
+        const isAmendment = desc.includes('amendment');
+        const hasRollCall = desc.includes('roll call');
+        const hasLegislatorName = searchNames.some(name => desc.includes(name));
+        
+        return isAmendment && hasRollCall && hasLegislatorName;
+    });
+
+    // Count passed and failed amendments
+    return amendments.reduce((acc, action) => {
+        const desc = action.description.toLowerCase();
+        if (desc.includes('prevailed') || desc.includes('passed')) {
+            acc.passed++;
+        } else if (desc.includes('failed') || desc.includes('defeated')) {
+            acc.failed++;
+        }
+        return acc;
+    }, { passed: 0, failed: 0 });
+};
+
 // Modify the calculateStats function to include amendment analysis
 const calculateStats = (bills, legislatorNames) => {
     const parsedBills = Array.from(bills).map(bill => JSON.parse(bill));
+    
+    // Get legislator names from the search input
+    const searchInput = document.getElementById('searchInput');
+    const names = searchInput.value.split(',').map(name => name.trim());
     
     const totalBills = parsedBills.length;
     const passedBills = parsedBills.filter(bill => hasBillPassedChamber(bill));
     const publicLaws = parsedBills.filter(bill => hasBillBecomeLaw(bill));
 
     const timing = calculateAverageTiming(parsedBills);
-    const amendments = getAmendmentStats(parsedBills, legislatorNames);
+    const amendments = getAmendmentStats(parsedBills, names);
 
     const getTypeBreakdown = (type) => {
         const typeBills = parsedBills.filter(bill => bill.type === type);
         const typeTimings = calculateAverageTiming(typeBills);
-        const typeAmendments = getAmendmentStats(typeBills, legislatorNames);
+        const typeAmendments = getAmendmentStats(typeBills, names);
         
         return {
             total: typeBills.length,
@@ -365,7 +417,6 @@ const renderStatsView = () => {
                     `Average ${categoryStats.avgDaysToPassChamber} days to pass` : 
                     'No timing data'
                 }</div>
-            
             </div>
             <div class="stat-metric">
                 <div class="stat-value">${lawRate}%</div>
@@ -378,12 +429,17 @@ const renderStatsView = () => {
                     `Average ${categoryStats.avgDaysToBecomeLaw} days to become law` : 
                     'No timing data'
                 }</div>
-            
             </div>`;
     };
 
     const renderAmendmentStats = (amendmentStats) => {
-        if (amendmentStats.total === 0) return '';
+        if (!amendmentStats || (amendmentStats.passed === 0 && amendmentStats.failed === 0)) {
+            return `
+                <div class="stat-metric">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">No Amendments Found</div>
+                </div>`;
+        }
         
         return `
             <div class="stat-metric">
@@ -481,8 +537,43 @@ const renderStatsView = () => {
                 </div>
             ` : ''}
 
+            <div class="stat-card">
+                <h3>Bill Topics Word Cloud</h3>
+                <canvas id="wordCloudCanvas" class="word-cloud-canvas"></canvas>
+            </div>
         </div>
     `;
+
+    // Initialize word cloud after the canvas is in the DOM
+    const parsedBills = Array.from(bills).map(bill => JSON.parse(bill));
+    const canvas = document.getElementById('wordCloudCanvas');
+    const wordList = generateWordCloud(parsedBills);
+
+    // Set canvas size
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 400;
+
+    // Configure and render word cloud
+    WordCloud(canvas, {
+        list: wordList,
+        gridSize: 20, // Increased grid size for more spacing
+        weightFactor: 1,
+        fontFamily: 'Inter, system-ui, sans-serif',
+        color: '#4B5563',
+        rotateRatio: 0.2, // Reduced rotation ratio
+        rotationSteps: 2,
+        backgroundColor: 'transparent',
+        drawOutOfBound: false,
+        shrinkToFit: true,
+        wait: 50, // Add small delay between words
+        minSize: 10, // Set minimum font size
+        minRotation: -Math.PI / 8, // Limit rotation range
+        maxRotation: Math.PI / 8,
+        shuffle: false, // Prevent shuffling
+        shape: 'square', // More stable than default ellipse
+        clearCanvas: true,
+        random: () => 0.5, // Fixed random seed
+    });
 };
 
 const renderBills = () => {

@@ -475,6 +475,13 @@ input:checked + .slider:before {
     margin-top: 24px;
 }
 
+/* Wordcloud */
+.word-cloud-canvas {
+    width: 100%;
+    height: 400px;
+    margin-top: 1rem;
+}
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
     body {
