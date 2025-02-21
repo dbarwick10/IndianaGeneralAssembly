@@ -7,7 +7,7 @@ let suggestions = [];
 let openBills = {};
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
-const testing = true;
+const testing = false;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
