@@ -7,7 +7,7 @@ let suggestions = [];
 let openBills = {};
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
-const testing = true;
+const testing = false;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -871,12 +871,17 @@ window.handleBillClick = (billName, type) => {
 
 // Create and inject the Find Legislator UI
 const setupFindLegislatorUI = () => {
-    // Create a toggle button for the finder ---- uncomment to go live
+    // Create a toggle button for the finder 
+
+        // WIP UNCOMMENT TO GO LIVE
+
     // const finderToggle = document.createElement('button');
     // finderToggle.id = 'finderToggle';
     // finderToggle.className = 'button secondary-button';
     // finderToggle.textContent = 'Find My Legislators';
     
+        // WIP UNCOMMENT TO GO LIVE
+
     // Add the toggle button to the search container
     const searchContainer = document.querySelector('.search-container');
     const viewToggle = document.querySelector('.view-toggle');
