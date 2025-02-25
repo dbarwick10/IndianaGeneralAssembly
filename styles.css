@@ -106,6 +106,10 @@ body {
     color: #6b7280; 
 }
 
+.note a {
+    color: #cccccc;
+}
+
 /* Chart Container */
 .chart-container {
     position: relative;
@@ -968,7 +972,7 @@ input:checked + .slider:before {
 }
 
 .bill-title a {
-    color: #f9fafb;
+    color: #cccccc;
 }
 
 /* inflation */
