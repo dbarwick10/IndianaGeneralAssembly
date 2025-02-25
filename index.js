@@ -871,11 +871,11 @@ window.handleBillClick = (billName, type) => {
 
 // Create and inject the Find Legislator UI
 const setupFindLegislatorUI = () => {
-    // Create a toggle button for the finder
-    const finderToggle = document.createElement('button');
-    finderToggle.id = 'finderToggle';
-    finderToggle.className = 'button secondary-button';
-    finderToggle.textContent = 'Find My Legislators';
+    // Create a toggle button for the finder ---- uncomment to go live
+    // const finderToggle = document.createElement('button');
+    // finderToggle.id = 'finderToggle';
+    // finderToggle.className = 'button secondary-button';
+    // finderToggle.textContent = 'Find My Legislators';
     
     // Add the toggle button to the search container
     const searchContainer = document.querySelector('.search-container');
