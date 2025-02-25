@@ -7,7 +7,7 @@ let suggestions = [];
 let openBills = {};
 const billDetailsCache = new Map();
 const billActionsCache = new Map();
-const testing = false;
+const testing = true;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -71,7 +71,7 @@ const clearResults = () => {
 const generateWordCloud = (bills) => {
     // Common stop words to filter out
     const stopWords = new Set([
-        'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+        'a', 'act', 'an', 'and', 'amend', 'indiana', 'concerning', 'code' , 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
         'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
         'will', 'with', 'the', 'concerning', 'regarding', 'various', 'matters',
         'provides', 'requires', 'establishes', 'amends', 'repeals', 'relating', 'state',
@@ -868,3 +868,274 @@ window.handleBillClick = (billName, type) => {
     openBills[billName] = !openBills[billName];
     renderBills();
 };
+
+// Create and inject the Find Legislator UI
+const setupFindLegislatorUI = () => {
+    // Create a toggle button for the finder
+    const finderToggle = document.createElement('button');
+    finderToggle.id = 'finderToggle';
+    finderToggle.className = 'button secondary-button';
+    finderToggle.textContent = 'Find My Legislators';
+    
+    // Add the toggle button to the search container
+    const searchContainer = document.querySelector('.search-container');
+    const viewToggle = document.querySelector('.view-toggle');
+    
+    if (searchContainer && viewToggle) {
+        searchContainer.insertBefore(finderToggle, viewToggle);
+    } else if (searchContainer) {
+        searchContainer.appendChild(finderToggle);
+    }
+    
+    // Create the finder form container
+    const finderContainer = document.createElement('div');
+    finderContainer.id = 'finderContainer';
+    finderContainer.className = 'finder-container hidden';
+    
+    finderContainer.innerHTML = `
+        <div class="finder-form">
+            <h2>Find Your Legislators by Address</h2>
+            <div class="form-group">
+                <label for="street">Street Address</label>
+                <input type="text" id="street" class="input" placeholder="123 Main St" required>
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" class="input" placeholder="Indianapolis" required>
+            </div>
+            <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" id="zip" class="input" placeholder="46204" required>
+            </div>
+            <button id="findButton" class="button">Find My Legislators</button>
+        </div>
+        <div id="legislatorResults" class="legislator-results hidden"></div>
+        <div id="finderLoading" class="loading hidden">Searching for your legislators...</div>
+        <div id="finderError" class="error-message hidden"></div>
+    `;
+    
+    // Add the finder container after the search container
+    if (searchContainer) {
+        searchContainer.parentNode.insertBefore(finderContainer, searchContainer.nextSibling);
+    }
+    
+    // Toggle finder visibility when the button is clicked
+    finderToggle.addEventListener('click', () => {
+        finderContainer.classList.toggle('hidden');
+        // Clear previous results when opening
+        if (!finderContainer.classList.contains('hidden')) {
+            document.getElementById('legislatorResults').classList.add('hidden');
+            document.getElementById('finderError').classList.add('hidden');
+            document.getElementById('legislatorResults').innerHTML = '';
+        }
+    });
+    
+    // Set up the find button functionality
+    document.getElementById('findButton').addEventListener('click', handleFindLegislators);
+};
+
+const fetchLegislatorsByAddress = async (street, city, zip) => {
+    try {
+        const year = document.getElementById('yearInput').value || '2025';
+        
+        // URL encode the address components
+        const encodedStreet = encodeURIComponent(street);
+        const encodedCity = encodeURIComponent(city);
+        const encodedZip = encodeURIComponent(zip || '');
+        
+        console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
+        const apiUrl = `${url}/${year}/address/legislators?street=${encodedStreet}&city=${encodedCity}&zip=${encodedZip}`;
+        console.log(`API URL: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Server error response: ${errorText}`);
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Legislators data received:', data);
+        return data.items || [];
+    } catch (error) {
+        console.error('Error finding legislators by address:', error);
+        throw error;
+    }
+};
+
+// Handle the find legislators form submission
+const handleFindLegislators = async () => {
+    const street = document.getElementById('street').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+    
+    const resultsContainer = document.getElementById('legislatorResults');
+    const loadingElement = document.getElementById('finderLoading');
+    const errorElement = document.getElementById('finderError');
+    
+    // Validate inputs - require street and city
+    if (!street || !city) {
+        errorElement.textContent = 'Please enter your street address and city.';
+        errorElement.classList.remove('hidden');
+        return;
+    }
+    
+    // Show loading, hide results and errors
+    loadingElement.classList.remove('hidden');
+    resultsContainer.classList.add('hidden');
+    errorElement.classList.add('hidden');
+    
+    try {
+        const year = document.getElementById('yearInput').value || '2025';
+        
+        // URL encode the address components
+        const encodedStreet = encodeURIComponent(street);
+        const encodedCity = encodeURIComponent(city);
+        const encodedZip = encodeURIComponent(zip || '');
+        
+        console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
+        const apiUrl = `${url}/${year}/address/legislators?street=${encodedStreet}&city=${encodedCity}&zip=${encodedZip}`;
+        console.log(`API URL: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Server error response: ${errorText}`);
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('District data received:', data);
+        
+        // If we already have legislators in the data, display them
+        if (data.items && data.items.length > 0) {
+            displayLegislatorResults(data);
+            return;
+        }
+        
+        // If we have district info but no legislators, look them up from the main legislators list
+        if (data.houseDistrict || data.senateDistrict) {
+            // Use the legislators array already loaded in your app
+            const matchingLegislators = [];
+            
+            // Find legislators matching these districts
+            if (window.legislators && window.legislators.length > 0) {
+                legislators.forEach(legislator => {
+                    if ((data.houseDistrict && legislator.chamber === 'H' && legislator.district === data.houseDistrict) ||
+                        (data.senateDistrict && legislator.chamber === 'S' && legislator.district === data.senateDistrict)) {
+                        matchingLegislators.push(legislator);
+                    }
+                });
+            }
+            
+            // Add found legislators to the data object
+            data.items = matchingLegislators;
+            
+            // Display the enhanced data
+            displayLegislatorResults(data);
+            return;
+        }
+        
+        // No district info found
+        errorElement.textContent = 'No legislative districts found for this address. Please check your address and try again.';
+        errorElement.classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error finding legislators:', error);
+        
+        // Provide more specific error message based on the error
+        if (error.message.includes('404')) {
+            errorElement.textContent = 'We couldn\'t find legislative districts for this address. Please verify your address and try again.';
+        } else if (error.message.includes('500')) {
+            errorElement.textContent = 'Server error while looking up your legislators. Please try again later.';
+        } else {
+            errorElement.textContent = 'Unable to find legislators for this address. Please check your address and try again.';
+        }
+        
+        errorElement.classList.remove('hidden');
+    } finally {
+        loadingElement.classList.add('hidden');
+    }
+};
+
+// Display the found legislators
+const displayLegislatorResults = (legislators, isFallback = false) => {
+    const resultsContainer = document.getElementById('legislatorResults');
+    resultsContainer.innerHTML = '';
+    
+    if (!legislators || legislators.length === 0) {
+        resultsContainer.innerHTML = '<p>No legislators found for this address.</p>';
+        resultsContainer.classList.remove('hidden');
+        return;
+    }
+    
+    // Create header for results
+    const header = document.createElement('h3');
+    header.textContent = 'Your Legislators';
+    header.className = 'title';
+    resultsContainer.appendChild(header);
+    
+    // Add note for fallback method
+    if (isFallback) {
+        const fallbackNote = document.createElement('div');
+        fallbackNote.className = 'fallback-note';
+        fallbackNote.innerHTML = `
+            <p>We couldn't find your exact district, so we're showing legislators who may represent your area.
+            For more accurate results, please try using a different address format.</p>
+        `;
+        resultsContainer.appendChild(fallbackNote);
+    }
+    
+    // Create a list for the legislators
+    const legislatorsList = document.createElement('div');
+    legislatorsList.className = 'legislators-list';
+    
+    // Add each legislator to the list
+    legislators.forEach(legislator => {
+        const legislatorCard = document.createElement('div');
+        legislatorCard.className = 'legislator-card';
+        
+        // Determine chamber for display
+        const chamberDisplay = legislator.chamber === 'S' ? 'Senate' : 'House';
+        
+        legislatorCard.innerHTML = `
+            <div class="legislator-info">
+                <h4>${legislator.firstName} ${legislator.lastName}</h4>
+                <p>${chamberDisplay} District ${legislator.district}</p>
+                <p>Party: ${legislator.party}</p>
+                <button class="button small-button select-legislator" 
+                        data-link="${legislator.link}" 
+                        data-name="${legislator.firstName} ${legislator.lastName}">
+                    View Bills
+                </button>
+            </div>
+        `;
+        
+        legislatorsList.appendChild(legislatorCard);
+    });
+    
+    resultsContainer.appendChild(legislatorsList);
+    resultsContainer.classList.remove('hidden');
+    
+    // Add event listeners to the "View Bills" buttons
+    document.querySelectorAll('.select-legislator').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const legislatorLink = event.currentTarget.getAttribute('data-link');
+            const legislatorName = event.currentTarget.getAttribute('data-name');
+            
+            // Set the legislator in the search input and trigger search
+            document.getElementById('searchInput').value = abbreviateTitle(legislatorName);
+            document.getElementById('searchButton').click();
+            
+            // Hide the finder container
+            document.getElementById('finderContainer').classList.add('hidden');
+        });
+    });
+};
+
+// Initialize the finder when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setupFindLegislatorUI();
+});

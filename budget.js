@@ -1,3 +1,5 @@
+let showingInflationAdjusted = false;
+
 const categories = {
     'Education': [
       'Tuition Support', 
@@ -294,7 +296,7 @@ const data = [
       'Distributions': 50.5
     },
     {
-      year: '2026*',
+      year: 2026,
       'General Government': 997.6,
       'Corrections': 1058.7,
       'Other Public Safety': 419.0,
@@ -320,7 +322,7 @@ const data = [
       'Distributions': 50.5
     },
     {
-      year: '2027*',
+      year: 2027,
       'General Government': 976.6,
       'Corrections': 1054.7,
       'Other Public Safety': 413.2,
@@ -449,7 +451,79 @@ const lineItemDescriptions = {
     }
 };
 
+const inflationFactors = {
+  2016: 1.000,  
+  2017: 1.025,  
+  2018: 1.0462,  
+  2019: 1.0625, 
+  2020: 1.0889,  
+  2021: 1.1041,  
+  2022: 1.1867,  
+  2023: 1.2628, 
+  2024: 1.3018,  
+  2025: 1.3409,  
+  2026: 1.37,
+  2027: 1.4  
+};
+
+
 // Helper functions
+const inflationAdjustedData = data.map(yearData => {
+  const year = yearData.year;
+  const factor = inflationFactors[year] || 1;
+  
+  // Create a new object with the same year
+  const adjustedYearData = { year: year };
+  
+  // Adjust all budget values by the inflation factor (dividing by the factor)
+  Object.keys(yearData).forEach(key => {
+    if (key !== 'year') {
+      adjustedYearData[key] = yearData[key] / factor;
+    }
+  });
+  
+  return adjustedYearData;
+});
+
+function addInflationToggle() {
+  const toggleContainer = document.createElement('div');
+  toggleContainer.className = 'inflation-toggle-container';
+  toggleContainer.innerHTML = `
+    <label class="toggle-switch">
+      <input type="checkbox" id="inflationToggle">
+      <span class="toggle-slider"></span>
+    </label>
+    <span class="toggle-label">Adjust for inflation (2016 dollars)</span>
+  `;
+  
+  // Insert the toggle before the category buttons
+  const categoryButtonsContainer = document.getElementById('categoryButtons');
+  categoryButtonsContainer.parentNode.insertBefore(toggleContainer, categoryButtonsContainer);
+  
+  // Add event listener for the toggle
+  document.getElementById('inflationToggle').addEventListener('change', function() {
+    showingInflationAdjusted = this.checked;
+    updateDataSource();
+    const selectedCategory = document.querySelector('.category-button.active').dataset.category;
+    updateChart(selectedCategory);
+    createLegend();
+  });
+}
+
+function updateDataSource() {
+  // Update the chart with the appropriate data
+  chart.data.datasets.forEach(dataset => {
+    const label = dataset.label;
+    if (showingInflationAdjusted) {
+      dataset.data = inflationAdjustedData.map(d => d[label]);
+    } else {
+      dataset.data = data.map(d => d[label]);
+    }
+  });
+  
+  chart.update();
+}
+
 const formatValue = (value) => {
 if (value >= 1000) {
     return `$${(value / 1000).toFixed(1)}B`;
@@ -582,7 +656,9 @@ function initializeChart(selectedCategory) {
             color: 'rgba(255, 255, 255, 0.1)'
           },
           ticks: {
-            callback: formatValue
+            callback: function(value) {
+              return formatValue(value);
+            }
           }
         }
       },
@@ -594,13 +670,19 @@ function initializeChart(selectedCategory) {
             label: (context) => {
               const item = context.dataset.label;
               const currentValue = context.parsed.y;
-              const previousYear = data.find((d) => d.year === context.label - 1);
+              
+              // Use the correct data source for previous year comparison
+              const dataSource = showingInflationAdjusted ? inflationAdjustedData : data;
+              const previousYear = dataSource.find((d) => d.year === context.label - 1);
               const previousValue = previousYear ? previousYear[item] : null;
               const yearChange = previousValue
                 ? ((currentValue - previousValue) / previousValue * 100).toFixed(1)
                 : null;
 
-              let label = `${item}: ${formatValue(currentValue)}`;
+              // Add inflation indicator if showing adjusted data
+              const inflationIndicator = showingInflationAdjusted ? " (2016 dollars)" : "";
+              
+              let label = `${item}: ${formatValue(currentValue)}${inflationIndicator}`;
               if (yearChange) {
                 label += ` (${yearChange}% change from previous year)`;
               }
@@ -620,7 +702,6 @@ function initializeChart(selectedCategory) {
     }
   });
 }
-
 // Update the chart
 function updateChart(selectedCategory) {
   const datasets = getDatasetsByCategory(selectedCategory);
@@ -631,21 +712,24 @@ function updateChart(selectedCategory) {
 
 // Get datasets by category
 function getDatasetsByCategory(selectedCategory) {
-let items;
-if (selectedCategory === 'all') {
+  let items;
+  if (selectedCategory === 'all') {
     items = Object.keys(data[0]).filter((key) => key !== 'year');
-} else {
+  } else {
     items = categories[selectedCategory] || [];
-}
+  }
 
-const datasets = items.map((item) => ({
+  const dataSource = showingInflationAdjusted ? inflationAdjustedData : data;
+  
+  const datasets = items.map((item) => ({
     label: item,
-    data: data.map((d) => d[item]),
+    data: dataSource.map((d) => d[item]),
     borderColor: getCategoryColor(item),
+    backgroundColor: getCategoryColor(item),
     fill: false
-}));
+  }));
 
-return datasets;
+  return datasets;
 }
 
 // Create category buttons
@@ -714,7 +798,18 @@ function resetDatasets() {
   chart.update();
 }
 
-// Complete createLegend function with highlighting
+function calculateCategoryTotals(yearData) {
+  const totals = {};
+  
+  Object.entries(categories).forEach(([category, items]) => {
+    totals[category] = items.reduce((sum, item) => sum + (yearData[item] || 0), 0);
+  });
+  
+  return totals;
+}
+
+// Modified createLegend function to add properly formatted totals
+// Complete createLegend function with the missing functionality restored
 function createLegend() {
   const legendContainer = document.getElementById('legendContainer');
   legendContainer.innerHTML = '';
@@ -728,11 +823,20 @@ function createLegend() {
   const rightColumnCategories = ['Health & Human Services', 'Public Safety'];
   const leftColumnCategories = Object.keys(categories).filter(cat => !rightColumnCategories.includes(cat));
 
+  // Use the appropriate data source based on toggle state
+  const dataSource = showingInflationAdjusted ? inflationAdjustedData : data;
+  
+  // Calculate totals for each year using the correct data source
+  const yearTotals = {};
+  dataSource.forEach(yearData => {
+    yearTotals[yearData.year] = calculateCategoryTotals(yearData);
+  });
+
   const createEntries = (items) => {
     return items
       .sort((a, b) => {
-        const valueA = data[data.length - 1][a];
-        const valueB = data[data.length - 1][b];
+        const valueA = dataSource[dataSource.length - 1][a];
+        const valueB = dataSource[dataSource.length - 1][b];
         return valueB - valueA;
       })
       .map(item => {
@@ -755,19 +859,27 @@ function createLegend() {
         label.textContent = item;
         mainLine.appendChild(label);
 
-        const startValue = data[0][item];
-        const endValue = data[data.length - 1][item];
+        // Use 2025 (index 9) and the last year for comparison
+        const yearArray = dataSource[9]; // 2025 
+        const startValue = yearArray[item];
+        const endValue = dataSource[dataSource.length - 1][item]; 
         const growth = ((endValue - startValue) / startValue * 100).toFixed(1);
 
         const value = document.createElement('div');
         value.classList.add('legend-item-value');
-        const firstYear = data[0].year;
-        const lastYear = data[data.length - 1].year;
-        value.textContent = `FY ${lastYear}: ${formatValue(endValue)} (${growth}% since FY ${firstYear})`;
+        const firstYear = yearArray.year; 
+        const lastYear = dataSource[dataSource.length - 1].year;
+        
+        // Add inflation indicator if showing adjusted data
+        const valueText = formatValue(endValue);
+        const inflationIndicator = showingInflationAdjusted ? " (2016 dollars)" : "";
+        
+        value.textContent = `FY ${lastYear}: ${valueText}${inflationIndicator} (${growth}% since FY ${firstYear})`;
         mainLine.appendChild(value);
 
         contentWrapper.appendChild(mainLine);
 
+        // Add descriptions if available
         if (lineItemDescriptions[item]) {
           const description = document.createElement('div');
           description.classList.add('legend-item-description');
@@ -784,7 +896,7 @@ function createLegend() {
 
           contentWrapper.appendChild(description);
 
-          // Add click handler with highlighting
+          // Add click handler
           entry.addEventListener('click', () => {
             const wasExpanded = entry.classList.contains('expanded');
             
@@ -812,30 +924,78 @@ function createLegend() {
       });
   };
 
-  // Create left column
+  // Create left column with category totals
   leftColumnCategories.forEach(category => {
     const categorySection = document.createElement('div');
     categorySection.classList.add('legend-group');
 
-    const title = document.createElement('div');
-    title.classList.add('legend-group-title');
-    title.textContent = category;
-    categorySection.appendChild(title);
+    const titleContainer = document.createElement('div');
+    titleContainer.classList.add('legend-group-header');
 
+    // Category name on first line
+    const titleName = document.createElement('div');
+    titleName.classList.add('legend-group-title-name');
+    titleName.textContent = category;
+    titleContainer.appendChild(titleName);
+    
+    // Budget info on second line
+    const titleInfo = document.createElement('div');
+    titleInfo.classList.add('legend-group-title-info');
+    
+    // Get the total for the first (2025) and last (2027*) years from the correct data source
+    const firstYear = dataSource[9].year; // 2025
+    const lastYear = dataSource[dataSource.length - 1].year; // 2027*
+    
+    const startTotal = yearTotals[firstYear][category];
+    const endTotal = yearTotals[lastYear][category];
+    const growth = ((endTotal - startTotal) / startTotal * 100).toFixed(1);
+    
+    // Add inflation indicator if showing adjusted data
+    const inflationIndicator = showingInflationAdjusted ? " (2016 dollars)" : "";
+    titleInfo.textContent = `FY ${lastYear}: ${formatValue(endTotal)}${inflationIndicator} (${growth}% since FY ${firstYear})`;
+    
+    titleContainer.appendChild(titleInfo);
+    categorySection.appendChild(titleContainer);
+
+    // Add individual entries using the correct data source
     createEntries(categories[category]).forEach(entry => categorySection.appendChild(entry));
     leftColumn.appendChild(categorySection);
   });
 
-  // Create right column
+  // Create right column with category totals (same approach)
   rightColumnCategories.forEach(category => {
     const categorySection = document.createElement('div');
     categorySection.classList.add('legend-group');
 
-    const title = document.createElement('div');
-    title.classList.add('legend-group-title');
-    title.textContent = category;
-    categorySection.appendChild(title);
+    const titleContainer = document.createElement('div');
+    titleContainer.classList.add('legend-group-header');
 
+    // Category name on first line
+    const titleName = document.createElement('div');
+    titleName.classList.add('legend-group-title-name');
+    titleName.textContent = category;
+    titleContainer.appendChild(titleName);
+    
+    // Budget info on second line
+    const titleInfo = document.createElement('div');
+    titleInfo.classList.add('legend-group-title-info');
+    
+    // Get the total for the first (2025) and last (2027*) years from the correct data source
+    const firstYear = dataSource[9].year; // 2025
+    const lastYear = dataSource[dataSource.length - 1].year; // 2027*
+    
+    const startTotal = yearTotals[firstYear][category];
+    const endTotal = yearTotals[lastYear][category];
+    const growth = ((endTotal - startTotal) / startTotal * 100).toFixed(1);
+    
+    // Add inflation indicator if showing adjusted data
+    const inflationIndicator = showingInflationAdjusted ? " (2016 dollars)" : "";
+    titleInfo.textContent = `FY ${lastYear}: ${formatValue(endTotal)}${inflationIndicator} (${growth}% since FY ${firstYear})`;
+    
+    titleContainer.appendChild(titleInfo);
+    categorySection.appendChild(titleContainer);
+
+    // Add individual entries using the correct data source
     createEntries(categories[category]).forEach(entry => categorySection.appendChild(entry));
     rightColumn.appendChild(categorySection);
   });
@@ -859,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize the app
 function initialize() {
+  addInflationToggle();
   createCategoryButtons();
   createLegend();
   initializeChart('all');
@@ -866,12 +1027,14 @@ function initialize() {
 
   // Add event listeners
   document.getElementById('categoryButtons').addEventListener('click', (event) => {
-      if (event.target.classList.contains('category-button')) {
-          const selectedCategory = event.target.dataset.category;
-          updateChart(selectedCategory);
-          updateActiveButton(selectedCategory);
-      }
+    if (event.target.classList.contains('category-button')) {
+      const selectedCategory = event.target.dataset.category;
+      updateChart(selectedCategory);
+      updateActiveButton(selectedCategory);
+    }
   });
 }
+
+
 
 initialize();
