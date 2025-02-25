@@ -5,9 +5,8 @@ let loading = false;
 let searchTerm = '';
 let suggestions = [];
 let openBills = {};
-const billDetailsCache = new Map();
-const billActionsCache = new Map();
-const testing = false;
+let billStats = null;
+const testing = true;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -41,21 +40,6 @@ const formatDateTime = (dateTimeString) => {
     });
 };
 
-const getPartyBreakdown = (legislators) => {
-    if (!legislators) return { total: 0, democrat: 0, republican: 0 };
-    
-    return legislators.reduce((acc, legislator) => {
-        acc.total++;
-        if (legislator.party?.toLowerCase().includes('democrat')) {
-            acc.democrat++;
-        } else if (legislator.party?.toLowerCase().includes('republican')) {
-            acc.republican++;
-        }
-        return acc;
-    }, { total: 0, democrat: 0, republican: 0 });
-};
-
-
 const formatPartyBreakdown = (breakdown) => {
     const partySummary = breakdown.democrat ? `${breakdown.democrat}D / ${breakdown.republican}R` : `${breakdown.republican}R`;
     return `${breakdown.total} Total (${partySummary})`;
@@ -66,6 +50,7 @@ const clearResults = () => {
     document.getElementById('noResults').classList.add('hidden');
     bills = new Set();
     openBills = {};
+    billStats = null;
 };
 
 const generateWordCloud = (bills) => {
@@ -102,65 +87,6 @@ const generateWordCloud = (bills) => {
         .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
 };
 
-const hasBillPassedChamber = (bill) => {
-    if (!bill.actions) return false;
-    return bill.actions.some(action => 
-        action.description.toLowerCase().includes('referred to the')
-    );
-};
-
-const hasBillBecomeLaw = (bill) => {
-    if (!bill.actions) return false;
-    return bill.actions.some(action => 
-        action.description.toLowerCase().includes('public law')
-    );
-};
-
-const calculateBillTiming = (actions) => {
-    if (!actions || actions.length === 0) return null;
-
-    const sortedActions = actions.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const firstAction = new Date(sortedActions[0].date);
-    
-    let chamberPassage = null;
-    let lawPassage = null;
-
-    for (const action of sortedActions) {
-        const actionDate = new Date(action.date);
-        const description = action.description.toLowerCase();
-
-        if (!chamberPassage && description.includes('referred to the')) {
-            chamberPassage = actionDate;
-        }
-
-        if (!lawPassage && description.includes('public law')) {
-            lawPassage = actionDate;
-        }
-    }
-
-    return {
-        daysToPassChamber: chamberPassage ? 
-            Math.ceil((chamberPassage - firstAction) / (1000 * 60 * 60 * 24)) : null,
-        daysToBecomeLaw: lawPassage ? 
-            Math.ceil((lawPassage - firstAction) / (1000 * 60 * 60 * 24)) : null
-    };
-};
-
-const calculateAverageTiming = (bills) => {
-    const timings = bills.map(bill => calculateBillTiming(bill.actions))
-                        .filter(timing => timing !== null);
-
-    const chamberTimes = timings.map(t => t.daysToPassChamber).filter(days => days !== null);
-    const lawTimes = timings.map(t => t.daysToBecomeLaw).filter(days => days !== null);
-
-    return {
-        averageDaysToPassChamber: chamberTimes.length > 0 ? 
-            Math.round(chamberTimes.reduce((a, b) => a + b, 0) / chamberTimes.length) : null,
-        averageDaysToBecomeLaw: lawTimes.length > 0 ? 
-            Math.round(lawTimes.reduce((a, b) => a + b, 0) / lawTimes.length) : null
-    };
-};
-
 const renderAutocompleteDropdown = () => {
     const dropdown = document.getElementById('autocompleteDropdown');
     dropdown.innerHTML = suggestions.map((legislator) => `
@@ -172,240 +98,60 @@ const renderAutocompleteDropdown = () => {
 };
 
 // API Functions
-const fetchBillDetails = async (billName) => {
-    if (billDetailsCache.has(billName)) {
-        return billDetailsCache.get(billName);
-    }
-    try {
-        const year = document.getElementById('yearInput').value;
-        const response = await fetch(`${url}/${year}/bills/${billName}`);
-        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-        const data = await response.json();
-        billDetailsCache.set(billName, data);
-        return data;
-    } catch (error) {
-        console.error('Error fetching bill details:', error);
-        return null;
-    }
-};
+const fetchCompleteBillData = async (legislatorLink, legislatorNames) => {
+    console.log(`=== CLIENT: FETCHING COMPLETE BILL DATA ===`);
+    console.log(`Legislator link: ${legislatorLink}`);
+    console.log(`Legislator names: ${legislatorNames.join(', ')}`);
 
-const fetchBillActions = async (billName) => {
-    if (billActionsCache.has(billName)) {
-        return billActionsCache.get(billName);
-    }
-
-    try {
-        const year = document.getElementById('yearInput').value;
-        const response = await fetch(`${url}/${year}/bills/${billName}/actions`);
-        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-        const data = await response.json();
-        const actions = data.items || [];
-        billActionsCache.set(billName, actions);
-        return actions;
-    } catch (error) {
-        console.error('Error fetching bill actions:', error);
-        return [];
-    }
-};
-
-const fetchBillsByLegislator = async (legislatorLink) => {
     try {
         const year = document.getElementById('yearInput').value;
         const userId = legislatorLink.split('/').pop();
         document.getElementById('loading').classList.remove('hidden');
-
-        const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
-        const billsByType = await Promise.all(
-            types.map(async (type) => {
-                const response = await fetch(`${url}/${year}/legislators/${userId}/bills/${type}`);
-                if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-                const data = await response.json();
-                return { type, bills: data.items || [] };
-            })
-        );
-
-        const simpleBills = billsByType.flatMap(({ type, bills }) => 
-            bills.filter(bill => bill.billName.startsWith('SB') || bill.billName.startsWith('HB'))
-                 .map(bill => ({ ...bill, type }))
-        );
-
-        const totalBills = simpleBills.length;
-        let processedBills = 0;
-
-        const initialBillsWithActions = await Promise.all(
-            simpleBills.map(async (bill) => {
-                const actions = await fetchBillActions(bill.billName);
-                return { ...bill, actions };
-            })
-        );
-
-        initialBillsWithActions.forEach(bill => bills.add(JSON.stringify(bill)));
+        
+        // Format legislator names for amendment tracking
+        const namesParam = legislatorNames.join(',');
+        
+        // Make a single API call to get complete bill data
+        const response = await fetch(`${url}/${year}/legislators/${userId}/complete-bills?names=${encodeURIComponent(namesParam)}`);
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+        
+        const data = await response.json();
+        const completeBills = data.bills || [];
+        billStats = data.stats || null;
+        
+        // Update the bills Set with complete data
+        completeBills.forEach(bill => bills.add(JSON.stringify(bill)));
+        
+        // Update loading progress to 100%
+        updateLoadingProgress(100, 100);
         updateView();
-
-        const loadDetailsInBackground = async () => {
-            const batchSize = 5;
-            const batches = [];
-            for (let i = 0; i < simpleBills.length; i += batchSize) {
-                batches.push(simpleBills.slice(i, i + batchSize));
-            }
         
-            for (const batch of batches) {
-                const detailedBills = await Promise.all(
-                    batch.map(async (bill) => {
-                        const details = await fetchBillDetails(bill.billName);
-                        const existingBill = Array.from(bills)
-                            .find(b => JSON.parse(b).billName === bill.billName);
-                        const actions = existingBill ? JSON.parse(existingBill).actions : [];
-                        return { ...bill, details, actions };
-                    })
-                );
-        
-                detailedBills.forEach(bill => {
-                    bills.delete(JSON.stringify({ ...bill, details: undefined }));
-                    bills.add(JSON.stringify(bill));
-                });
-        
-                processedBills += batch.length;
-                updateLoadingProgress(processedBills, totalBills);
-                updateView();
-        
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-        
-            document.getElementById('loading').classList.add('hidden');
-        };
-
-        loadDetailsInBackground();
-
+        document.getElementById('loading').classList.add('hidden');
+        return completeBills;
     } catch (error) {
-        console.error('Error fetching bills:', error);
+        console.error('Error fetching complete bill data:', error);
         document.getElementById('noResults').classList.remove('hidden');
         document.getElementById('loading').classList.add('hidden');
+        return [];
     }
-};
-
-// Stats Functions
-const getAmendmentStats = (bills, legislatorNames) => {
-    if (!Array.isArray(bills)) {
-        console.error('Bills is not an array:', bills);
-        return { total: 0, passed: 0, failed: 0, passRate: '0.0', failRate: '0.0' };
-    }
-
-    const amendmentResults = bills.reduce((acc, bill) => {
-        const amendmentStats = analyzeAmendments(bill, legislatorNames);
-        if (amendmentStats) {
-            acc.passed += amendmentStats.passed;
-            acc.failed += amendmentStats.failed;
-        }
-        return acc;
-    }, { passed: 0, failed: 0 });
-
-    const total = amendmentResults.passed + amendmentResults.failed;
-    
-    return {
-        total,
-        passed: amendmentResults.passed,
-        failed: amendmentResults.failed,
-        passRate: total > 0 ? (amendmentResults.passed / total * 100).toFixed(1) : '0.0',
-        failRate: total > 0 ? (amendmentResults.failed / total * 100).toFixed(1) : '0.0'
-    };
-};
-
-// Enhanced analyzeAmendments with more specific amendment detection
-const analyzeAmendments = (bill, legislatorNames) => {
-    if (!bill.actions || !Array.isArray(legislatorNames)) {
-        return null;
-    }
-
-    // Clean up legislator names for matching
-    const searchNames = legislatorNames.map(name => 
-        name.replace(/^(Rep\.|Senator|Sen\.|Representative)\s+/, '')
-            .toLowerCase()
-            .trim()
-    );
-
-    // Find amendments related to the specified legislators
-    const amendments = bill.actions.filter(action => {
-        const desc = action.description.toLowerCase();
-        const isAmendment = desc.includes('amendment');
-        const hasRollCall = desc.includes('roll call');
-        const hasLegislatorName = searchNames.some(name => desc.includes(name));
-        
-        return isAmendment && hasRollCall && hasLegislatorName;
-    });
-
-    // Count passed and failed amendments
-    return amendments.reduce((acc, action) => {
-        const desc = action.description.toLowerCase();
-        if (desc.includes('prevailed') || desc.includes('passed')) {
-            acc.passed++;
-        } else if (desc.includes('failed') || desc.includes('defeated')) {
-            acc.failed++;
-        }
-        return acc;
-    }, { passed: 0, failed: 0 });
-};
-
-// Modify the calculateStats function to include amendment analysis
-const calculateStats = (bills, legislatorNames) => {
-    const parsedBills = Array.from(bills).map(bill => JSON.parse(bill));
-    
-    // Get legislator names from the search input
-    const searchInput = document.getElementById('searchInput');
-    const names = searchInput.value.split(',').map(name => name.trim());
-    
-    const totalBills = parsedBills.length;
-    const passedBills = parsedBills.filter(bill => hasBillPassedChamber(bill));
-    const publicLaws = parsedBills.filter(bill => hasBillBecomeLaw(bill));
-
-    const timing = calculateAverageTiming(parsedBills);
-    const amendments = getAmendmentStats(parsedBills, names);
-
-    const getTypeBreakdown = (type) => {
-        const typeBills = parsedBills.filter(bill => bill.type === type);
-        const typeTimings = calculateAverageTiming(typeBills);
-        const typeAmendments = getAmendmentStats(typeBills, names);
-        
-        return {
-            total: typeBills.length,
-            passed: typeBills.filter(bill => hasBillPassedChamber(bill)).length,
-            laws: typeBills.filter(bill => hasBillBecomeLaw(bill)).length,
-            avgDaysToPassChamber: typeTimings.averageDaysToPassChamber,
-            avgDaysToBecomeLaw: typeTimings.averageDaysToBecomeLaw,
-            amendments: typeAmendments,
-            authors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.authors || [])),
-            coauthors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.coauthors || [])),
-            sponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.sponsors || [])),
-            cosponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.cosponsors || []))
-        };
-    };
-
-    return {
-        overall: {
-            total: totalBills,
-            passed: passedBills.length,
-            laws: publicLaws.length,
-            passageRate: (passedBills.length / totalBills * 100).toFixed(1),
-            lawRate: (publicLaws.length / totalBills * 100).toFixed(1),
-            avgDaysToPassChamber: timing.averageDaysToPassChamber,
-            avgDaysToBecomeLaw: timing.averageDaysToBecomeLaw,
-            amendments
-        },
-        authored: getTypeBreakdown('authored'),
-        coauthored: getTypeBreakdown('coauthored'),
-        sponsored: getTypeBreakdown('sponsored'),
-        cosponsored: getTypeBreakdown('cosponsored')
-    };
 };
 
 // Render Functions
 const renderStatsView = () => {
-    const stats = calculateStats(bills);
     const results = document.getElementById('results');
+    
+    // Use server-provided stats if available, otherwise use empty default values
+    const stats = billStats || {
+        overall: { total: 0, passed: 0, laws: 0, passageRate: '0.0', lawRate: '0.0', timing: {} },
+        authored: { total: 0, passed: 0, laws: 0, timing: {}, authors: { democrat: 0, republican: 0, total: 0 } },
+        coauthored: { total: 0, passed: 0, laws: 0, timing: {}, coauthors: { democrat: 0, republican: 0, total: 0 } },
+        sponsored: { total: 0, passed: 0, laws: 0, timing: {}, sponsors: { democrat: 0, republican: 0, total: 0 } },
+        cosponsored: { total: 0, passed: 0, laws: 0, timing: {}, cosponsors: { democrat: 0, republican: 0, total: 0 } }
+    };
 
     const renderPassageRates = (categoryStats) => {
-        const chamberRate = categoryStats.total ? (categoryStats.passed / categoryStats.total * 100).toFixed(1) : '0.0';
-        const lawRate = categoryStats.total ? (categoryStats.laws / categoryStats.total * 100).toFixed(1) : '0.0';
+        const chamberRate = categoryStats.passageRate || '0.0';
+        const lawRate = categoryStats.lawRate || '0.0';
         
         return `
             <div class="stat-metric">
@@ -415,8 +161,8 @@ const renderStatsView = () => {
                     <div class="percentage-fill" style="width: ${chamberRate}%"></div>
                 </div>
                 <div class="stat-sublabel">${
-                    categoryStats.avgDaysToPassChamber ? 
-                    `Average ${categoryStats.avgDaysToPassChamber} days to pass` : 
+                    categoryStats.timing?.averageDaysToPassChamber ? 
+                    `Average ${categoryStats.timing.averageDaysToPassChamber} days to pass` : 
                     'No timing data'
                 }</div>
             </div>
@@ -427,8 +173,8 @@ const renderStatsView = () => {
                     <div class="percentage-fill" style="width: ${lawRate}%"></div>
                 </div>
                 <div class="stat-sublabel">${
-                    categoryStats.avgDaysToBecomeLaw ? 
-                    `Average ${categoryStats.avgDaysToBecomeLaw} days to become law` : 
+                    categoryStats.timing?.averageDaysToBecomeLaw ? 
+                    `Average ${categoryStats.timing.averageDaysToBecomeLaw} days to become law` : 
                     'No timing data'
                 }</div>
             </div>`;
@@ -475,7 +221,7 @@ const renderStatsView = () => {
                 <h3>Authored Bills (${stats.authored.total})</h3>
                 ${renderPassageRates(stats.authored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.authored.authors.democrat}D / ${stats.authored.authors.republican}R</div>
+                    <div class="stat-value">${stats.authored.authors?.democrat || 0}D / ${stats.authored.authors?.republican || 0}R</div>
                     <div class="stat-label">Author Party Distribution</div>
                 </div>
             </div>
@@ -484,7 +230,7 @@ const renderStatsView = () => {
                 <h3>Coauthored Bills (${stats.coauthored.total})</h3>
                 ${renderPassageRates(stats.coauthored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.coauthored.coauthors.democrat}D / ${stats.coauthored.coauthors.republican}R</div>
+                    <div class="stat-value">${stats.coauthored.coauthors?.democrat || 0}D / ${stats.coauthored.coauthors?.republican || 0}R</div>
                     <div class="stat-label">Coauthor Party Distribution</div>
                 </div>
             </div>
@@ -493,7 +239,7 @@ const renderStatsView = () => {
                 <h3>Sponsored Bills (${stats.sponsored.total})</h3>
                 ${renderPassageRates(stats.sponsored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.sponsored.sponsors.democrat}D / ${stats.sponsored.sponsors.republican}R</div>
+                    <div class="stat-value">${stats.sponsored.sponsors?.democrat || 0}D / ${stats.sponsored.sponsors?.republican || 0}R</div>
                     <div class="stat-label">Sponsor Party Distribution</div>
                 </div>
             </div>
@@ -502,7 +248,7 @@ const renderStatsView = () => {
                 <h3>Cosponsored Bills (${stats.cosponsored.total})</h3>
                 ${renderPassageRates(stats.cosponsored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.cosponsored.cosponsors.democrat}D / ${stats.cosponsored.cosponsors.republican}R</div>
+                    <div class="stat-value">${stats.cosponsored.cosponsors?.democrat || 0}D / ${stats.cosponsored.cosponsors?.republican || 0}R</div>
                     <div class="stat-label">Cosponsor Party Distribution</div>
                 </div>
             </div>
@@ -510,8 +256,8 @@ const renderStatsView = () => {
             <div class="stat-card">
                 <h3>Party Collaboration</h3>
                 ${(() => {
-                    const totalDems = (stats.coauthored.coauthors.democrat || 0) + (stats.cosponsored.cosponsors.democrat || 0);
-                    const totalReps = (stats.coauthored.coauthors.republican || 0) + (stats.cosponsored.cosponsors.republican || 0);
+                    const totalDems = (stats.coauthored.coauthors?.democrat || 0) + (stats.cosponsored.cosponsors?.democrat || 0);
+                    const totalReps = (stats.coauthored.coauthors?.republican || 0) + (stats.cosponsored.cosponsors?.republican || 0);
                     const total = totalDems + totalReps;
                     return `
                         <div class="stat-metric">
@@ -532,7 +278,7 @@ const renderStatsView = () => {
                 })()}
             </div>
 
-            ${stats.overall.amendments.total > 0 ? `
+            ${stats.overall.amendments?.total > 0 ? `
                 <div class="stat-card">
                     <h3>Amendment Status (${stats.overall.amendments.total})</h3>
                     ${renderAmendmentStats(stats.overall.amendments)}
@@ -606,7 +352,7 @@ const renderBills = () => {
                 <h2 class="title capitalize">${type} Bills</h2>
                 <div class="space-y-4">
                     ${bills.map((bill) => {
-                        const timing = calculateBillTiming(bill.actions);
+                        const timing = bill.timing || {};
                         return `
                         <div class="bill-card">
                             <details ${openBills[bill.billName] ? 'open' : ''}>
@@ -614,11 +360,11 @@ const renderBills = () => {
                                     <div class="bill-header">
                                         <div class="bill-title">
                                             ${bill.billName} - ${bill.description}
-                                            ${hasBillPassedChamber(bill) ? 
+                                            ${bill.passedChamber ? 
                                                 `<span class="status-tag passed">Passed Chamber${
                                                     timing?.daysToPassChamber ? ` in ${timing.daysToPassChamber} days` : ''
                                                 }</span>` : ''}
-                                            ${hasBillBecomeLaw(bill) ? 
+                                            ${bill.becomeLaw ? 
                                                 `<span class="status-tag law">Became Law${
                                                     timing?.daysToBecomeLaw ? ` in ${timing.daysToBecomeLaw} days` : ''
                                                 }</span>` : ''}
@@ -627,22 +373,38 @@ const renderBills = () => {
                                             <div class="bill-summary">
                                                 ${bill.details.authors?.length ? `
                                                     <span class="summary-item">
-                                                        Authors: ${formatPartyBreakdown(getPartyBreakdown(bill.details.authors))}
+                                                        Authors: ${formatPartyBreakdown(bill.details.authorParties || {
+                                                            democrat: bill.details.authors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.authors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.authors.length
+                                                        })}
                                                     </span>
                                                 ` : ''}
                                                 ${bill.details.coauthors?.length ? `
                                                     <span class="summary-item">
-                                                        Co-authors: ${formatPartyBreakdown(getPartyBreakdown(bill.details.coauthors))}
+                                                        Co-authors: ${formatPartyBreakdown(bill.details.coauthorParties || {
+                                                            democrat: bill.details.coauthors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.coauthors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.coauthors.length
+                                                        })}
                                                     </span>
                                                 ` : ''}
                                                 ${bill.details.sponsors?.length ? `
                                                     <span class="summary-item">
-                                                        Sponsors: ${formatPartyBreakdown(getPartyBreakdown(bill.details.sponsors))}
+                                                        Sponsors: ${formatPartyBreakdown(bill.details.sponsorParties || {
+                                                            democrat: bill.details.sponsors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.sponsors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.sponsors.length
+                                                        })}
                                                     </span>
                                                 ` : ''}
                                                 ${bill.details.cosponsors?.length ? `
                                                     <span class="summary-item">
-                                                        Co-sponsors: ${formatPartyBreakdown(getPartyBreakdown(bill.details.cosponsors))}
+                                                        Co-sponsors: ${formatPartyBreakdown(bill.details.cosponsorParties || {
+                                                            democrat: bill.details.cosponsors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.cosponsors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.cosponsors.length
+                                                        })}
                                                     </span>
                                                 ` : ''}
                                             </div>
@@ -664,7 +426,11 @@ const renderBills = () => {
                                                 <div class="legislator-header">
                                                     <h3>Authors</h3>
                                                     <span class="party-count">
-                                                        ${formatPartyBreakdown(getPartyBreakdown(bill.details.authors))}
+                                                        ${formatPartyBreakdown(bill.details.authorParties || {
+                                                            democrat: bill.details.authors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.authors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.authors.length
+                                                        })}
                                                     </span>
                                                 </div>
                                                 <ul>
@@ -679,7 +445,11 @@ const renderBills = () => {
                                                 <div class="legislator-header">
                                                     <h3>Co-authors</h3>
                                                     <span class="party-count">
-                                                        ${formatPartyBreakdown(getPartyBreakdown(bill.details.coauthors))}
+                                                        ${formatPartyBreakdown(bill.details.coauthorParties || {
+                                                            democrat: bill.details.coauthors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.coauthors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.coauthors.length
+                                                        })}
                                                     </span>
                                                 </div>
                                                 <ul>
@@ -694,7 +464,11 @@ const renderBills = () => {
                                                 <div class="legislator-header">
                                                     <h3>Sponsors</h3>
                                                     <span class="party-count">
-                                                        ${formatPartyBreakdown(getPartyBreakdown(bill.details.sponsors))}
+                                                        ${formatPartyBreakdown(bill.details.sponsorParties || {
+                                                            democrat: bill.details.sponsors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.sponsors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.sponsors.length
+                                                        })}
                                                     </span>
                                                 </div>
                                                 <ul>
@@ -709,7 +483,11 @@ const renderBills = () => {
                                                 <div class="legislator-header">
                                                     <h3>Co-sponsors</h3>
                                                     <span class="party-count">
-                                                        ${formatPartyBreakdown(getPartyBreakdown(bill.details.cosponsors))}
+                                                        ${formatPartyBreakdown(bill.details.cosponsorParties || {
+                                                            democrat: bill.details.cosponsors.filter(a => a.party?.toLowerCase().includes('democrat')).length,
+                                                            republican: bill.details.cosponsors.filter(a => a.party?.toLowerCase().includes('republican')).length,
+                                                            total: bill.details.cosponsors.length
+                                                        })}
                                                     </span>
                                                 </div>
                                                 <ul>
@@ -764,13 +542,6 @@ const updateView = () => {
     }
 };
 
-const clearCaches = () => {
-    billDetailsCache.clear();
-    billActionsCache.clear();
-    bills.clear();
-    openBills = {};
-};
-
 // Event Listeners
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchTerm = e.target.value;
@@ -804,14 +575,10 @@ document.getElementById('autocompleteDropdown').addEventListener('click', (e) =>
 });
 
 document.getElementById('yearInput').addEventListener('change', async () => {
-    clearCaches();
     clearResults();
 });
 
 document.getElementById('viewToggle').addEventListener('change', () => {
-    const label = document.getElementById('viewLabel');
-    // label.textContent = document.getElementById('viewToggle').checked ? 'Stats View' : 'Bill View';
-    
     if (bills.size > 0) {
         updateView();
     }
@@ -840,8 +607,9 @@ document.getElementById('searchButton').addEventListener('click', async () => {
 
         updateLoadingProgress(0, 1);
 
+        // Fetch complete bill data for each legislator using the new endpoint
         await Promise.all(uniqueLegislators.map((legislator) =>
-            fetchBillsByLegislator(legislator.link)
+            fetchCompleteBillData(legislator.link, names)
         ));
 
         updateView();
@@ -871,72 +639,67 @@ window.handleBillClick = (billName, type) => {
 
 // Create and inject the Find Legislator UI
 const setupFindLegislatorUI = () => {
-    // Create a toggle button for the finder 
-
-        // WIP UNCOMMENT TO GO LIVE
-
+    // // Create a toggle button for the finder 
     // const finderToggle = document.createElement('button');
     // finderToggle.id = 'finderToggle';
     // finderToggle.className = 'button secondary-button';
     // finderToggle.textContent = 'Find My Legislators';
     
-        // WIP UNCOMMENT TO GO LIVE
-
-    // Add the toggle button to the search container
-    const searchContainer = document.querySelector('.search-container');
-    const viewToggle = document.querySelector('.view-toggle');
+    // // Add the toggle button to the search container
+    // const searchContainer = document.querySelector('.search-container');
+    // const viewToggle = document.querySelector('.view-toggle');
     
-    if (searchContainer && viewToggle) {
-        searchContainer.insertBefore(finderToggle, viewToggle);
-    } else if (searchContainer) {
-        searchContainer.appendChild(finderToggle);
-    }
+    // if (searchContainer && viewToggle) {
+    //     searchContainer.insertBefore(finderToggle, viewToggle);
+    // } else if (searchContainer) {
+    //     searchContainer.appendChild(finderToggle);
+    // }
     
-    // Create the finder form container
-    const finderContainer = document.createElement('div');
-    finderContainer.id = 'finderContainer';
-    finderContainer.className = 'finder-container hidden';
+    // // Create the finder form container
+    // const finderContainer = document.createElement('div');
+    // finderContainer.id = 'finderContainer';
+    // finderContainer.className = 'finder-container hidden';
     
-    finderContainer.innerHTML = `
-        <div class="finder-form">
-            <h2>Find Your Legislators by Address</h2>
-            <div class="form-group">
-                <label for="street">Street Address</label>
-                <input type="text" id="street" class="input" placeholder="123 Main St" required>
-            </div>
-            <div class="form-group">
-                <label for="city">City</label>
-                <input type="text" id="city" class="input" placeholder="Indianapolis" required>
-            </div>
-            <div class="form-group">
-                <label for="zip">ZIP Code</label>
-                <input type="text" id="zip" class="input" placeholder="46204" required>
-            </div>
-            <button id="findButton" class="button">Find My Legislators</button>
-        </div>
-        <div id="legislatorResults" class="legislator-results hidden"></div>
-        <div id="finderLoading" class="loading hidden">Searching for your legislators...</div>
-        <div id="finderError" class="error-message hidden"></div>
-    `;
+    // finderContainer.innerHTML = `
+    //     <div class="finder-form">
+    //         <h2>Find Your Legislators by Address</h2>
+    //         <div class="form-group">
+    //             <label for="street">Street Address</label>
+    //             <input type="text" id="street" class="input" placeholder="123 Main St" required>
+    //         </div>
+    //         <div class="form-group">
+    //             <label for="city">City</label>
+    //             <input type="text" id="city" class="input" placeholder="Indianapolis" required>
+    //         </div>
+    //         <div class="form-group">
+    //             <label for="zip">ZIP Code</label>
+    //             <input type="text" id="zip" class="input" placeholder="46204" required>
+    //         </div>
+    //         <button id="findButton" class="button">Find My Legislators</button>
+    //     </div>
+    //     <div id="legislatorResults" class="legislator-results hidden"></div>
+    //     <div id="finderLoading" class="loading hidden">Searching for your legislators...</div>
+    //     <div id="finderError" class="error-message hidden"></div>
+    // `;
     
-    // Add the finder container after the search container
-    if (searchContainer) {
-        searchContainer.parentNode.insertBefore(finderContainer, searchContainer.nextSibling);
-    }
+    // // Add the finder container after the search container
+    // if (searchContainer) {
+    //     searchContainer.parentNode.insertBefore(finderContainer, searchContainer.nextSibling);
+    // }
     
-    // Toggle finder visibility when the button is clicked
-    finderToggle.addEventListener('click', () => {
-        finderContainer.classList.toggle('hidden');
-        // Clear previous results when opening
-        if (!finderContainer.classList.contains('hidden')) {
-            document.getElementById('legislatorResults').classList.add('hidden');
-            document.getElementById('finderError').classList.add('hidden');
-            document.getElementById('legislatorResults').innerHTML = '';
-        }
-    });
+    // // Toggle finder visibility when the button is clicked
+    // finderToggle.addEventListener('click', () => {
+    //     finderContainer.classList.toggle('hidden');
+    //     // Clear previous results when opening
+    //     if (!finderContainer.classList.contains('hidden')) {
+    //         document.getElementById('legislatorResults').classList.add('hidden');
+    //         document.getElementById('finderError').classList.add('hidden');
+    //         document.getElementById('legislatorResults').innerHTML = '';
+    //     }
+    // });
     
-    // Set up the find button functionality
-    document.getElementById('findButton').addEventListener('click', handleFindLegislators);
+    // // Set up the find button functionality
+    // document.getElementById('findButton').addEventListener('click', handleFindLegislators);
 };
 
 const fetchLegislatorsByAddress = async (street, city, zip) => {
