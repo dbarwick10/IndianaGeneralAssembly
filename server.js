@@ -264,6 +264,323 @@ app.get("/legislators", async (req, res) => {
     }
 });
 
+// Add this to your server.js file
+
+// Local district data
+const houseRepresentatives = [
+    {district: 1, name: "Carolyn Jackson"},
+    {district: 2, name: "Earl Harris, Jr."},
+    {district: 3, name: "Ragen Hatcher"},
+    {district: 4, name: "Edmond Soliday"},
+    {district: 5, name: "Dale DeVon"},
+    {district: 6, name: "Maureen Bauer"},
+    {district: 7, name: "Jake Teshka"},
+    {district: 8, name: "Ryan Dvorak"},
+    {district: 9, name: "Patricia Boy"},
+    {district: 10, name: "Charles Moseley"},
+    {district: 11, name: "Michael J. Aylesworth"},
+    {district: 12, name: "Mike Andrade"},
+    {district: 13, name: "Matt Commons"},
+    {district: 14, name: "Vernon Smith"},
+    {district: 15, name: "Harold Slager"},
+    {district: 16, name: "Kendell Culp"},
+    {district: 17, name: "Jack Jordan"},
+    {district: 18, name: "David Abbott"},
+    {district: 19, name: "Julie Olthoff"},
+    {district: 20, name: "Jim Pressel"},
+    {district: 21, name: "Timothy Wesco"},
+    {district: 22, name: "Craig Snow"},
+    {district: 23, name: "Ethan Manning"},
+    {district: 24, name: "Hunter Smith"},
+    {district: 25, name: "Becky Cash"},
+    {district: 26, name: "Chris Campbell"},
+    {district: 27, name: "Sheila Ann Klinker"},
+    {district: 28, name: "Jeffrey Thompson"},
+    {district: 29, name: "Alaina Shonkwiler"},
+    {district: 30, name: "Michael Karickhoff"},
+    {district: 31, name: "Lori Goss-Reaves"},
+    {district: 32, name: "Victoria Garcia Wilburn"},
+    {district: 33, name: "John Prescott"},
+    {district: 34, name: "Sue Errington"},
+    {district: 35, name: "Elizabeth Rowray"},
+    {district: 36, name: "Kyle Pierce"},
+    {district: 37, name: "Todd Huston"},
+    {district: 38, name: "Heath VanNatter"},
+    {district: 39, name: "Daniel Lopez"},
+    {district: 40, name: "Gregory Steuerwald"},
+    {district: 41, name: "Mark Genda"},
+    {district: 42, name: "Tim Yocum"},
+    {district: 43, name: "Tonya Pfaff"},
+    {district: 44, name: "Beau Baird"},
+    {district: 45, name: "Bruce Borders"},
+    {district: 46, name: "Bob Heaton"},
+    {district: 47, name: "Robb Greene"},
+    {district: 48, name: "Doug Miller"},
+    {district: 49, name: "Joanna King"},
+    {district: 50, name: "Lorissa Sweet"},
+    {district: 51, name: "Tony Isa"},
+    {district: 52, name: "Ben Smaltz"},
+    {district: 53, name: "Ethan Lawson"},
+    {district: 54, name: "Cory Criswell"},
+    {district: 55, name: "Lindsay Patterson"},
+    {district: 56, name: "Bradford Barrett"},
+    {district: 57, name: "Craig Haggard"},
+    {district: 58, name: "Michelle Davis"},
+    {district: 59, name: "Ryan Lauer"},
+    {district: 60, name: "Peggy Mayfield"},
+    {district: 61, name: "Matt Pierce"},
+    {district: 62, name: "Dave Hall"},
+    {district: 63, name: "Shane Lindauer"},
+    {district: 64, name: "Matt Hostettler"},
+    {district: 65, name: "Christopher May"},
+    {district: 66, name: "Zach Payne"},
+    {district: 67, name: "Alex Zimmerman"},
+    {district: 68, name: "Garrett Bascom"},
+    {district: 69, name: "Jim Lucas"},
+    {district: 70, name: "Karen Engleman"},
+    {district: 71, name: "Wendy Dant Chesser"},
+    {district: 72, name: "Edward Clere"},
+    {district: 73, name: "Jennifer Meltzer"},
+    {district: 74, name: "Steve Bartels"},
+    {district: 75, name: "Cindy Ledbetter"},
+    {district: 76, name: "Wendy McNamara"},
+    {district: 77, name: "Alex Burton"},
+    {district: 78, name: "Tim O'Brien"},
+    {district: 79, name: "Matthew Lehman"},
+    {district: 80, name: "Phil GiaQuinta"},
+    {district: 81, name: "Martin Carbaugh"},
+    {district: 82, name: "Kyle Miller"},
+    {district: 83, name: "Christopher Judy"},
+    {district: 84, name: "Bob Morris"},
+    {district: 85, name: "David Heine"},
+    {district: 86, name: "Edward DeLaney"},
+    {district: 87, name: "Carey Hamilton"},
+    {district: 88, name: "Chris Jeter"},
+    {district: 89, name: "Mitch Gore"},
+    {district: 90, name: "Andrew Ireland"},
+    {district: 91, name: "Robert Behning"},
+    {district: 92, name: "Renee Pack"},
+    {district: 93, name: "Julie McGuire"},
+    {district: 94, name: "Cherrish Pryor"},
+    {district: 95, name: "John L. Bartlett"},
+    {district: 96, name: "Gregory Porter"},
+    {district: 97, name: "Justin Moed"},
+    {district: 98, name: "Robin Shackleford"},
+    {district: 99, name: "Vanessa Summers"},
+    {district: 100, name: "Robert Johnson"}
+];
+
+const stateSenatorsData = [
+    {district: 1, name: "Dan Dernulc"},
+    {district: 2, name: "Lonnie Randolph"},
+    {district: 3, name: "Mark Spencer"},
+    {district: 4, name: "Rodney Pol Jr."},
+    {district: 5, name: "Ed Charbonneau"},
+    {district: 6, name: "Rick Niemeyer"},
+    {district: 7, name: "Brian Buchanan"},
+    {district: 8, name: "Mike Bohacek"},
+    {district: 9, name: "Ryan Mishler"},
+    {district: 10, name: "David Niezgodski"},
+    {district: 11, name: "Linda Rogers"},
+    {district: 12, name: "Blake Doriot"},
+    {district: 13, name: "Susan Glick"},
+    {district: 14, name: "Tyler Johnson"},
+    {district: 15, name: "Liz Brown"},
+    {district: 16, name: "Justin Busch"},
+    {district: 17, name: "Andy Zay"},
+    {district: 18, name: "Stacey Donato"},
+    {district: 19, name: "Travis Holdman"},
+    {district: 20, name: "Scott Baldwin"},
+    {district: 21, name: "James Buck"},
+    {district: 22, name: "Ronnie Alting"},
+    {district: 23, name: "Spencer Deery"},
+    {district: 24, name: "Brett A. Clark"},
+    {district: 25, name: "Mike Gaskill"},
+    {district: 26, name: "Scott Alexander"},
+    {district: 27, name: "Jeff Raatz"},
+    {district: 28, name: "Michael Crider"},
+    {district: 29, name: "J.D. Ford"},
+    {district: 30, name: "Fady Qaddoura"},
+    {district: 31, name: "Kyle Walker"},
+    {district: 32, name: "Aaron Freeman"},
+    {district: 33, name: "Greg Taylor"},
+    {district: 34, name: "La Keisha Jackson"},
+    {district: 35, name: "Michael Young"},
+    {district: 36, name: "Cyndi Carrasco"},
+    {district: 37, name: "Rodric D. Bray"},
+    {district: 38, name: "Greg Goode"},
+    {district: 39, name: "Eric Bassler"},
+    {district: 40, name: "Shelli Yoder"},
+    {district: 41, name: "Greg Walker"},
+    {district: 42, name: "Jean Leising"},
+    {district: 43, name: "Randy Maxwell"},
+    {district: 44, name: "Eric Koch"},
+    {district: 45, name: "Chris Garten"},
+    {district: 46, name: "Andrea Hunley"},
+    {district: 47, name: "Gary Byrne"},
+    {district: 48, name: "Daryl Schmitt"},
+    {district: 49, name: "Jim Tomes"},
+    {district: 50, name: "Vaneta Becker"}
+];
+
+// District cache to avoid frequent calls to GIS service
+const districtCache = new NodeCache({ stdTTL: 86400 }); // Cache for 24 hours
+
+// Route to fetch legislators by address
+app.get("/:year/address/legislators", async (req, res) => {
+    try {
+        const { year } = req.params;
+        const { street, city, zip } = req.query;
+        
+        if (!street || !city) {
+            return res.status(400).json({
+                error: "Missing address information",
+                details: "Street and city are required"
+            });
+        }
+        
+        console.log(`Finding legislators for address: ${street}, ${city}, Indiana ${zip || ''}`);
+        
+        // STEP 1: Convert address to coordinates using Census Geocoder
+        const formattedAddress = `${street}, ${city}, Indiana ${zip || ''}`;
+        const geocodeUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(formattedAddress)}&benchmark=Public_AR_Current&format=json`;
+        
+        console.log(`Geocoding URL: ${geocodeUrl}`);
+        
+        let geocodeResponse;
+        try {
+            geocodeResponse = await fetch(geocodeUrl);
+            
+            if (!geocodeResponse.ok) {
+                throw new Error(`Geocoding API returned ${geocodeResponse.status}`);
+            }
+        } catch (error) {
+            console.error('Error fetching from Census Geocoding API:', error);
+            throw new Error(`Failed to geocode address: ${error.message}`);
+        }
+        
+        let geocodeData;
+        try {
+            geocodeData = await geocodeResponse.json();
+            console.log('Geocode response received');
+        } catch (error) {
+            console.error('Error parsing geocode response:', error);
+            throw new Error('Failed to parse geocoding response');
+        }
+        
+        // Check if address was found
+        if (!geocodeData.result || !geocodeData.result.addressMatches || geocodeData.result.addressMatches.length === 0) {
+            console.log('No address matches found in geocoding response');
+            return res.status(404).json({
+                error: "Address not found",
+                details: "Could not locate the provided address"
+            });
+        }
+        
+        // Get coordinates from the first match
+        const match = geocodeData.result.addressMatches[0];
+        const longitude = match.coordinates.x;
+        const latitude = match.coordinates.y;
+        
+        console.log(`Coordinates found: lon ${longitude}, lat ${latitude}`);
+        
+        // STEP 2: Query the Indiana GIS service to find the voting district
+        let houseDistrict, senateDistrict;
+        
+        // Try to get district info from cache first
+        const cacheKey = `${longitude},${latitude}`;
+        const cachedDistricts = districtCache.get(cacheKey);
+        
+        if (cachedDistricts) {
+            console.log('Using cached district information');
+            houseDistrict = cachedDistricts.houseDistrict;
+            senateDistrict = cachedDistricts.senateDistrict;
+        } else {
+            // Need to query the GIS service
+            const gisUrl = `https://gisdata.in.gov/server/rest/services/Hosted/Voting_District_Boundaries_2023/FeatureServer/1/query?geometry=${longitude},${latitude}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=h,s&returnGeometry=false&f=json`;
+            
+            console.log(`GIS URL: ${gisUrl}`);
+            
+            try {
+                const gisResponse = await fetch(gisUrl);
+                
+                if (!gisResponse.ok) {
+                    throw new Error(`GIS service returned ${gisResponse.status}`);
+                }
+                
+                const gisData = await gisResponse.json();
+                
+                if (gisData.features && gisData.features.length > 0) {
+                    // Extract district numbers from the response
+                    const feature = gisData.features[0];
+                    houseDistrict = parseInt(feature.attributes.h);
+                    senateDistrict = parseInt(feature.attributes.s);
+                    
+                    // Cache the results
+                    districtCache.set(cacheKey, { houseDistrict, senateDistrict });
+                    
+                    console.log(`Districts found: House ${houseDistrict}, Senate ${senateDistrict}`);
+                } else {
+                    console.log('No district found for these coordinates');
+                }
+            } catch (error) {
+                console.error('Error querying GIS service:', error);
+            }
+        }
+        
+        // STEP 3: Look up the legislators from our local data
+        // Find House representative
+        const houseRep = houseRepresentatives.find(rep => rep.district === houseDistrict);
+        
+        // Find Senator
+        const senator = stateSenatorsData.find(sen => sen.district === senateDistrict);
+        
+        // Prepare the legislators in the format expected by the frontend
+        const legislators = [];
+        
+        if (houseRep) {
+            legislators.push({
+                firstName: houseRep.name.split(' ')[0],
+                lastName: houseRep.name.split(' ').slice(1).join(' '),
+                district: houseRep.district.toString(),
+                chamber: 'H',
+                party: 'Republican', // Add actual party data if available
+                link: `/legislators/${houseRep.name.replace(/\s+/g, '_').toLowerCase()}`
+            });
+        }
+        
+        if (senator) {
+            legislators.push({
+                firstName: senator.name.split(' ')[0],
+                lastName: senator.name.split(' ').slice(1).join(' '),
+                district: senator.district.toString(),
+                chamber: 'S',
+                party: 'Republican', // Add actual party data if available
+                link: `/legislators/${senator.name.replace(/\s+/g, '_').toLowerCase()}`
+            });
+        }
+        
+        console.log(`Found ${legislators.length} legislators`);
+        
+        // Return the results
+        res.json({
+            items: legislators,
+            count: legislators.length,
+            houseDistrict,
+            senateDistrict,
+            address: match.matchedAddress,
+            coordinates: { longitude, latitude }
+        });
+        
+    } catch (error) {
+        console.error('Error finding legislators by address:', error);
+        res.status(500).json({
+            error: "Failed to find legislators",
+            details: error.message
+        });
+    }
+});
+
 // Regular routes for individual bill types
 app.get("/:year/legislators/:userId/bills", async (req, res) => {
     try {
