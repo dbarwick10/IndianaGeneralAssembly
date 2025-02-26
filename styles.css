@@ -1033,6 +1033,68 @@ input:checked + .slider:before {
     font-weight: 500;
   }
 
+  /* Recent searches styling */
+.recent-searches-container {
+    position: relative;
+    margin-top: 8px;
+}
+
+.recent-searches-dropdown {
+    position: relative;
+}
+
+.recent-searches-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.recent-searches-list.hidden {
+    display: none;
+}
+
+.recent-search-item {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #374151;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.recent-search-item:last-child {
+    border-bottom: none;
+}
+
+.recent-search-item:hover {
+    background-color: #2d3748;
+}
+
+.recent-search-meta {
+    font-size: 0.85em;
+    color: #9ca3af;
+}
+
+.recent-search-item.no-results,
+.recent-search-item.error {
+    justify-content: center;
+    color: #9ca3af;
+    cursor: default;
+}
+
+.recent-search-item.error {
+    color: #ef4444;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

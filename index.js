@@ -12,10 +12,23 @@ const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-
 // Initialize the application 
 window.onload = async () => {
     try {
-        const response = await fetch(`${url}/legislators`);
-        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-        const data = await response.json();
-        legislators = data.items || [];
+        // Try to load legislators from localStorage first
+        const storedLegislators = localStorage.getItem('legislators');
+        
+        if (storedLegislators) {
+            // Parse the stored legislators
+            legislators = JSON.parse(storedLegislators);
+            console.log('Loaded legislators from localStorage:', legislators.length);
+        }
+        
+        // If no legislators in localStorage or we want fresh data anyway,
+        // fetch from the API
+        if (legislators.length === 0) {
+            const response = await fetch(`${url}/legislators`);
+            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+            const data = await response.json();
+            legislators = data.items || [];
+        }
     } catch (error) {
         console.error('Error during page load:', error);
     }
@@ -607,6 +620,9 @@ document.getElementById('searchButton').addEventListener('click', async () => {
 
         updateLoadingProgress(0, 1);
 
+        // Save each legislator to recent searches
+        uniqueLegislators.forEach(legislator => saveRecentSearch(legislator));
+
         // Fetch complete bill data for each legislator using the new endpoint
         await Promise.all(uniqueLegislators.map((legislator) =>
             fetchCompleteBillData(legislator.link, names)
@@ -639,67 +655,67 @@ window.handleBillClick = (billName, type) => {
 
 // Create and inject the Find Legislator UI
 const setupFindLegislatorUI = () => {
-    // // Create a toggle button for the finder 
-    // const finderToggle = document.createElement('button');
-    // finderToggle.id = 'finderToggle';
-    // finderToggle.className = 'button secondary-button';
-    // finderToggle.textContent = 'Find My Legislators';
+    // Create a toggle button for the finder 
+    const finderToggle = document.createElement('button');
+    finderToggle.id = 'finderToggle';
+    finderToggle.className = 'button secondary-button';
+    finderToggle.textContent = 'Find My Legislators';
     
-    // // Add the toggle button to the search container
-    // const searchContainer = document.querySelector('.search-container');
-    // const viewToggle = document.querySelector('.view-toggle');
+    // Add the toggle button to the search container
+    const searchContainer = document.querySelector('.search-container');
+    const viewToggle = document.querySelector('.view-toggle');
     
-    // if (searchContainer && viewToggle) {
-    //     searchContainer.insertBefore(finderToggle, viewToggle);
-    // } else if (searchContainer) {
-    //     searchContainer.appendChild(finderToggle);
-    // }
+    if (searchContainer && viewToggle) {
+        searchContainer.insertBefore(finderToggle, viewToggle);
+    } else if (searchContainer) {
+        searchContainer.appendChild(finderToggle);
+    }
     
-    // // Create the finder form container
-    // const finderContainer = document.createElement('div');
-    // finderContainer.id = 'finderContainer';
-    // finderContainer.className = 'finder-container hidden';
+    // Create the finder form container
+    const finderContainer = document.createElement('div');
+    finderContainer.id = 'finderContainer';
+    finderContainer.className = 'finder-container hidden';
     
-    // finderContainer.innerHTML = `
-    //     <div class="finder-form">
-    //         <h2>Find Your Legislators by Address</h2>
-    //         <div class="form-group">
-    //             <label for="street">Street Address</label>
-    //             <input type="text" id="street" class="input" placeholder="123 Main St" required>
-    //         </div>
-    //         <div class="form-group">
-    //             <label for="city">City</label>
-    //             <input type="text" id="city" class="input" placeholder="Indianapolis" required>
-    //         </div>
-    //         <div class="form-group">
-    //             <label for="zip">ZIP Code</label>
-    //             <input type="text" id="zip" class="input" placeholder="46204" required>
-    //         </div>
-    //         <button id="findButton" class="button">Find My Legislators</button>
-    //     </div>
-    //     <div id="legislatorResults" class="legislator-results hidden"></div>
-    //     <div id="finderLoading" class="loading hidden">Searching for your legislators...</div>
-    //     <div id="finderError" class="error-message hidden"></div>
-    // `;
+    finderContainer.innerHTML = `
+        <div class="finder-form">
+            <h2>Find Your Legislators by Address</h2>
+            <div class="form-group">
+                <label for="street">Street Address</label>
+                <input type="text" id="street" class="input" placeholder="123 Main St" required>
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" class="input" placeholder="Indianapolis" required>
+            </div>
+            <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" id="zip" class="input" placeholder="46204" required>
+            </div>
+            <button id="findButton" class="button">Find My Legislators</button>
+        </div>
+        <div id="legislatorResults" class="legislator-results hidden"></div>
+        <div id="finderLoading" class="loading hidden">Searching for your legislators...</div>
+        <div id="finderError" class="error-message hidden"></div>
+    `;
     
-    // // Add the finder container after the search container
-    // if (searchContainer) {
-    //     searchContainer.parentNode.insertBefore(finderContainer, searchContainer.nextSibling);
-    // }
+    // Add the finder container after the search container
+    if (searchContainer) {
+        searchContainer.parentNode.insertBefore(finderContainer, searchContainer.nextSibling);
+    }
     
-    // // Toggle finder visibility when the button is clicked
-    // finderToggle.addEventListener('click', () => {
-    //     finderContainer.classList.toggle('hidden');
-    //     // Clear previous results when opening
-    //     if (!finderContainer.classList.contains('hidden')) {
-    //         document.getElementById('legislatorResults').classList.add('hidden');
-    //         document.getElementById('finderError').classList.add('hidden');
-    //         document.getElementById('legislatorResults').innerHTML = '';
-    //     }
-    // });
+    // Toggle finder visibility when the button is clicked
+    finderToggle.addEventListener('click', () => {
+        finderContainer.classList.toggle('hidden');
+        // Clear previous results when opening
+        if (!finderContainer.classList.contains('hidden')) {
+            document.getElementById('legislatorResults').classList.add('hidden');
+            document.getElementById('finderError').classList.add('hidden');
+            document.getElementById('legislatorResults').innerHTML = '';
+        }
+    });
     
-    // // Set up the find button functionality
-    // document.getElementById('findButton').addEventListener('click', handleFindLegislators);
+    // Set up the find button functionality
+    document.getElementById('findButton').addEventListener('click', handleFindLegislators);
 };
 
 const fetchLegislatorsByAddress = async (street, city, zip) => {
@@ -711,9 +727,9 @@ const fetchLegislatorsByAddress = async (street, city, zip) => {
         const encodedCity = encodeURIComponent(city);
         const encodedZip = encodeURIComponent(zip || '');
         
-        console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
+        // console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
         const apiUrl = `${url}/${year}/address/legislators?street=${encodedStreet}&city=${encodedCity}&zip=${encodedZip}`;
-        console.log(`API URL: ${apiUrl}`);
+        // console.log(`API URL: ${apiUrl}`);
         
         const response = await fetch(apiUrl);
         
@@ -775,7 +791,7 @@ const handleFindLegislators = async () => {
         }
         
         const data = await response.json();
-        console.log('District data received:', data);
+        // console.log('District data received:', data);
         
         // If we already have legislators in the data, display them
         if (data.items && data.items.length > 0) {
@@ -829,9 +845,12 @@ const handleFindLegislators = async () => {
 };
 
 // Display the found legislators
-const displayLegislatorResults = (legislators, isFallback = false) => {
+const displayLegislatorResults = (response, isFallback = false) => {
     const resultsContainer = document.getElementById('legislatorResults');
     resultsContainer.innerHTML = '';
+    
+    // Check if we were passed a response object or an array of legislators
+    const legislators = Array.isArray(response) ? response : (response.items || []);
     
     if (!legislators || legislators.length === 0) {
         resultsContainer.innerHTML = '<p>No legislators found for this address.</p>';
@@ -839,19 +858,36 @@ const displayLegislatorResults = (legislators, isFallback = false) => {
         return;
     }
     
+    // Save the found legislators to local storage
+    saveLegislatorsToLocalStorage(legislators);
+    
     // Create header for results
     const header = document.createElement('h3');
     header.textContent = 'Your Legislators';
     header.className = 'title';
     resultsContainer.appendChild(header);
     
+    // Add district information if available in the response
+    if (response.houseDistrict || response.senateDistrict) {
+        const districtInfo = document.createElement('div');
+        districtInfo.className = 'district-info';
+        districtInfo.innerHTML = `
+            <p>Your address is in the following districts:</p>
+            <ul>
+                ${response.houseDistrict ? `<li>House District ${response.houseDistrict}</li>` : ''}
+                ${response.senateDistrict ? `<li>Senate District ${response.senateDistrict}</li>` : ''}
+            </ul>
+        `;
+        resultsContainer.appendChild(districtInfo);
+    }
+    
     // Add note for fallback method
-    if (isFallback) {
+    if (isFallback || response.source === 'zipcode-fallback') {
         const fallbackNote = document.createElement('div');
         fallbackNote.className = 'fallback-note';
         fallbackNote.innerHTML = `
-            <p>We couldn't find your exact district, so we're showing legislators who may represent your area.
-            For more accurate results, please try using a different address format.</p>
+            <p>We've matched your ZIP code (${document.getElementById('zip').value.trim()}) to likely legislative districts.
+            This is an approximate match - your exact address might be in a different district.</p>
         `;
         resultsContainer.appendChild(fallbackNote);
     }
@@ -867,15 +903,16 @@ const displayLegislatorResults = (legislators, isFallback = false) => {
         
         // Determine chamber for display
         const chamberDisplay = legislator.chamber === 'S' ? 'Senate' : 'House';
+        const chamberClass = legislator.chamber === 'S' ? 'Sen.' : 'Rep.';
         
         legislatorCard.innerHTML = `
             <div class="legislator-info">
-                <h4>${legislator.firstName} ${legislator.lastName}</h4>
+                <h4> ${chamberClass} ${legislator.firstName} ${legislator.lastName}</h4>
                 <p>${chamberDisplay} District ${legislator.district}</p>
                 <p>Party: ${legislator.party}</p>
                 <button class="button small-button select-legislator" 
                         data-link="${legislator.link}" 
-                        data-name="${legislator.firstName} ${legislator.lastName}">
+                        data-name="${chamberClass} ${legislator.firstName} ${legislator.lastName}">
                     View Bills
                 </button>
             </div>
@@ -893,15 +930,147 @@ const displayLegislatorResults = (legislators, isFallback = false) => {
             const legislatorLink = event.currentTarget.getAttribute('data-link');
             const legislatorName = event.currentTarget.getAttribute('data-name');
             
-            // Set the legislator in the search input and trigger search
-            document.getElementById('searchInput').value = abbreviateTitle(legislatorName);
+            // Set the legislator in the search input
+            const nameValue = abbreviateTitle(legislatorName);
+            document.getElementById('searchInput').value = nameValue;
+            
+            // Update the searchTerm variable to match the input value
+            searchTerm = nameValue;
+            
+            // Set the year to the current year using Date object
+            const currentYear = new Date().getFullYear();
+            document.getElementById('yearInput').value = currentYear.toString();
+            
+            // Trigger search
             document.getElementById('searchButton').click();
             
             // Hide the finder container
             document.getElementById('finderContainer').classList.add('hidden');
         });
     });
+
 };
+
+// Save legislators to local storage
+function saveLegislatorsToLocalStorage(legislators) {
+    try {
+        // Replace any existing legislators in storage
+        localStorage.setItem('legislators', JSON.stringify(legislators));
+        console.log('Saved legislators to localStorage:', legislators.length);
+    } catch (error) {
+        console.error('Error saving legislators to localStorage:', error);
+    }
+}
+
+// Store recent legislator searches in localStorage
+function saveRecentSearch(legislator) {
+    try {
+        // Get current recent searches
+        let recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+        
+        // Check if this legislator is already in the list
+        const existingIndex = recentSearches.findIndex(item => item.link === legislator.link);
+        
+        if (existingIndex >= 0) {
+            // Move to top of list if already exists
+            const existing = recentSearches.splice(existingIndex, 1)[0];
+            recentSearches.unshift(existing);
+        } else {
+            // Add to beginning of list
+            recentSearches.unshift(legislator);
+        }
+        
+        // Keep only the most recent 10 searches
+        recentSearches = recentSearches.slice(0, 10);
+        
+        // Save back to localStorage
+        localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+        
+        console.log('Saved recent search:', legislator.fullName);
+    } catch (error) {
+        console.error('Error saving recent search:', error);
+    }
+}
+
+function setupRecentSearchesUI() {
+    const searchContainer = document.querySelector('.search-container');
+    
+    // Create recent searches dropdown
+    const recentContainer = document.createElement('div');
+    recentContainer.className = 'recent-searches-container';
+    recentContainer.innerHTML = `
+        <div class="recent-searches-dropdown">
+            <button id="recentSearchesButton" class="button secondary-button">Recent Searches</button>
+            <div id="recentSearchesList" class="recent-searches-list hidden"></div>
+        </div>
+    `;
+    
+    // Add to the DOM
+    if (searchContainer) {
+        const searchInput = document.getElementById('searchInput');
+        searchContainer.insertBefore(recentContainer, searchInput.nextSibling);
+    }
+    
+    // Toggle dropdown visibility
+    document.getElementById('recentSearchesButton').addEventListener('click', () => {
+        const list = document.getElementById('recentSearchesList');
+        list.classList.toggle('hidden');
+        
+        if (!list.classList.contains('hidden')) {
+            updateRecentSearchesList();
+        }
+    });
+}
+
+function updateRecentSearchesList() {
+    const list = document.getElementById('recentSearchesList');
+    
+    try {
+        const recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+        
+        if (recentSearches.length === 0) {
+            list.innerHTML = '<div class="recent-search-item no-results">No recent searches</div>';
+            return;
+        }
+        
+        list.innerHTML = recentSearches.map(legislator => `
+            <div class="recent-search-item" data-link="${legislator.link}" data-name="${legislator.fullName}">
+                <span>${abbreviateTitle(legislator.fullName)}</span>
+                <span class="recent-search-meta">${legislator.chamber === 'S' ? 'Senate' : 'House'} Dist. ${legislator.district}</span>
+            </div>
+        `).join('');
+        
+        // Add click handlers
+        list.querySelectorAll('.recent-search-item').forEach(item => {
+            item.addEventListener('click', event => {
+                const link = event.currentTarget.getAttribute('data-link');
+                const name = event.currentTarget.getAttribute('data-name');
+                
+                if (link && name) {
+                    // Set the name in the search input
+                    const nameValue = abbreviateTitle(name);
+                    document.getElementById('searchInput').value = nameValue;
+                    
+                    // Update searchTerm variable
+                    searchTerm = nameValue;
+                    
+                    // Set year to current year
+                    const currentYear = new Date().getFullYear();
+                    document.getElementById('yearInput').value = currentYear.toString();
+                    
+                    // Hide the dropdown
+                    list.classList.add('hidden');
+                    
+                    // Trigger search
+                    document.getElementById('searchButton').click();
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error updating recent searches list:', error);
+        list.innerHTML = '<div class="recent-search-item error">Error loading recent searches</div>';
+    }
+}
 
 // Initialize the finder when the page loads
 document.addEventListener('DOMContentLoaded', () => {
