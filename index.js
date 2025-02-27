@@ -833,9 +833,9 @@ const handleFindLegislators = async () => {
         const encodedCity = encodeURIComponent(city);
         const encodedZip = encodeURIComponent(zip || '');
         
-        console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
+        // console.log(`Finding legislators for: ${street}, ${city}, ${zip || ''}`);
         const apiUrl = `${url}/${year}/address/legislators?street=${encodedStreet}&city=${encodedCity}&zip=${encodedZip}`;
-        console.log(`API URL: ${apiUrl}`);
+        // console.log(`API URL: ${apiUrl}`);
         
         const response = await fetch(apiUrl);
         
