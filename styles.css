@@ -1095,6 +1095,40 @@ input:checked + .slider:before {
     color: #ef4444;
 }
 
+/* loading  */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 2rem;
+  }
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #3b82f6; /* Blue color matching your theme */
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  .loading-text {
+    color: #d1d5db;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .hidden {
+    display: none;
+}
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

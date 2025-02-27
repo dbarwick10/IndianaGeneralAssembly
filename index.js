@@ -12,25 +12,43 @@ const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-
 // Initialize the application 
 window.onload = async () => {
     try {
-        // Try to load legislators from localStorage first
+        // Always fetch fresh data from API first
+        const response = await fetch(`${url}/legislators`);
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+            // Update the legislators array
+            legislators = data.items;
+            // console.log('Loaded legislators from API:', legislators.length);
+        } else {
+            throw new Error('No legislators returned from API');
+        }
+    } catch (error) {
+        console.error('Error loading legislators from API:', error);
+        console.log('Attempting to load from localStorage...');
+        
+        // Try to load from localStorage as fallback
         const storedLegislators = localStorage.getItem('legislators');
         
         if (storedLegislators) {
-            // Parse the stored legislators
-            legislators = JSON.parse(storedLegislators);
-            console.log('Loaded legislators from localStorage:', legislators.length);
+            try {
+                const parsed = JSON.parse(storedLegislators);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    legislators = parsed;
+                    console.log('Loaded legislators from localStorage:', legislators.length);
+                }
+            } catch (parseError) {
+                console.error('Error parsing localStorage data:', parseError);
+            }
         }
         
-        // If no legislators in localStorage or we want fresh data anyway,
-        // fetch from the API
-        if (legislators.length === 0) {
-            const response = await fetch(`${url}/legislators`);
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-            const data = await response.json();
-            legislators = data.items || [];
+        // If we still have no legislators, show an error message
+        if (!legislators || legislators.length === 0) {
+            console.error('No legislators available from any source');
+            // Instead of alert, you could show a message in the UI
+            // alert('Failed to load legislators data. Please refresh the page or try again later.');
         }
-    } catch (error) {
-        console.error('Error during page load:', error);
     }
 };
 
@@ -112,14 +130,19 @@ const renderAutocompleteDropdown = () => {
 
 // API Functions
 const fetchCompleteBillData = async (legislatorLink, legislatorNames) => {
-    console.log(`=== CLIENT: FETCHING COMPLETE BILL DATA ===`);
-    console.log(`Legislator link: ${legislatorLink}`);
-    console.log(`Legislator names: ${legislatorNames.join(', ')}`);
+    // console.log(`=== CLIENT: FETCHING COMPLETE BILL DATA ===`);
+    // console.log(`Legislator link: ${legislatorLink}`);
+    // console.log(`Legislator names: ${legislatorNames.join(', ')}`);
 
     try {
         const year = document.getElementById('yearInput').value;
         const userId = legislatorLink.split('/').pop();
-        document.getElementById('loading').classList.remove('hidden');
+        
+        // Show loading spinner
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.classList.remove('hidden');
+        }
         
         // Format legislator names for amendment tracking
         const namesParam = legislatorNames.join(',');
@@ -135,19 +158,32 @@ const fetchCompleteBillData = async (legislatorLink, legislatorNames) => {
         // Update the bills Set with complete data
         completeBills.forEach(bill => bills.add(JSON.stringify(bill)));
         
-        // Update loading progress to 100%
-        updateLoadingProgress(100, 100);
         updateView();
         
-        document.getElementById('loading').classList.add('hidden');
+        // Hide spinner when done
+        if (loadingElement) {
+            loadingElement.classList.add('hidden');
+        }
+        
         return completeBills;
     } catch (error) {
         console.error('Error fetching complete bill data:', error);
-        document.getElementById('noResults').classList.remove('hidden');
-        document.getElementById('loading').classList.add('hidden');
+        
+        // Show error and hide spinner
+        const noResultsElement = document.getElementById('noResults');
+        if (noResultsElement) {
+            noResultsElement.classList.remove('hidden');
+        }
+        
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.classList.add('hidden');
+        }
+        
         return [];
     }
 };
+
 
 // Render Functions
 const renderStatsView = () => {
@@ -541,9 +577,22 @@ const renderBills = () => {
 };
 
 const updateLoadingProgress = (current, total) => {
-    const percentage = Math.round((current / total) * 100);
-    document.getElementById('loadingProgress').textContent = percentage;
-    document.getElementById('progressIndicator').style.width = `${percentage}%`;
+    try {
+        const percentage = Math.round((current / total) * 100);
+        
+        const progressTextElement = document.getElementById('loadingProgress');
+        if (progressTextElement) {
+            progressTextElement.textContent = percentage;
+        }
+        
+        const progressBarElement = document.getElementById('progressIndicator');
+        if (progressBarElement) {
+            progressBarElement.style.width = `${percentage}%`;
+        }
+    } catch (error) {
+        // Silently handle any errors with the progress bar
+        console.warn('Error updating progress:', error);
+    }
 };
 
 const updateView = () => {
@@ -609,28 +658,34 @@ document.getElementById('searchButton').addEventListener('click', async () => {
     const names = searchTerm.split(',').map((name) => name.trim());
     const uniqueLegislators = names.map((name) =>
         legislators.find((l) =>
-            abbreviateTitle(l.fullName).toLowerCase() === name.toLowerCase()
+            l && l.fullName && abbreviateTitle(l.fullName).toLowerCase() === name.toLowerCase()
         )
     ).filter(Boolean);
 
     if (uniqueLegislators.length > 0) {
         loading = true;
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('noResults').classList.add('hidden');
-
-        updateLoadingProgress(0, 1);
+        
+        // Hide no results, we're about to search
+        const noResultsElement = document.getElementById('noResults');
+        if (noResultsElement) {
+            noResultsElement.classList.add('hidden');
+        }
 
         // Save each legislator to recent searches
         uniqueLegislators.forEach(legislator => saveRecentSearch(legislator));
 
-        // Fetch complete bill data for each legislator using the new endpoint
+        // Fetch data for all selected legislators
         await Promise.all(uniqueLegislators.map((legislator) =>
             fetchCompleteBillData(legislator.link, names)
         ));
 
+        loading = false;
         updateView();
     } else {
-        document.getElementById('noResults').classList.remove('hidden');
+        const noResultsElement = document.getElementById('noResults');
+        if (noResultsElement) {
+            noResultsElement.classList.remove('hidden');
+        }
     }
 });
 
@@ -850,16 +905,16 @@ const displayLegislatorResults = (response, isFallback = false) => {
     resultsContainer.innerHTML = '';
     
     // Check if we were passed a response object or an array of legislators
-    const legislators = Array.isArray(response) ? response : (response.items || []);
+    const foundLegislators = Array.isArray(response) ? response : (response.items || []);
     
-    if (!legislators || legislators.length === 0) {
+    if (!foundLegislators || foundLegislators.length === 0) {
         resultsContainer.innerHTML = '<p>No legislators found for this address.</p>';
         resultsContainer.classList.remove('hidden');
         return;
     }
     
     // Save the found legislators to local storage
-    saveLegislatorsToLocalStorage(legislators);
+    saveLegislatorsToLocalStorage(foundLegislators);
     
     // Create header for results
     const header = document.createElement('h3');
@@ -953,8 +1008,9 @@ const displayLegislatorResults = (response, isFallback = false) => {
 
 // Save legislators to local storage
 function saveLegislatorsToLocalStorage(legislators) {
+    if (!Array.isArray(legislators) || legislators.length === 0) return;
+    
     try {
-        // Replace any existing legislators in storage
         localStorage.setItem('legislators', JSON.stringify(legislators));
         console.log('Saved legislators to localStorage:', legislators.length);
     } catch (error) {
@@ -986,7 +1042,7 @@ function saveRecentSearch(legislator) {
         // Save back to localStorage
         localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
         
-        console.log('Saved recent search:', legislator.fullName);
+        // console.log('Saved recent search:', legislator.fullName);
     } catch (error) {
         console.error('Error saving recent search:', error);
     }
