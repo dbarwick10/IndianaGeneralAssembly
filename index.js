@@ -913,9 +913,6 @@ const displayLegislatorResults = (response, isFallback = false) => {
         return;
     }
     
-    // Save the found legislators to local storage
-    saveLegislatorsToLocalStorage(foundLegislators);
-    
     // Create header for results
     const header = document.createElement('h3');
     header.textContent = 'Your Legislators';
@@ -952,7 +949,7 @@ const displayLegislatorResults = (response, isFallback = false) => {
     legislatorsList.className = 'legislators-list';
     
     // Add each legislator to the list
-    legislators.forEach(legislator => {
+    foundLegislators.forEach(legislator => {
         const legislatorCard = document.createElement('div');
         legislatorCard.className = 'legislator-card';
         
@@ -962,7 +959,7 @@ const displayLegislatorResults = (response, isFallback = false) => {
         
         legislatorCard.innerHTML = `
             <div class="legislator-info">
-                <h4> ${chamberClass} ${legislator.firstName} ${legislator.lastName}</h4>
+                <h4>${chamberClass} ${legislator.firstName} ${legislator.lastName}</h4>
                 <p>${chamberDisplay} District ${legislator.district}</p>
                 <p>Party: ${legislator.party}</p>
                 <button class="button small-button select-legislator" 
@@ -1003,7 +1000,6 @@ const displayLegislatorResults = (response, isFallback = false) => {
             document.getElementById('finderContainer').classList.add('hidden');
         });
     });
-
 };
 
 // Save legislators to local storage
