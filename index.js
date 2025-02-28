@@ -1,3 +1,5 @@
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+
 // Global state
 let legislators = [];
 let bills = new Set();
@@ -694,12 +696,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentPath = window.location.pathname;
     const billTrackerLink = document.getElementById('billTracker');
     const budgetLink = document.getElementById('budget');
+    const issueLink = document.getElementById('issues');
     
     if (currentPath.includes('index.html')) {
         billTrackerLink.classList.add('active');
     } else if (currentPath.includes('budget.html')) {
         budgetLink.classList.add('active');
+    } else if (currentPath.includes('issues.html')) {
+        issueLink.classList.add('active');
     }
+
+    const findBtn = document.getElementById('find-my-legislators-btn');
+    if (findBtn) {
+        findBtn.addEventListener('click', showLegislatorFinder);
+    }
+    
+    const clearBtn = document.getElementById('clear-my-legislators-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearMyLegislators);
+    }
+    
+    // Load saved legislators on page load
+    loadMyLegislators();
 });
 
 // Make handleBillClick available globally
@@ -1123,8 +1141,3 @@ function updateRecentSearchesList() {
         list.innerHTML = '<div class="recent-search-item error">Error loading recent searches</div>';
     }
 }
-
-// Initialize the finder when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    setupFindLegislatorUI();
-});

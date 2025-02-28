@@ -1,3 +1,5 @@
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+
 let showingInflationAdjusted = false;
 
 const categories = {
@@ -593,33 +595,6 @@ if (event.target.classList.contains('category-button')) {
 }
 });
 
-function highlightDataset(label) {
-  chart.data.datasets.forEach(dataset => {
-    if (dataset.label === label) {
-      dataset.borderWidth = 4;
-      dataset.borderColor = getCategoryColor(label);
-      dataset.backgroundColor = getCategoryColor(label);
-      dataset.opacity = 1;
-    } else {
-      dataset.borderWidth = 1;
-      dataset.borderColor = 'rgba(200, 200, 200, 0.3)';
-      dataset.backgroundColor = 'rgba(200, 200, 200, 0.1)';
-      dataset.opacity = 0.3;
-    }
-  });
-  chart.update();
-}
-
-function resetDatasets() {
-  chart.data.datasets.forEach(dataset => {
-    dataset.borderWidth = 1;
-    dataset.borderColor = getCategoryColor(dataset.label);
-    dataset.backgroundColor = getCategoryColor(dataset.label);
-    dataset.opacity = 1;
-  });
-  chart.update();
-}
-
 // Initialize the chart
 function initializeChart(selectedCategory) {
   const datasets = getDatasetsByCategory(selectedCategory);
@@ -1007,14 +982,30 @@ function createLegend() {
 document.addEventListener('DOMContentLoaded', () => {
   // Highlight active nav link based on current page
   const currentPath = window.location.pathname;
-  const billTrackerLink = document.getElementById('billTracker');
-  const budgetLink = document.getElementById('budget');
-  
-  if (currentPath.includes('index.html')) {
-      billTrackerLink.classList.add('active');
-  } else if (currentPath.includes('budget.html')) {
-      budgetLink.classList.add('active');
-  }
+    const billTrackerLink = document.getElementById('billTracker');
+    const budgetLink = document.getElementById('budget');
+    const issueLink = document.getElementById('issues');
+    
+    if (currentPath.includes('index.html')) {
+        billTrackerLink.classList.add('active');
+    } else if (currentPath.includes('budget.html')) {
+        budgetLink.classList.add('active');
+    } else if (currentPath.includes('issues.html')) {
+        issueLink.classList.add('active');
+    }
+
+  const findBtn = document.getElementById('find-my-legislators-btn');
+    if (findBtn) {
+        findBtn.addEventListener('click', showLegislatorFinder);
+    }
+    
+    const clearBtn = document.getElementById('clear-my-legislators-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearMyLegislators);
+    }
+    
+    // Load saved legislators on page load
+    loadMyLegislators();
 });
 
 // Initialize the app

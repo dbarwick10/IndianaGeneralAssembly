@@ -10,7 +10,7 @@ body {
 
 .container {
     padding: 24px;
-    max-width: 1200px;
+    max-width: 80%;
     margin: 0 auto;
 }
 
@@ -31,7 +31,7 @@ body {
 }
 
 .nav-container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -106,7 +106,7 @@ body {
     color: #6b7280; 
 }
 
-.note a {
+a {
     color: #cccccc;
 }
 
@@ -775,7 +775,7 @@ input:checked + .slider:before {
 .small-button {
     font-size: 0.85rem;
     padding: 8px 16px;
-    margin-top: 12px;
+    /* margin-top: 12px; */
 }
 
 /* Error message */
@@ -1129,6 +1129,201 @@ input:checked + .slider:before {
     }
   }
 
+/* Legislator header styles */
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+}
+
+.nav-logo {
+    color: #f9fafb;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-right: 1.5rem;
+    white-space: nowrap;
+}
+
+/* Move nav-links to the right */
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    margin-left: auto; /* This pushes the links to the right */
+}
+
+/* Legislators info section */
+.header-legislators-info {
+    display: flex;
+    align-items: center;
+    color: #d1d5db;
+    font-size: 0.875rem;
+    margin-right: 1rem;
+}
+
+.legislators-label {
+    background-color: #1d4ed8;
+    padding: 4px 8px;
+    border: 4px solid rgba(69, 68, 68, 0.1);
+    border-radius: 4px;
+}
+
+.your-legislators {
+    margin-left: 8px;
+    margin-right: 1rem;
+}
+
+.legislator-name {
+    background: #374151;
+    color: #f9f9f9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+/* Find My Legislators button area */
+.header-legislators-action {
+    margin-right: 1rem;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background-color: #1f2937;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.close-modal {
+    color: #9ca3af;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #f9fafb;
+    text-decoration: none;
+}
+
+/* Finder form styles */
+.finder-form {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #d1d5db;
+    font-weight: 500;
+}
+
+.loading {
+    text-align: center;
+    padding: 15px;
+    color: #d1d5db;
+}
+
+.error-message {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Finder results */
+.finder-results {
+    margin-top: 20px;
+}
+
+.results-title {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #f9fafb;
+}
+
+.district-info {
+    background-color: #374151;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.district-info p {
+    color: #d1d5db;
+    margin-bottom: 5px;
+}
+
+.district-info ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #f9fafb;
+}
+
+/* Legislators list in results */
+.legislators-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.legislator-card {
+    background-color: #374151;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+}
+
+.legislator-info h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #f9fafb;
+    font-size: 1rem;
+}
+
+.legislator-info p {
+    margin: 4px 0;
+    color: #d1d5db;
+    font-size: 0.875rem;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -1141,7 +1336,7 @@ input:checked + .slider:before {
     }
 
     .input {
-        width: 100%;
+        width: 85%;
         margin-right: 0;
         margin-bottom: 8px;
     }
@@ -1152,7 +1347,7 @@ input:checked + .slider:before {
     }
 
     .button {
-        width: 100%;
+        width: 85%;
     }
 
     .stats-container {
@@ -1164,10 +1359,36 @@ input:checked + .slider:before {
     }
 
     .nav-container {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-        text-align: center;
+        flex-wrap: wrap;
+    }
+    
+    .header-legislators {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+    }
+    
+    .header-legislators button {
+        width: 100%;
+    }
+    
+    .legislators-dropdown {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        width: auto;
+        margin: 0 15px;
+    }
+    
+    .legislators-dropdown:before {
+        display: none;
+    }
+    
+    .modal-content {
+        margin: 15% auto;
+        width: 95%;
+        padding: 15px;
     }
 
     .nav-links {
@@ -1212,5 +1433,57 @@ input:checked + .slider:before {
     .issue-item.active {
         border-left-color: transparent;
         border-bottom-color: #2563eb;
+    }
+
+    .nav-container {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .nav-logo {
+        width: 100%;
+        text-align: center;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .header-legislators-info {
+        order: 2;
+        margin-right: 0;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .header-legislators-action {
+        order: 3;
+        margin-right: 0;
+        margin-top: 10px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .nav-links {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+    
+    .legislator-name {
+        margin-bottom: 5px;
+    }
+    
+    .modal-content {
+        margin: 15% auto;
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .legislators-list {
+        grid-template-columns: 1fr;
     }
 }

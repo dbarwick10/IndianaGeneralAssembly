@@ -12,11 +12,13 @@
         <header class="nav-header">
             <nav class="nav-container">
                 <div class="nav-logo">
-                    <span>Indiana Legislative Tools</span>
+                <span>Indiana Legislative Tools</span>
                 </div>
+                <div id="header-legislators-info" class="header-legislators-info"></div>
+
                 <div class="nav-links">
                     <a href="index.html" class="nav-link" id="billTracker">Bill Tracker</a>
-                    <a href="issues.html" class="nav-link active" id="issues">Issues</a>
+                    <a href="issues.html" class="nav-link" id="issues">Issues</a>
                     <a href="budget.html" class="nav-link" id="budget">Budget View</a>
                 </div>
             </nav>
@@ -24,9 +26,14 @@
         
         <div class="issues-container">
             <div class="issues-sidebar">
-                <h2 class="sidebar-title">Key Issues (work in progress)</h2>
+                <h2 class="sidebar-title">Key Issues (work in progress)
+                    <div id="header-legislators-action" class="header-legislators-action">
+                        <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+                    </div>
+                </h2>
+                
                 <ul class="issues-list">
-                    <li class="issue-item active" data-issue="education">Education (example)</li>
+                    <li class="issue-item active" data-issue="education">Education</li>
                     <li class="issue-item" data-issue="healthcare">Healthcare (example)</li>
                     <li class="issue-item" data-issue="infrastructure">Infrastructure (example)</li>
                     <li class="issue-item" data-issue="economic-development">Economic Development (example)</li>
@@ -40,23 +47,23 @@
             <div class="issues-content">
                 <div id="education" class="issue-detail active">
                     <div class="issue-header">
-                        <h2 class="issue-title">Education (example)</h2>
+                        <h2 class="issue-title">Education</h2>
                     </div>
                     <div class="issue-description">
-                        <p>Education is a cornerstone issue in Indiana's legislative agenda. The state has been working to improve its education system through various initiatives, including increasing funding for K-12 schools, implementing new programs to help students succeed, and addressing teacher compensation.</p>
-                        <p>Recent focus areas include literacy, workforce development programs, school choice options, and enhanced teacher recruitment and retention strategies.</p>
+                        <p>The House Republicans have made it a priority to trim Indiana’s education code. In doing so, they are <a href="https://indianapublicmedia.org/news/deregulation-bill-would-trim-licensure-education-requirements-for-indiana-secretary-of-education.php">removing the requirements</a> to be the secretary of education. The bill also removes requirements that a governing body of a school corporation that <a href="https://www.wboi.org/2025-01-22/lawmakers-debate-changes-to-charter-school-rules-secretary-of-education-in-deregulation-bill">operates a charter school must also operate a public school</a>.</p>
+                            <p>Education funding will see an elimination of the Curricular Material Reimbursement Fund, which was used to provide curricular reimbursements to public school and certain nonpublic school students. In Fiscal Year 2025 this amounted to $160 million. The wealthiest Hoosiers are able to save money while public schools could see more cuts to their budgets as the annual income maximum for choice scholarships is removed.</p>
                     </div>
                     <div class="related-bills">
                         <h3>Related Bills</h3>
                         <div class="bill-item">
                             <div class="bill-title">HB 1001 - State Budget</div>
-                            <div class="bill-description">Increases the state's education budget by 6% and establishes a new funding formula for public schools.</div>
-                            <span class="bill-status status-progress">In Progress</span>
+                            <div class="bill-description">Removes the income maximums for choice scholarship eligibility, change curricular materials funding, provide state funding for adult charter schools, require reporting on dual credit alignment, prohibit excessive fees for career scholarship students, mandate more frequent distribution of choice scholarships, and require the Commission for Higher Education to report on facility utilization at state educational institutions.</div>
+                            <span class="bill-status status-progress">Passed House</span>
                         </div>
                         <div class="bill-item">
-                            <div class="bill-title">SB 223 - Teacher Retention Program</div>
-                            <div class="bill-description">Creates incentives and support programs to improve teacher retention rates in Indiana public schools.</div>
-                            <span class="bill-status status-passed">Passed</span>
+                            <div class="bill-title">HB 1002 - Various education matters</div>
+                            <div class="bill-description">The document outlines a legislative bill that removes and repeals numerous education provisions across 62 different areas while amending or relocating certain provisions related to charter schools, governance, administration, and educational programs.</div>
+                            <span class="bill-status status-passed">Passed House</span>
                         </div>
                     </div>
                     <div class="call-script">
@@ -64,13 +71,17 @@
                         <div class="script-container">
                             <p class="script-intro">When calling your representative about education issues, consider using the following script:</p>
                             <div class="script-content">
-                                <p>"Hello, my name is [Your Name] and I'm a constituent from [Your City/Town].</p>
-                                <p>I'm calling to express my support for increased education funding and better teacher compensation in Indiana. Specifically, I encourage support for HB 1001 and SB 223.</p>
-                                <p>Strong public education is vital for our state's future, and I believe we need to invest more in our schools and educators.</p>
-                                <p>Can I count on [Representative Name] to support these education initiatives?</p>
-                                <p>Thank you for your time and consideration."</p>
+                                <p>"Hello, my name is [Your Name] and I'm a constituent at [Your Street Address, City, State, Zip Code].</p>
+                                <p>I'm calling to express my opposition to House Bills 1001. This bill would reduce public education funding through choice scholarships and significantly cut curricular materials funds, which I find deeply concerning.</p>
+                                <p>I also want to voice my concerns about House Bill 1002. I believe the Secretary of Education position requires substantial education experience to effectively lead Indiana's schools.</p>
+                                <p>Strong public education is essential for our state's future, and I urge [Rep./Sen. Name] to support increased investment in our schools and educators rather than these cuts.</p>
+                                <p><strong>[Additional responses as needed:]</strong></p>
+                                <ul>
+                                    <li><p>I would appreciate hearing [Rep./Sen. Name]'s position on these bills.</p></ul>
+                                    </ul>
+                                <p>Thank you for your time."</p>
                             </div>
-                            <p class="script-tip"><strong>Tip:</strong> Be sure to personalize your call by sharing how education issues impact you, your family, or your community.</p>
+                            <p class="script-tip"><strong>Tip:</strong> Be respectful. The person you talk to is unlikely to be the Representative or Senator themselves.</p>
                         </div>
                     </div>
                 </div>
@@ -151,6 +162,6 @@
         </div>
     </div>
 
-    <script src="issues.js"></script>
+    <script type="module" src="issues.js"></script>
 </body>
 </html>

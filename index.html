@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Indiana Legislature Bill Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="./styles.css" rel="stylesheet">
 </head>
 <body>
@@ -12,12 +12,15 @@
         <header class="nav-header">
             <nav class="nav-container">
                 <div class="nav-logo">
-                    <span>Indiana Legislative Tools</span>
+                <span>Indiana Legislative Tools</span>
                 </div>
+                
+                <div id="header-legislators-info" class="header-legislators-info"></div>
+
                 <div class="nav-links">
                     <a href="index.html" class="nav-link" id="billTracker">Bill Tracker</a>
-                <a href="issues.html" class="nav-link" id="issues">Issues</a>
-                <a href="budget.html" class="nav-link" id="budget">Budget View</a>
+                    <a href="issues.html" class="nav-link" id="issues">Issues</a>
+                    <a href="budget.html" class="nav-link" id="budget">Budget View</a>
                 </div>
             </nav>
         </header>
@@ -38,6 +41,9 @@
                     placeholder="Enter legislator(s) separated by a comma... "
                 />
                 <ul class="autocomplete-dropdown" id="autocompleteDropdown"></ul>
+            </div>
+            <div id="header-legislators-action" class="header-legislators-action">
+                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
             </div>
             <div class="view-toggle">
                 <span id="viewLabel">Bill View</span>

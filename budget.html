@@ -4,26 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget Line Items</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
-      <header class="nav-header">
-        <nav class="nav-container">
-            <div class="nav-logo">
+        <header class="nav-header">
+            <nav class="nav-container">
+                <div class="nav-logo">
                 <span>Indiana Legislative Tools</span>
-            </div>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link" id="billTracker">Bill Tracker</a>
-                <a href="issues.html" class="nav-link" id="issues">Issues</a>
-                <a href="budget.html" class="nav-link" id="budget">Budget View</a>
-            </div>
-        </nav>
-    </header>
+                </div>
+                
+                <div id="header-legislators-info" class="header-legislators-info"></div>
+                
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link" id="billTracker">Bill Tracker</a>
+                    <a href="issues.html" class="nav-link" id="issues">Issues</a>
+                    <a href="budget.html" class="nav-link" id="budget">Budget View</a>
+                </div>
+            </nav>
+        </header>
         <div class="card">
             <div class="card-header">
-                <h1 class="card-title">Indiana Budget Line Items</h1>
+                <h1 class="card-title">Indiana Budget Line Items
+                    <div id="header-legislators-action" class="header-legislators-action">
+                        <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+                    </div>
+                </h1>
                 <p class="note">All figures are from the Latest Fiscal Notes from each budget year</p>
                 <div id="categoryButtons" class="category-buttons"></div>
             </div>
@@ -42,6 +50,6 @@
         </footer>
     </div>
 
-    <script src="budget.js"></script>
+    <script type="module" src="budget.js"></script>
 </body>
 </html>

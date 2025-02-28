@@ -1,5 +1,20 @@
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+
+// Original issues.js functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Get all issue items and issue details
+    const currentPath = window.location.pathname;
+    const billTrackerLink = document.getElementById('billTracker');
+    const budgetLink = document.getElementById('budget');
+    const issueLink = document.getElementById('issues');
+    
+    if (currentPath.includes('index.html')) {
+        billTrackerLink.classList.add('active');
+    } else if (currentPath.includes('budget.html')) {
+        budgetLink.classList.add('active');
+    } else if (currentPath.includes('issues.html')) {
+        issueLink.classList.add('active');
+    }
     const issueItems = document.querySelectorAll('.issue-item');
     const issueDetails = document.querySelectorAll('.issue-detail');
     
@@ -39,4 +54,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the page
     initializeIssues();
+    
+    const findBtn = document.getElementById('find-my-legislators-btn');
+    if (findBtn) {
+        findBtn.addEventListener('click', showLegislatorFinder);
+    }
+    
+    const clearBtn = document.getElementById('clear-my-legislators-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearMyLegislators);
+    }
+    
+    // Load saved legislators on page load
+    loadMyLegislators();
 });
