@@ -42,9 +42,8 @@
                 />
                 <ul class="autocomplete-dropdown" id="autocompleteDropdown"></ul>
             </div>
-            <div id="header-legislators-action" class="header-legislators-action">
-                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
-            </div>
+            <button class="button" id="searchButton">Search</button>
+            
             <div class="view-toggle">
                 <span id="viewLabel">Bill View</span>
                 <label class="switch">
@@ -53,7 +52,9 @@
                 </label>
                 <span id="viewLabel">Stats View</span>
             </div>
-            <button class="button" id="searchButton">Search</button>
+            <div id="header-legislators-action" class="header-legislators-action">
+                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+            </div>
         </div>
         <div id="loading" class="loading-spinner hidden">
             <div class="spinner"></div>
@@ -63,12 +64,12 @@
         <div id="noResults" class="no-results hidden">No bills found for your search.</div>
         <footer>
             <div class="note">
-                <p>Disclaimer:</p>
                 <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
                 <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
             </div>
         </footer>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
     <script type="module" src="./index.js"></script>
 </body>
 </html>

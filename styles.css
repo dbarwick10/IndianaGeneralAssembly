@@ -341,6 +341,11 @@ input:checked + .slider:before {
     color: #132d83;
 }
 
+.status-tag.returned {
+    background-color: #f2fd93;
+    color: #46420a;
+}
+
 .status-tag.law {
     background-color: #86efac;
     color: #093f1e;
@@ -922,6 +927,38 @@ input:checked + .slider:before {
     color: #9ca3af;
 }
 
+.issue-detail table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    background-color: #1f2937;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.issue-detail th {
+    background-color: #374151;
+    color: #f9fafb;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #4b5563;
+}
+
+.issue-detail td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #374151;
+    color: #d1d5db;
+}
+
+.issue-detail tr:last-child td {
+    border-bottom: none;
+}
+
+.issue-detail tr:hover td {
+    background-color: #2d3748;
+}
+
 /* Call script styles */
 .call-script {
     margin-top: 30px;
@@ -973,6 +1010,163 @@ input:checked + .slider:before {
 
 .bill-title a {
     color: #cccccc;
+}
+
+.personalized-notice {
+    background-color: #2563eb;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
+.personalized-notice {
+    background-color: #2563eb;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
+.call-tracking {
+    background-color: #1f2937;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid #374151;
+}
+
+.tracking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.tracking-header h4 {
+    margin: 0;
+    color: #f9fafb;
+}
+
+.calls-remaining {
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.calls-complete {
+    color: #10b981;
+    font-weight: 500;
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: #374151;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #2563eb;
+    transition: width 0.3s ease;
+}
+
+.current-call-info {
+    background-color: #374151;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.current-call-info h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #f9fafb;
+}
+
+.current-call-info p {
+    margin: 5px 0;
+    color: #d1d5db;
+}
+
+.legislator-phone {
+    font-size: 1.1em;
+    color: #f9fafb !important;
+}
+
+.result-prompt {
+    margin-bottom: 10px;
+    color: #d1d5db;
+}
+
+.result-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.result-btn {
+    background-color: #374151;
+    color: #f9fafb;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 100px;
+}
+
+.result-btn:hover {
+    background-color: #4b5563;
+    transform: translateY(-1px);
+}
+
+.result-btn[data-result="contacted"] {
+    background-color: #10b981;
+    color: white;
+}
+
+.result-btn[data-result="contacted"]:hover {
+    background-color: #059669;
+}
+
+.result-btn[data-result="voicemail"] {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.result-btn[data-result="voicemail"]:hover {
+    background-color: #2563eb;
+}
+
+.all-calls-complete {
+    text-align: center;
+    padding: 15px;
+}
+
+.all-calls-complete h4 {
+    color: #10b981;
+    margin-bottom: 10px;
+}
+
+.reset-calls-btn {
+    background-color: #374151;
+    color: #f9fafb;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+}
+
+.reset-calls-btn:hover {
+    background-color: #4b5563;
 }
 
 /* inflation */
@@ -1485,5 +1679,13 @@ input:checked + .slider:before {
     
     .legislators-list {
         grid-template-columns: 1fr;
+    }
+
+    .result-buttons {
+        flex-direction: column;
+    }
+    
+    .result-btn {
+        width: 100%;
     }
 }

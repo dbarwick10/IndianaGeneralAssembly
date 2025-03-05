@@ -8,7 +8,7 @@ let searchTerm = '';
 let suggestions = [];
 let openBills = {};
 let billStats = null;
-const testing = false;
+const testing = true;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -48,8 +48,6 @@ window.onload = async () => {
         // If we still have no legislators, show an error message
         if (!legislators || legislators.length === 0) {
             console.error('No legislators available from any source');
-            // Instead of alert, you could show a message in the UI
-            // alert('Failed to load legislators data. Please refresh the page or try again later.');
         }
     }
 };
@@ -386,7 +384,22 @@ const renderBills = () => {
 
     const parsedBills = Array.from(bills)
         .map(bill => JSON.parse(bill))
-        .sort((a, b) => a.billName.localeCompare(b.billName, undefined, { numeric: true }));
+        .sort((a, b) => {
+            const getPriority = (bill) => {
+                if (bill.becomeLaw) return 1; 
+                if (bill.passedChamber) return 2; 
+                return 3; 
+            };
+
+            const priorityA = getPriority(a);
+            const priorityB = getPriority(b);
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            } else {
+                return a.billName.localeCompare(b.billName, undefined, { numeric: true });
+            }
+        });
     
     const groupedBills = {
         authored: parsedBills.filter(bill => bill.type === 'authored'),
@@ -412,8 +425,20 @@ const renderBills = () => {
                                         <div class="bill-title">
                                             ${bill.billName} - ${bill.description}
                                             ${bill.passedChamber ? 
-                                                `<span class="status-tag passed">Passed Chamber${
+                                                `<span class="status-tag passed">Referred to the ${
+                                                    bill.sentToChamber && bill.sentToChamber.description === 'Referred to the Senate' ? 'Senate' : 
+                                                    bill.sentToChamber && bill.sentToChamber.description === 'Referred to the House' ? 'House' : 
+                                                    'Unknown Chamber'
+                                                }${
                                                     timing?.daysToPassChamber ? ` in ${timing.daysToPassChamber} days` : ''
+                                                }</span>` : ''}
+                                            ${bill.returnedWithAmendments ? 
+                                                `<span class="status-tag returned">Returned ${
+                                                    bill.returnedWithAmendments.description === 'Returned to the Senate with amendments' ? 'to Senate' :
+                                                    bill.returnedWithAmendments.description === 'Returned to the House with amendments' ? 'to House' :
+                                                    'Unknown Chamber'
+                                                }${
+                                                    timing?.daysToReturnWithAmendments ? ` in ${timing.daysToReturnWithAmendments} days` : ''
                                                 }</span>` : ''}
                                             ${bill.becomeLaw ? 
                                                 `<span class="status-tag law">Became Law${
