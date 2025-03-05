@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education - Indiana Legislative Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-container">
+    <div class="nav-logo">
+    <span>Indiana Legislative Tools</span>
+    </div>
+    
+    <div id="header-legislators-info" class="header-legislators-info"></div>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link" id="billTracker">Bill Tracker</a>
+        <a href="/issues/" class="nav-link active" id="issues">Issues</a>
+        <a href="/budget/" class="nav-link" id="budget">Budget View</a>
+    </div>
+</nav>
+        
+        <main>
+            
+<div class="bill-detail-container">
+  <div class="issue-navigation">
+    <a href="/issues/2025/education/" class="back-link">« Back to Education</a>
+  </div>
+  
+  <div class="bill-header">
+    <h1 class="bill-title"> - Education</h1>
+    <span class="bill-status status-"></span>
+  </div>
+  
+  <div class="bill-content">
+    
+Education is a cornerstone issue in Indiana's legislative agenda. The state has been working to improve its education system through various initiatives, including increasing funding for K-12 schools, implementing new programs to help students succeed, and addressing teacher compensation.
+
+Recent focus areas include literacy, workforce development programs, school choice options, and enhanced teacher recruitment and retention strategies.
+  </div>
+  
+  
+  <div class="call-script">
+    <h3>Call Script</h3>
+    <div class="script-container">
+      <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
+      <div class="script-content">
+        <p>Hello, my name is [Your Name] and I&rsquo;m a constituent from [Your City/Town].</p>
+<p>I&rsquo;m calling to express my support for increased education funding and better teacher compensation in Indiana. Specifically, I encourage support for HB 1001 and SB 223.</p>
+<p>Strong public education is vital for our state&rsquo;s future, and I believe we need to invest more in our schools and educators.</p>
+<p>Can I count on [Representative Name] to support these education initiatives?</p>
+<p>Thank you for your time and consideration.</p>
+
+      </div>
+      <p class="script-tip"><strong>Tip:</strong> Personalize your call by sharing how this bill impacts you.</p>
+    </div>
+  </div>
+  
+  
+  <div class="bill-actions">
+    <h3>Bill Actions</h3>
+    <div id="dynamicActions" data-bill="" data-year="">
+      <div class="loading">Loading bill actions...</div>
+    </div>
+  </div>
+</div>
+
+        </main>
+        
+        
+        <footer>
+            <div class="note">
+                <p>Disclaimer:</p>
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
+                <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
+            </div>
+        </footer>
+        
+    </div>
+    
+    
+<script>
+  
+  document.addEventListener('DOMContentLoaded', async function() {
+    const actionContainer = document.getElementById('dynamicActions');
+    if (!actionContainer) return;
+    
+    const billNumber = actionContainer.dataset.bill;
+    const year = actionContainer.dataset.year || '2025';
+    const apiEndpoint = 'https:\/\/indianageneralassembly-production.up.railway.app';
+    
+    try {
+      
+      const response = await fetch(`${apiEndpoint}/${year}/bills/${billNumber}/actions`);
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        let actionsHtml = '<ul class="action-list">';
+        data.items.forEach(action => {
+          actionsHtml += `<li><strong>${new Date(action.date).toLocaleDateString()}</strong>: ${action.description}</li>`;
+        });
+        actionsHtml += '</ul>';
+        actionContainer.innerHTML = actionsHtml;
+      } else {
+        actionContainer.innerHTML = '<p>No actions found for this bill.</p>';
+      }
+    } catch (error) {
+      actionContainer.innerHTML = '<p>Error loading bill actions. Please try again later.</p>';
+      console.error('Error fetching bill actions:', error);
+    }
+  });
+</script>
+
+</body>
+</html>

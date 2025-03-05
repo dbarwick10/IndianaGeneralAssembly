@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="generator" content="Hugo 0.145.0"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indiana Legislature Bill Tracker - Indiana Legislative Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-container">
+    <div class="nav-logo">
+    <span>Indiana Legislative Tools</span>
+    </div>
+    
+    <div id="header-legislators-info" class="header-legislators-info"></div>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link active" id="billTracker">Bill Tracker</a>
+        <a href="/issues/" class="nav-link" id="issues">Issues</a>
+        <a href="/budget/" class="nav-link" id="budget">Budget View</a>
+    </div>
+</nav>
+        
+        <main>
+            
+<h1 class="title">Indiana Legislature Bill Tracker</h1>
+<div class="search-container">
+    <div class="relative">
+        <input
+            type="text"
+            class="input"
+            id="yearInput"
+            value="2025"
+            placeholder="Enter year (e.g., 2025)"
+        />
+        <input
+            type="text"
+            class="input"
+            id="searchInput"
+            placeholder="Enter legislator(s) separated by a comma... "
+        />
+        <ul class="autocomplete-dropdown" id="autocompleteDropdown"></ul>
+    </div>
+    <div id="header-legislators-action" class="header-legislators-action">
+        <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+    </div>
+    <div class="view-toggle">
+        <span id="viewLabel">Bill View</span>
+        <label class="switch">
+            <input type="checkbox" id="viewToggle">
+            <span class="slider round"></span>
+        </label>
+        <span id="viewLabel">Stats View</span>
+    </div>
+    <button class="button" id="searchButton">Search</button>
+</div>
+<div id="loading" class="loading-spinner hidden">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading bills...</div>
+</div>
+<div id="results" class="space-y-6"></div>
+<div id="noResults" class="no-results hidden">No bills found for your search.</div>
+
+        </main>
+        
+        
+        <footer>
+            <div class="note">
+                <p>Disclaimer:</p>
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
+                <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
+            </div>
+        </footer>
+        
+    </div>
+    
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
+<script type="module" src="/js/index.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+baseURL = "/"
+languageCode = "en-us"
+title = "Indiana Legislative Tools"
+
+# URL structure for issues pages
+[permalinks]
+  issues = "/issues/:sections[1]/:filename"
+
+[outputFormats]
+[outputFormats.JSON]
+  mediaType = "application/json"
+  baseName = "index"
+  isPlainText = true
+
+[outputs]
+  home = ["HTML", "JSON"]
+  section = ["HTML", "JSON"]
+
+[params]
+  description = "Track bills, budgets, and issues in the Indiana Legislature"
+  apiEndpoint = "https://indianageneralassembly-production.up.railway.app"
+  year = "2025"
+
+[menu]
+  [[menu.main]]
+    name = "Bill Tracker"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    name = "Issues"
+    url = "/issues/"
+    weight = 2
+  [[menu.main]]
+    name = "Budget View"
+    url = "/budget/"
+    weight = 3

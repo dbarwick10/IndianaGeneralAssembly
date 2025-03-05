@@ -2,48 +2,61 @@
 
 // Function to load and display legislators in the header
 export function loadMyLegislators() {
-    const houseRep = localStorage.getItem('myHouseRep');
-    const senator = localStorage.getItem('mySenator');
-    const infoContainer = document.getElementById('header-legislators-info');
-    const findBtn = document.getElementById('find-my-legislators-btn');
-    const partyColor = JSON.parse(houseRep).party === 'Republican' ? 'style=background:red;' : 'style=background:blue;';
-    
-    if (!infoContainer || !findBtn) return;
-    
-    // Clear previous content
-    infoContainer.innerHTML = '';
-    
-    // Check if we have saved legislators
-    if (houseRep || senator) {
-        let html = '';
+    try {
+        // Get saved legislators from localStorage
+        const savedLegislators = localStorage.getItem('myHouseRep' || 'mySenator');
         
-        html += `<div class="legislators-label">
-            <span class="your-legislators">Your legislators: </span>`;
-        if (houseRep) {
-            const rep = JSON.parse(houseRep);
-            html += `<span class="legislator-name" ${partyColor}>Rep. ${rep.firstName} ${rep.lastName}</span>`;
+        if (!savedLegislators) {
+            return;
         }
-        
-        if (senator) {
-            const sen = JSON.parse(senator);
-            html += `<span class="legislator-name" ${partyColor}>Sen. ${sen.firstName} ${sen.lastName}</span>
-                </div>`;
-        }
-        
-        infoContainer.innerHTML = html;
-        
-        // Update button text
-        findBtn.textContent = 'Change My Legislators';
-    } else {
-        // No saved legislators
-        infoContainer.innerHTML = '';
-        
-        // Update button text
-        findBtn.textContent = 'Find My Legislators';
+        if (savedLegislators) {
+            const legislators = JSON.parse(savedLegislators);
+            
+            if (Array.isArray(legislators) && legislators.length > 0) {
+                // Create legislators info container
+                const infoContainer = document.getElementById('header-legislators-info');
+                if (infoContainer) {
+                    infoContainer.innerHTML = '';
+                    
+                    const label = document.createElement('span');
+                    label.className = 'legislators-label';
+                    label.textContent = 'Your Legislators:';
+                    infoContainer.appendChild(label);
+                    
+                    const legislatorsContainer = document.createElement('span');
+                    legislatorsContainer.className = 'your-legislators';
+                    
+                    // Add each legislator
+                    legislators.forEach(legislator => {
+                        // Add null check before accessing legislator.party
+                        if (legislator && legislator.party) {
+                            const legislatorSpan = document.createElement('span');
+                            legislatorSpan.className = 'legislator-name';
+                            
+                            // Display chamber and name
+                            const chamberPrefix = legislator.chamber === 'S' ? 'Sen.' : 'Rep.';
+                            legislatorSpan.textContent = `${chamberPrefix} ${legislator.firstName} ${legislator.lastName} (${legislator.party})`;
+                            
+                            legislatorsContainer.appendChild(legislatorSpan);
+                        }
+                    });
+                    
+                    infoContainer.appendChild(legislatorsContainer);
+                    
+                    // Add clear button if needed
+                    const clearBtn = document.createElement('button');
+                    clearBtn.id = 'clear-my-legislators-btn';
+                    clearBtn.className = 'button small-button';
+                    clearBtn.textContent = 'Clear';
+                    clearBtn.addEventListener('click', clearMyLegislators);
+                    
+                    infoContainer.appendChild(clearBtn);
+                }
+            }
+        } 
+    } catch (error) {
+        console.error('Error loading saved legislators:', error);
     }
-    
-    // Also update any call scripts with legislator names
-    updateCallScripts();
 }
 
 // Function to update call scripts with legislator names

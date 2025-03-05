@@ -1,0 +1,70 @@
+{{ define "main" }}
+<div class="bill-detail-container">
+  <div class="issue-navigation">
+    <a href="{{ .Parent.RelPermalink }}" class="back-link">« Back to {{ .Parent.Title }}</a>
+  </div>
+  
+  <div class="bill-header">
+    <h1 class="bill-title">{{ .Params.billNumber }} - {{ .Title }}</h1>
+    <span class="bill-status status-{{ lower .Params.status | urlize }}">{{ .Params.status }}</span>
+  </div>
+  
+  <div class="bill-content">
+    {{ .Content }}
+  </div>
+  
+  {{ if .Params.callScript }}
+  <div class="call-script">
+    <h3>Call Script</h3>
+    <div class="script-container">
+      <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
+      <div class="script-content">
+        {{ .Params.callScript | markdownify }}
+      </div>
+      <p class="script-tip"><strong>Tip:</strong> Personalize your call by sharing how this bill impacts you.</p>
+    </div>
+  </div>
+  {{ end }}
+  
+  <div class="bill-actions">
+    <h3>Bill Actions</h3>
+    <div id="dynamicActions" data-bill="{{ .Params.billNumber }}" data-year="{{ .Params.year }}">
+      <div class="loading">Loading bill actions...</div>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+  // JavaScript to fetch real-time bill data from your API
+  document.addEventListener('DOMContentLoaded', async function() {
+    const actionContainer = document.getElementById('dynamicActions');
+    if (!actionContainer) return;
+    
+    const billNumber = actionContainer.dataset.bill;
+    const year = actionContainer.dataset.year || '{{ .Site.Params.year }}';
+    const apiEndpoint = '{{ .Site.Params.apiEndpoint }}';
+    
+    try {
+      // Fetch bill details
+      const response = await fetch(`${apiEndpoint}/${year}/bills/${billNumber}/actions`);
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        let actionsHtml = '<ul class="action-list">';
+        data.items.forEach(action => {
+          actionsHtml += `<li><strong>${new Date(action.date).toLocaleDateString()}</strong>: ${action.description}</li>`;
+        });
+        actionsHtml += '</ul>';
+        actionContainer.innerHTML = actionsHtml;
+      } else {
+        actionContainer.innerHTML = '<p>No actions found for this bill.</p>';
+      }
+    } catch (error) {
+      actionContainer.innerHTML = '<p>Error loading bill actions. Please try again later.</p>';
+      console.error('Error fetching bill actions:', error);
+    }
+  });
+</script>
+{{ end }}

@@ -1,0 +1,33 @@
+{{ define "head" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ end }}
+
+{{ define "main" }}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Indiana Budget Line Items
+            <div id="header-legislators-action" class="header-legislators-action">
+                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+            </div>
+        </h1>
+        <p class="note">All figures are from the Latest Fiscal Notes from each budget year</p>
+        <div id="categoryButtons" class="category-buttons"></div>
+    </div>
+    <div class="card-content">
+        <div class="chart-container">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+        <div id="legendContainer" class="legend-container"></div>
+    </div>
+</div>
+<footer class="footer">
+    <div class="footer-note">
+        <p class="note">Note: Years 2026 and 2027 represent proposed budget figures, not actual appropriations</p>
+        <p class="note">When searching with inflation set to true, inflation rates come from the <a href="https://www.bls.gov/data/inflation_calculator.htm">Bureau of Labor Statistics</a>. The Years 2026 and 2027 are projected inflation rates</p>
+    </div>
+</footer>
+{{ end }}
+
+{{ define "scripts" }}
+<script type="module" src="/js/budget.js"></script>
+{{ end }}

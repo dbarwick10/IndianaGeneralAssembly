@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Hugo: Start Server",
+            "type": "shell",
+            "command": "hugo server -D",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "isBackground": true
+        },
+        {
+            "label": "Hugo: Build Site",
+            "type": "shell",
+            "command": "hugo --minify",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Hugo: New Content",
+            "type": "shell",
+            "command": "hugo new ${input:contentPath}",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "contentPath",
+            "description": "Path for new content (e.g., issues/2025/education/hb1003.md)",
+            "default": "",
+            "type": "promptString"
+        }
+    ]
+}

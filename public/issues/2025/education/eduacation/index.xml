@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Education on Indiana Legislative Tools</title>
+    <link>//localhost:1313/issues/2025/education/eduacation/</link>
+    <description>Recent content in Education on Indiana Legislative Tools</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="//localhost:1313/issues/2025/education/eduacation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Education</title>
+      <link>//localhost:1313/issues/2025/education/education/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/issues/2025/education/education/</guid>
+      <description>Education is a cornerstone issue in Indiana&#39;s legislative agenda. The state has been working to improve its education system through various initiatives, including increasing funding for K-12 schools, implementing new programs to help students succeed, and addressing teacher compensation.&#xD;&#xA;&#xD;&#xA;Recent focus areas include literacy, workforce development programs, school choice options, and enhanced teacher recruitment and retention strategies.</description>
+    </item>
+    <item>
+      <title>School Funding Reform</title>
+      <link>//localhost:1313/issues/2025/education/hb1002/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/issues/2025/education/hb1002/</guid>
+      <description>&lt;h2 id=&#34;bill-summary&#34;&gt;Bill Summary&lt;/h2&gt;&#xA;&lt;p&gt;HB 1002 would reform the school funding formula to provide more equitable distribution of resources to schools across Indiana, with a focus on addressing disparities between urban and rural districts.&lt;/p&gt;&#xA;&lt;h2 id=&#34;key-provisions&#34;&gt;Key Provisions&lt;/h2&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Increases per-pupil funding by 5% for all schools&lt;/li&gt;&#xA;&lt;li&gt;Creates a new &amp;ldquo;rural support&amp;rdquo; index in the funding formula&lt;/li&gt;&#xA;&lt;li&gt;Establishes grants for schools with high populations of students in poverty&lt;/li&gt;&#xA;&lt;li&gt;Requires annual reporting on funding equity metrics&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h2 id=&#34;current-status&#34;&gt;Current Status&lt;/h2&gt;&#xA;&lt;p&gt;The bill was introduced on January 10, 2025, and has been referred to the House Education Committee. A hearing is scheduled for January 25, 2025.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

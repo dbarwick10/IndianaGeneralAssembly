@@ -1,0 +1,77 @@
+{{ define "main" }}
+{{ if eq .RelPermalink "/issues/" }}
+  <!-- Main issues index page -->
+  <h1 class="title">Legislative Issues</h1>
+  
+  <div class="year-list">
+    {{ range where .Pages "Kind" "section" }}
+      <div class="year-item">
+        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        <p>{{ .Description }}</p>
+      </div>
+    {{ end }}
+  </div>
+{{ else if in .RelPermalink "/2025/" }}
+  <!-- Issues container for specific year -->
+  <div class="issues-container">
+    <div class="issues-sidebar">
+      <h2 class="sidebar-title">Key Issues
+        <div id="header-legislators-action" class="header-legislators-action">
+          <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+        </div>
+      </h2>
+      
+      <ul class="issues-list">
+        {{ $currentPage := . }}
+        {{ range where .Parent.Pages "Kind" "section" }}
+          <li class="issue-item{{ if eq .RelPermalink $currentPage.RelPermalink }} active{{ end }}" data-issue="{{ .File.ContentBaseName }}">
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          </li>
+        {{ end }}
+      </ul>
+    </div>
+    
+    <div class="issues-content">
+      <div class="issue-detail active">
+        <div class="issue-header">
+          <h2 class="issue-title">{{ .Title }}</h2>
+        </div>
+        <div class="issue-description">
+          {{ .Content }}
+        </div>
+        
+        <div class="related-bills">
+          <h3>Related Bills</h3>
+          {{ range .Pages }}
+            <div class="bill-item">
+              <div class="bill-title">
+                <a href="{{ .RelPermalink }}">{{ .Params.billNumber }}</a>
+                - {{ .Title }}
+              </div>
+              <div class="bill-description">{{ .Description }}</div>
+              <span class="bill-status status-{{ lower .Params.status | urlize }}">{{ .Params.status }}</span>
+            </div>
+          {{ end }}
+        </div>
+        
+        {{ if .Params.callScript }}
+        <div class="call-script">
+          <h3>Call Script</h3>
+          <div class="script-container">
+            <p class="script-intro">When calling your representative about this issue, consider using the following script:</p>
+            <div class="script-content">
+              {{ .Params.callScript | markdownify }}
+            </div>
+            <p class="script-tip"><strong>Tip:</strong> Be respectful. The person you talk to is unlikely to be the Representative or Senator themselves.</p>
+          </div>
+        </div>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+{{ end }}
+{{ end }}
+
+{{ define "scripts" }}
+<script type="module" src="/js/issues.js"></script>
+{{ end }}

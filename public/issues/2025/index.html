@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 Legislative Session - Indiana Legislative Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-container">
+    <div class="nav-logo">
+    <span>Indiana Legislative Tools</span>
+    </div>
+    
+    <div id="header-legislators-info" class="header-legislators-info"></div>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link" id="billTracker">Bill Tracker</a>
+        <a href="/issues/" class="nav-link active" id="issues">Issues</a>
+        <a href="/budget/" class="nav-link" id="budget">Budget View</a>
+    </div>
+</nav>
+        
+        <main>
+            
+<h1 class="title">2025 Legislative Session</h1>
+<div class="year-description"><p>This page contains key issues and related bills for the 2025 Indiana Legislative Session.</p>
+</div>
+
+<div class="search-container">
+    <input
+        type="text"
+        class="input"
+        id="billSearchInput"
+        placeholder="Search for a bill (e.g., HB1001)"
+    />
+    <button class="button" id="billSearchButton">Search</button>
+</div>
+
+<div id="search-results" class="bills-list"></div>
+
+<h2>Key Issues</h2>
+<div class="issues-grid">
+    <div class="issue-card">
+        <h3>Education</h3>
+        <ul>
+            <li><a href="/issues//hb1001" class="bill-link" data-bill="hb1001" data-year="">HB 1001 - State Budget</a></li>
+            <li><a href="/issues//hb1002" class="bill-link" data-bill="hb1002" data-year="">HB 1002 - Education Reform</a></li>
+        </ul>
+    </div>
+    
+    <div class="issue-card">
+        <h3>Healthcare</h3>
+        <ul>
+            <li><a href="/issues//sb5" class="bill-link" data-bill="sb5" data-year="">SB 5 - Rural Healthcare</a></li>
+            <li><a href="/issues//hb1127" class="bill-link" data-bill="hb1127" data-year="">HB 1127 - Mental Health</a></li>
+        </ul>
+    </div>
+    
+    
+</div>
+
+        </main>
+        
+        
+        <footer>
+            <div class="note">
+                <p>Disclaimer:</p>
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
+                <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
+            </div>
+        </footer>
+        
+    </div>
+    
+    
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('billSearchInput');
+    const searchButton = document.getElementById('billSearchButton');
+    const resultsContainer = document.getElementById('search-results');
+    
+    searchButton.addEventListener('click', async function() {
+      const billId = searchInput.value.trim();
+      if (!billId) return;
+      
+      
+      resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+      
+      try {
+        const year = '';
+        const apiEndpoint = 'https:\/\/indianageneralassembly-production.up.railway.app';
+        
+        const response = await fetch(`${apiEndpoint}/${year}/bills/${billId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Bill not found: ${response.status}`);
+        }
+        
+        const billData = await response.json();
+        
+        
+        resultsContainer.innerHTML = `
+          <div class="bill-item">
+            <div class="bill-title">
+              <a href="/issues/${year}/${billId}" class="bill-link" data-bill="${billId}" data-year="${year}">
+                ${billId.toUpperCase()} - ${billData.description || 'Bill Information'}
+              </a>
+            </div>
+            <div class="bill-description">${billData.title || ''}</div>
+            <span class="bill-status ${billData.status ? `status-${billData.status.toLowerCase().replace(/\s+/g, '-')}` : ''}">
+              ${billData.status || 'Status Unknown'}
+            </span>
+          </div>
+        `;
+        
+      } catch (error) {
+        resultsContainer.innerHTML = `
+          <div class="error-message">
+            <p>Could not find bill "${billId}". Please check the bill number and try again.</p>
+            <p>Error: ${error.message}</p>
+          </div>
+        `;
+      }
+    });
+    
+    
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchButton.click();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

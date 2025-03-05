@@ -1,0 +1,158 @@
+{{ define "main" }}
+<div class="bill-detail-container" id="bill-container">
+  <div class="issue-navigation">
+    <a href="/issues/{{ .Params.year }}/" class="back-link">« Back to {{ .Params.year }} Session</a>
+  </div>
+  
+  <div class="loading-spinner" id="bill-loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading bill information...</div>
+  </div>
+  
+  <div id="bill-content" class="hidden">
+    <!-- Content will be populated by JavaScript -->
+  </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const billContainer = document.getElementById('bill-container');
+    const loadingElement = document.getElementById('bill-loading');
+    const contentElement = document.getElementById('bill-content');
+    
+    // Get bill ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const billId = pathParts[pathParts.length - 1];
+    const year = pathParts[pathParts.length - 2] || '{{ .Site.Params.year }}';
+    
+    const apiEndpoint = '{{ .Site.Params.apiEndpoint }}';
+    
+    try {
+      // Fetch bill details
+      const response = await fetch(`${apiEndpoint}/${year}/bills/${billId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const billData = await response.json();
+      
+      // Fetch bill actions
+      const actionsResponse = await fetch(`${apiEndpoint}/${year}/bills/${billId}/actions`);
+      const actionsData = await actionsResponse.json();
+      
+      // Hide loading spinner
+      loadingElement.classList.add('hidden');
+      contentElement.classList.remove('hidden');
+      
+      // Populate bill content
+      contentElement.innerHTML = `
+        <div class="bill-header">
+          <h1 class="bill-title">${billId} - ${billData.description || 'Bill Information'}</h1>
+          <span class="bill-status ${billData.status ? `status-${billData.status.toLowerCase().replace(/\s+/g, '-')}` : ''}">
+            ${billData.status || 'Status Unknown'}
+          </span>
+        </div>
+        
+        <div class="bill-details">
+          ${billData.title ? `<p><strong>Title:</strong> ${billData.title}</p>` : ''}
+          ${billData.description ? `<p><strong>Description:</strong> ${billData.description}</p>` : ''}
+          
+          ${billData.authors && billData.authors.length ? `
+            <div class="legislator-section">
+              <div class="legislator-header">
+                <h3>Authors</h3>
+              </div>
+              <ul>
+                ${billData.authors.map(author => `
+                  <li>${author.fullName.replace('Representative', 'Rep.').replace('Senator', 'Sen.')} (${author.party})</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${billData.coauthors && billData.coauthors.length ? `
+            <div class="legislator-section">
+              <div class="legislator-header">
+                <h3>Co-authors</h3>
+              </div>
+              <ul>
+                ${billData.coauthors.map(coauthor => `
+                  <li>${coauthor.fullName.replace('Representative', 'Rep.').replace('Senator', 'Sen.')} (${coauthor.party})</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${billData.sponsors && billData.sponsors.length ? `
+            <div class="legislator-section">
+              <div class="legislator-header">
+                <h3>Sponsors</h3>
+              </div>
+              <ul>
+                ${billData.sponsors.map(sponsor => `
+                  <li>${sponsor.fullName.replace('Representative', 'Rep.').replace('Senator', 'Sen.')} (${sponsor.party})</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${billData.cosponsors && billData.cosponsors.length ? `
+            <div class="legislator-section">
+              <div class="legislator-header">
+                <h3>Co-sponsors</h3>
+              </div>
+              <ul>
+                ${billData.cosponsors.map(cosponsor => `
+                  <li>${cosponsor.fullName.replace('Representative', 'Rep.').replace('Senator', 'Sen.')} (${cosponsor.party})</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+        
+        <div class="bill-digest">
+          ${billData.latestVersion && billData.latestVersion.digest ? `
+            <details>
+              <summary><strong>Digest</strong></summary>
+              <p>${billData.latestVersion.digest}</p>
+            </details>
+          ` : ''}
+        </div>
+        
+        <div class="bill-actions">
+          <h3>Bill Actions</h3>
+          ${actionsData.items && actionsData.items.length ? `
+            <ul class="action-list">
+              ${actionsData.items.sort((a, b) => new Date(a.date) - new Date(b.date))
+                .map(action => `
+                  <li>
+                    <strong>${new Date(action.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}</strong>: ${action.description}
+                  </li>
+                `).join('')}
+            </ul>
+          ` : '<p>No actions found for this bill.</p>'}
+        </div>
+      `;
+      
+    } catch (error) {
+      console.error('Error fetching bill data:', error);
+      loadingElement.classList.add('hidden');
+      contentElement.classList.remove('hidden');
+      contentElement.innerHTML = `
+        <div class="error-message">
+          <h2>Error Loading Bill Information</h2>
+          <p>Sorry, we couldn't load information for this bill. Please try again later.</p>
+          <p>Error details: ${error.message}</p>
+        </div>
+      `;
+    }
+  });
+</script>
+{{ end }}

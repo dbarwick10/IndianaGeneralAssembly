@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Budget - Indiana Legislative Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+    <nav class="nav-container">
+        <div class="nav-logo">
+            <span>Indiana Legislative Tools</span>
+        </div>
+        
+        <div id="header-legislators-info" class="header-legislators-info"></div>
+        
+        <div class="nav-links">
+            <a href="/" class="nav-link" id="billTracker">Bill Tracker</a>
+            <a href="/issues/" class="nav-link active" id="issues">Issues</a>
+            <a href="/budget/" class="nav-link" id="budget">Budget View</a>
+        </div>
+    </nav>
+</header>
+        
+        <main>
+            
+<div class="bill-detail-container">
+  <div class="issue-navigation">
+    <a href="/issues/2025/education/" class="back-link">« Back to Education</a>
+  </div>
+  
+  <div class="bill-header">
+    <h1 class="bill-title">HB1001 - State Budget</h1>
+    <span class="bill-status status-passed-house">Passed House</span>
+  </div>
+  
+  
+  
+  <div class="bill-content">
+    <h2 id="bill-summary">Bill Summary</h2>
+<p>House Bill 1001 is the state budget bill that makes significant changes to education funding in Indiana.</p>
+<h2 id="key-provisions">Key Provisions</h2>
+<ul>
+<li>Removes income maximums for choice scholarship eligibility</li>
+<li>Changes curricular materials funding</li>
+<li>Provides state funding for adult charter schools</li>
+<li>Requires reporting on dual credit alignment</li>
+<li>Prohibits excessive fees for career scholarship students</li>
+<li>Mandates more frequent distribution of choice scholarships</li>
+<li>Requires the Commission for Higher Education to report on facility utilization</li>
+</ul>
+<h2 id="current-status">Current Status</h2>
+<p>The bill has passed the House and is now being considered in the Senate.</p>
+
+  </div>
+  
+  
+  <div class="call-script">
+    <h3>Call Script</h3>
+    <div class="script-container">
+      <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
+      <div class="script-content">
+        <p>&ldquo;Hello, my name is [Your Name] and I&rsquo;m a constituent at [Your Street Address, City, State, Zip Code].</p>
+<p>I&rsquo;m calling to express my opposition to House Bill 1001, the state budget bill. This bill would reduce public education funding through choice scholarships and significantly cut curricular materials funds, which I find deeply concerning.</p>
+<p>Strong public education is essential for our state&rsquo;s future, and I urge [Rep./Sen. Name] to support increased investment in our schools and educators rather than these cuts.</p>
+<p>Thank you for your time.&rdquo;</p>
+
+      </div>
+      <p class="script-tip"><strong>Tip:</strong> Personalize your call by sharing how this bill impacts you, your family, or your community.</p>
+    </div>
+  </div>
+  
+  
+  <div class="bill-actions">
+    <h3>Bill Actions</h3>
+    <div id="dynamicActions" data-bill="HB1001" data-year="2025">
+      <p class="loading">Loading bill actions...</p>
+    </div>
+  </div>
+</div>
+
+        </main>
+        
+        
+        <footer>
+            <div class="note">
+                <p>Disclaimer:</p>
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
+                <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
+            </div>
+        </footer>
+        
+    </div>
+    
+    
+<script>
+  
+  document.addEventListener('DOMContentLoaded', async function() {
+    const actionContainer = document.getElementById('dynamicActions');
+    if (!actionContainer) return;
+    
+    const billNumber = actionContainer.dataset.bill;
+    const year = actionContainer.dataset.year || '2025';
+    const apiUrl = 'https:\/\/indianageneralassembly-production.up.railway.app';
+    
+    try {
+      const response = await fetch(`${apiUrl}/${year}/bills/${billNumber}/actions`);
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        let actionsHtml = '<ul class="action-list">';
+        data.items.forEach(action => {
+          actionsHtml += `<li><strong>${new Date(action.date).toLocaleDateString()}</strong>: ${action.description}</li>`;
+        });
+        actionsHtml += '</ul>';
+        actionContainer.innerHTML = actionsHtml;
+      } else {
+        actionContainer.innerHTML = '<p>No actions found for this bill.</p>';
+      }
+    } catch (error) {
+      actionContainer.innerHTML = '<p>Error loading bill actions. Please try again later.</p>';
+      console.error('Error fetching bill actions:', error);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+<nav class="nav-container">
+    <div class="nav-logo">
+    <span>Indiana Legislative Tools</span>
+    </div>
+    
+    <div id="header-legislators-info" class="header-legislators-info"></div>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link{{ if .IsHome }} active{{ end }}" id="billTracker">Bill Tracker</a>
+        <a href="/issues/" class="nav-link{{ if eq .Section "issues" }} active{{ end }}" id="issues">Issues</a>
+        <a href="/budget/" class="nav-link{{ if eq .Section "budget" }} active{{ end }}" id="budget">Budget View</a>
+    </div>
+</nav>

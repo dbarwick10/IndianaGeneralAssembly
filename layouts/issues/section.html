@@ -1,0 +1,98 @@
+{{ define "main" }}
+<h1 class="title">{{ .Title }}</h1>
+<div class="year-description">{{ .Content }}</div>
+
+<div class="search-container">
+    <input
+        type="text"
+        class="input"
+        id="billSearchInput"
+        placeholder="Search for a bill (e.g., HB1001)"
+    />
+    <button class="button" id="billSearchButton">Search</button>
+</div>
+
+<div id="search-results" class="bills-list"></div>
+
+<h2>Key Issues</h2>
+<div class="issues-grid">
+    <div class="issue-card">
+        <h3>Education</h3>
+        <ul>
+            <li><a href="/issues/{{ .Params.year }}/hb1001" class="bill-link" data-bill="hb1001" data-year="{{ .Params.year }}">HB 1001 - State Budget</a></li>
+            <li><a href="/issues/{{ .Params.year }}/hb1002" class="bill-link" data-bill="hb1002" data-year="{{ .Params.year }}">HB 1002 - Education Reform</a></li>
+        </ul>
+    </div>
+    
+    <div class="issue-card">
+        <h3>Healthcare</h3>
+        <ul>
+            <li><a href="/issues/{{ .Params.year }}/sb5" class="bill-link" data-bill="sb5" data-year="{{ .Params.year }}">SB 5 - Rural Healthcare</a></li>
+            <li><a href="/issues/{{ .Params.year }}/hb1127" class="bill-link" data-bill="hb1127" data-year="{{ .Params.year }}">HB 1127 - Mental Health</a></li>
+        </ul>
+    </div>
+    
+    <!-- Add more issue cards as needed -->
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('billSearchInput');
+    const searchButton = document.getElementById('billSearchButton');
+    const resultsContainer = document.getElementById('search-results');
+    
+    searchButton.addEventListener('click', async function() {
+      const billId = searchInput.value.trim();
+      if (!billId) return;
+      
+      // Show loading indicator
+      resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+      
+      try {
+        const year = '{{ .Params.year }}';
+        const apiEndpoint = '{{ .Site.Params.apiEndpoint }}';
+        
+        const response = await fetch(`${apiEndpoint}/${year}/bills/${billId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Bill not found: ${response.status}`);
+        }
+        
+        const billData = await response.json();
+        
+        // Display result
+        resultsContainer.innerHTML = `
+          <div class="bill-item">
+            <div class="bill-title">
+              <a href="/issues/${year}/${billId}" class="bill-link" data-bill="${billId}" data-year="${year}">
+                ${billId.toUpperCase()} - ${billData.description || 'Bill Information'}
+              </a>
+            </div>
+            <div class="bill-description">${billData.title || ''}</div>
+            <span class="bill-status ${billData.status ? `status-${billData.status.toLowerCase().replace(/\s+/g, '-')}` : ''}">
+              ${billData.status || 'Status Unknown'}
+            </span>
+          </div>
+        `;
+        
+      } catch (error) {
+        resultsContainer.innerHTML = `
+          <div class="error-message">
+            <p>Could not find bill "${billId}". Please check the bill number and try again.</p>
+            <p>Error: ${error.message}</p>
+          </div>
+        `;
+      }
+    });
+    
+    // Allow searching by pressing Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchButton.click();
+      }
+    });
+  });
+</script>
+{{ end }}

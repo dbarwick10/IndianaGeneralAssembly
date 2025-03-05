@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ if .Title }}{{ .Title }} - {{ end }}Indiana Legislative Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    {{ block "head" . }}{{ end }}
+</head>
+<body>
+    <div class="container">
+        {{ partial "nav.html" . }}
+        
+        <main>
+            {{ block "main" . }}{{ end }}
+        </main>
+        
+        {{ block "footer" . }}
+        <footer>
+            <div class="note">
+                <p>Disclaimer:</p>
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.</small></p>
+                <p><small>INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
+            </div>
+        </footer>
+        {{ end }}
+    </div>
+    
+    {{ block "scripts" . }}{{ end }}
+</body>
+</html>
