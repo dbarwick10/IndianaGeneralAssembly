@@ -14,8 +14,7 @@ app.use(cors({
     origin: function(origin, callback) {
         console.log('Incoming origin:', origin);
         const allowedOrigins = [
-            'http://127.0.0.1:5500',
-            'http://localhost:1313',
+            'http://127.0.0.1:5500',        
             'http://localhost:5500',
             'https://dbarwick10.github.io',
             'https://dbarwick10.github.io/IndianaGeneralAssembly',
@@ -105,6 +104,7 @@ const calculateBillTiming = (actions) => {
     const firstAction = new Date(sortedActions[0].date);
     
     let chamberPassage = null;
+    let returnedWithAmendments = null;
     let lawPassage = null;
 
     for (const action of sortedActions) {
@@ -115,6 +115,10 @@ const calculateBillTiming = (actions) => {
             chamberPassage = actionDate;
         }
 
+        if (!returnedWithAmendments && description.includes('returned to the senate with amendments' || 'returned to the house with amendments')) {
+            returnedWithAmendments = actionDate;
+        }
+
         if (!lawPassage && description.includes('public law')) {
             lawPassage = actionDate;
         }
@@ -123,6 +127,8 @@ const calculateBillTiming = (actions) => {
     return {
         daysToPassChamber: chamberPassage ? 
             Math.ceil((chamberPassage - firstAction) / (1000 * 60 * 60 * 24)) : null,
+        daysToReturnWithAmendments: returnedWithAmendments ?
+            Math.ceil((returnedWithAmendments - chamberPassage) / (1000 * 60 * 60 * 24)) : null,
         daysToBecomeLaw: lawPassage ? 
             Math.ceil((lawPassage - firstAction) / (1000 * 60 * 60 * 24)) : null
     };
@@ -702,6 +708,16 @@ app.get("/:year/legislators/:userId/complete-bills", async (req, res) => {
                     const passedChamber = actions.some(action => 
                         action.description?.toLowerCase().includes('referred to the'));
                     
+                    const sentToChamber = actions.find(action => 
+                        action.description === 'Referred to the Senate' || 
+                        action.description === 'Referred to the House'
+                    );
+
+                    const returnedWithAmendments = actions.find(action => 
+                        action.description === 'Returned to the Senate with amendments' || 
+                        action.description === 'Returned to the House with amendments'
+                    );
+
                     const becomeLaw = actions.some(action => 
                         action.description?.toLowerCase().includes('public law'));
 
@@ -713,6 +729,8 @@ app.get("/:year/legislators/:userId/complete-bills", async (req, res) => {
                         details,
                         actions,
                         passedChamber,
+                        sentToChamber,
+                        returnedWithAmendments,
                         becomeLaw,
                         timing
                     };
