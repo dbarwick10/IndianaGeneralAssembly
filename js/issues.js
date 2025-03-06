@@ -1,5 +1,5 @@
 // issues.js - Enhanced with Markdown support and call tracking
-import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "../findMyLegislator.js";
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get all issue items and issue details
@@ -77,7 +77,7 @@ function checkForDailyReset() {
 async function loadIssuesData() {
     try {
         // Fetch the issues index
-        const response = await fetch('issues/index.json');
+        const response = await fetch('bills/index.json');
         if (!response.ok) throw new Error(`Failed to load issues index: ${response.status}`);
         
         const issuesData = await response.json();
@@ -158,7 +158,7 @@ async function loadIssueContent(issueId) {
     
     try {
         // Fetch the markdown file for this issue
-        const response = await fetch(`issues/${issueId}.md`);
+        const response = await fetch(`bills/${issueId}.md`);
         if (!response.ok) throw new Error(`Failed to load issue content: ${response.status}`);
         
         const markdownContent = await response.text();

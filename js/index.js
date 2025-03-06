@@ -1,4 +1,4 @@
-import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "../findMyLegislator.js";
 
 // Global state
 let legislators = [];
