@@ -227,7 +227,7 @@ function processRenderedContent() {
             section.innerHTML = `
                 <h3>Call Script</h3>
                 <div class="script-container">
-                    <p class="script-intro">When calling your representative about this issue, consider using the following script:</p>
+                    <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
                     <div class="script-content"></div>
                     <p class="script-tip"><strong>Tip:</strong> Be respectful. The person you talk to is unlikely to be the Representative or Senator themselves.</p>
                 </div>
@@ -692,6 +692,11 @@ function recordCallResult(legislator, result) {
         
         // Update the call tracking to show the next legislator
         updateCallTracking();
+
+        const nextLegislator = legislators[nextIndex];
+            if (nextLegislator) {
+                updateCallScriptText(nextLegislator);
+            }
         
         // Scroll to script
         const scriptContainer = document.querySelector('.script-container');
