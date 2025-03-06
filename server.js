@@ -20,6 +20,7 @@ app.use(cors({
             'https://dbarwick10.github.io/IndianaGeneralAssembly',
             'https://indianageneralassembly-production.up.railway.app',
             'https://legisalert.netlify.app',
+            'https://legisalert.org/',
             null 
         ];
         
