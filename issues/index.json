@@ -16,29 +16,24 @@
         "description": "Various immigration matters"
       },
       {
-        "id": "public-safety",
-        "title": "Public Safety",
-        "description": "Law enforcement, emergency services, and public protection"
+        "id": "hb1002",
+        "title": "HB 1002: Various Education Matters",
+        "description": "Various Education Matters"
       },
       {
-        "id": "environment",
-        "title": "Environment",
-        "description": "Environmental regulations, conservation, and natural resources"
+        "id": "sb518",
+        "title": "SB 518: School Property Taxes",
+        "description": "School property taxes"
       },
       {
-        "id": "taxes",
-        "title": "Taxes & Revenue",
-        "description": "Tax policy, state revenues, and funding allocation"
+        "id": "sb523",
+        "title": "SB 523: School Chaplains",
+        "description": "School Chaplains"
       },
       {
-        "id": "trans-rights",
-        "title": "Transgender Rights",
-        "description": "Legislation affecting transgender individuals"
-      },
-      {
-        "id": "example",
-        "title": "Example Markdown",
-        "description": "example markdown file"
+        "id": "sb289",
+        "title": "SB 289: Nondiscrimination in Employment and Education",
+        "description": "Nondiscrimination in employment and education"
       }
     ]
   }

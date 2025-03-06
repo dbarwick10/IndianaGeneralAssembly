@@ -1522,6 +1522,7 @@ input:checked + .slider:before {
 @media (max-width: 768px) {
     .container {
         padding: 16px;
+        max-width: 90%;
     }
 
     .search-container {

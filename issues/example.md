@@ -8,8 +8,8 @@ The state has begun addressing these challenges through various legislative meas
 
 * Renewable energy development
 * Carbon emissions reduction
-* Climate resilience funding
-* Agricultural adaptation strategies
+    * Climate resilience funding
+    * Agricultural adaptation strategies
 
 In the current session, several bills have been introduced that would impact Indiana's approach to climate policy, including measures to both accelerate and restrict climate action.
 
