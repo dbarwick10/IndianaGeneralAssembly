@@ -1194,121 +1194,137 @@ function getUrlParams() {
     const searchParams = new URLSearchParams(window.location.search);
     const params = {};
     
-    // Check for legislator parameter
-    if (searchParams.has('legislator')) {
-      // Convert dashes back to spaces after decoding
-      const encoded = searchParams.get('legislator');
-      const decoded = decodeURIComponent(encoded);
-      const nameWithoutPrefix = decoded.replace(/-+/g, ' ');
-      
-      // Find the legislator to determine the right prefix
-      params.legislator = nameWithoutPrefix; // Store the name without prefix initially
-      
-    //   console.log('Found legislator in URL:', nameWithoutPrefix);
+    // Check for legislators parameter (now supports multiple comma-separated values)
+    if (searchParams.has('legislators')) {
+        const encodedLegislators = searchParams.get('legislators');
+        // Split by comma first, then decode each legislator name
+        const legislatorList = encodedLegislators.split(',').map(name => {
+            // Convert dashes back to spaces after decoding
+            const decoded = decodeURIComponent(name);
+            return decoded.replace(/-+/g, ' ');
+        });
+        
+        params.legislators = legislatorList;
+        console.log('Found legislators in URL:', legislatorList);
     }
     
     // Check for year parameter
     if (searchParams.has('year')) {
-      params.year = searchParams.get('year');
-    //   console.log('Found year in URL:', params.year);
+        params.year = searchParams.get('year');
+        console.log('Found year in URL:', params.year);
     }
     
     // Check for view parameter (bills or stats)
     if (searchParams.has('view')) {
-      params.view = searchParams.get('view');
-    //   console.log('Found view in URL:', params.view);
+        params.view = searchParams.get('view');
+        console.log('Found view in URL:', params.view);
     }
     
     return params;
-  }
-  
+}
+
 // Function to update URL with current search parameters
 function updateUrlWithSearch(legislatorNames, year, viewType) {
     const params = new URLSearchParams();
     
     if (legislatorNames && legislatorNames.length > 0) {
-      // Remove "Sen." and "Rep." prefixes, then replace spaces with dashes
-      const cleanedNames = legislatorNames.replace(/\b(Sen\.|Rep\.)\s+/g, '');
-      const formattedNames = cleanedNames.replace(/\s+/g, '-');
-      params.set('legislator', encodeURIComponent(formattedNames));
+        // Split by comma to handle multiple legislators
+        const nameList = legislatorNames.split(',').map(name => name.trim());
+        
+        // Process each legislator name
+        const formattedNames = nameList.map(name => {
+            // Remove "Sen." and "Rep." prefixes
+            const cleanedName = name.replace(/\b(Sen\.|Rep\.)\s+/g, '');
+            // Replace spaces with dashes
+            return encodeURIComponent(cleanedName.replace(/\s+/g, '-'));
+        });
+        
+        // Join with commas for the URL
+        params.set('legislators', formattedNames.join(','));
     }
     
     if (year) {
-      params.set('year', year);
+        params.set('year', year);
     }
     
     if (viewType) {
-      params.set('view', viewType === 'stats' ? 'stats' : 'bills');
+        params.set('view', viewType === 'stats' ? 'stats' : 'bills');
     }
     
     // Update the URL without reloading the page
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
-  }
+}
 
 // Handle URL parameters and perform search if needed
 function handleUrlParameters() {
-    // console.log('Handling URL parameters...');
+    console.log('Handling URL parameters...');
     const params = getUrlParams();
     
-    if (params.legislator) {
-    //   console.log('Processing legislator from URL:', params.legislator);
-      
-      // Find the matching legislator to determine the correct prefix
-      const matchingLegislator = legislators.find(leg => {
-        const cleanedLegName = leg.fullName.toLowerCase().replace(/\b(senator|rep\.|representative)\s+/g, '');
-        const cleanedSearchName = params.legislator.toLowerCase();
-        return cleanedLegName === cleanedSearchName;
-      });
-      
-      // Add the appropriate prefix based on chamber
-      let displayName = params.legislator;
-      if (matchingLegislator) {
-        const prefix = matchingLegislator.chamber === 'S' ? 'Sen. ' : 'Rep. ';
-        displayName = prefix + params.legislator;
-      }
-      
-      // Set the search input with the prefix
-      document.getElementById('searchInput').value = displayName;
-      searchTerm = displayName;
-      
-      // Set the year if provided
-      if (params.year) {
-        document.getElementById('yearInput').value = params.year;
-      } else {
-        // Default to current year
-        const currentYear = new Date().getFullYear();
-        document.getElementById('yearInput').value = currentYear.toString();
-      }
-      
-      // Set view type if provided
-      if (params.view === 'stats') {
-        document.getElementById('viewToggle').checked = true;
-      } else {
-        document.getElementById('viewToggle').checked = false;
-      }
-      
-      // Trigger search after a short delay to ensure DOM is fully loaded
-    //   console.log('Scheduling search from URL parameters...');
-      setTimeout(() => {
-        // console.log('Executing search from URL parameters');
-        const searchButton = document.getElementById('searchButton');
-        if (searchButton) {
-          searchButton.click();
+    if (params.legislators && params.legislators.length > 0) {
+        console.log('Processing legislators from URL:', params.legislators);
+        
+        // Process each legislator name to add correct prefix
+        const displayNames = params.legislators.map(legislatorName => {
+            // Find the matching legislator to determine the correct prefix
+            const matchingLegislator = legislators.find(leg => {
+                const cleanedLegName = leg.fullName.toLowerCase().replace(/\b(senator|rep\.|representative)\s+/g, '');
+                const cleanedSearchName = legislatorName.toLowerCase();
+                return cleanedLegName === cleanedSearchName;
+            });
+            
+            // Add the appropriate prefix based on chamber if found
+            if (matchingLegislator) {
+                const prefix = matchingLegislator.chamber === 'S' ? 'Sen. ' : 'Rep. ';
+                return prefix + legislatorName;
+            }
+            
+            // If no match found, return the name as is
+            return legislatorName;
+        });
+        
+        // Join names with commas for the search input
+        const fullSearchTerm = displayNames.join(', ');
+        document.getElementById('searchInput').value = fullSearchTerm;
+        searchTerm = fullSearchTerm;
+        
+        // Set the year if provided
+        if (params.year) {
+            document.getElementById('yearInput').value = params.year;
         } else {
-          console.error('Search button not found in DOM');
+            // Default to current year
+            const currentYear = new Date().getFullYear();
+            document.getElementById('yearInput').value = currentYear.toString();
         }
-      }, 500); // Slightly longer delay to ensure everything is ready
+        
+        // Set view type if provided
+        if (params.view === 'stats') {
+            document.getElementById('viewToggle').checked = true;
+        } else {
+            document.getElementById('viewToggle').checked = false;
+        }
+        
+        // Trigger search after a short delay to ensure DOM is fully loaded
+        console.log('Scheduling search from URL parameters...');
+        setTimeout(() => {
+            console.log('Executing search from URL parameters');
+            const searchButton = document.getElementById('searchButton');
+            if (searchButton) {
+                searchButton.click();
+            } else {
+                console.error('Search button not found in DOM');
+            }
+        }, 500); // Slightly longer delay to ensure everything is ready
     } else {
-      console.log('No legislator parameter found in URL');
+        console.log('No legislators parameter found in URL');
     }
-  }
+}
 
 // Add this event listener to detect URL changes (browser back/forward)
 window.addEventListener('popstate', function(event) {
-    // console.log('popstate event triggered - URL changed');
+    console.log('popstate event triggered - URL changed');
     // Clear any existing search results first
     clearResults();
     // Get parameters from the new URL and perform search
     handleUrlParameters();
-  });
+});
