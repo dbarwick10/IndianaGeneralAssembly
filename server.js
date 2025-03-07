@@ -1,13 +1,21 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
 import 'dotenv/config';
 import NodeCache from 'node-cache';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_CACHE_TTL = 3600; // Cache API responses for 1 hour
+const API_CACHE_TTL = 3600;
 const apiCache = new NodeCache({ stdTTL: API_CACHE_TTL });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+let globalCallCounter = 0;
+
+app.use(express.static(__dirname));
 
 // Enable CORS and JSON parsing
 app.use(cors({
@@ -45,6 +53,121 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.post("/api/calls/record", (req, res) => {
+    try {
+        // Increment the global counter
+        globalCallCounter++;
+        
+        // Get additional information from the request body if available
+        const { legislatorId, result, issueID } = req.body;
+        const timestamp = new Date().toISOString();
+        const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+        
+        // Create a detailed log message
+        console.log(`=== CALL RECORDED ===`);
+        console.log(`Timestamp: ${timestamp}`);
+        console.log(`Global Counter: ${globalCallCounter}`);
+        console.log(`Legislator ID: ${legislatorId || 'Not specified'}`);
+        console.log(`Issue ID: ${issueID || 'Not specified'}`);
+        console.log(`Call Result: ${result || 'Not specified'}`);
+        console.log(`Client IP: ${clientIP}`);
+        console.log(`User Agent: ${req.get('User-Agent') || 'Not specified'}`);
+        console.log(`====================`);
+        
+        // Return the updated count
+        res.json({
+            success: true,
+            globalCallCount: globalCallCounter,
+            timestamp: timestamp
+        });
+        
+        // You could also log to a file in addition to console
+        const logEntry = {
+            timestamp,
+            counter: globalCallCounter,
+            legislatorId,
+            result,
+            issueID,
+            clientIP,
+            userAgent: req.get('User-Agent')
+        };
+        
+        // Optional: Append to a log file
+        try {
+            const logFilePath = join(__dirname, 'call-logs.json');
+            let logs = [];
+            
+            // Read existing logs if file exists
+            if (fs.existsSync(logFilePath)) {
+                const logFileContent = fs.readFileSync(logFilePath, 'utf8');
+                logs = JSON.parse(logFileContent);
+            }
+            
+            // Add new log entry
+            logs.push(logEntry);
+            
+            // Write back to file (limit to last 1000 entries to prevent file from growing too large)
+            if (logs.length > 1000) logs = logs.slice(-1000);
+            fs.writeFileSync(logFilePath, JSON.stringify(logs, null, 2));
+        } catch (logError) {
+            console.error('Error writing to log file:', logError);
+        }
+        
+    } catch (error) {
+        console.error('Error recording call:', error);
+        res.status(500).json({
+            error: "Failed to record call",
+            details: error.message
+        });
+    }
+});
+
+// Endpoint to get the current global call count
+app.get("/api/calls/count", (req, res) => {
+    try {
+        res.json({
+            globalCallCount: globalCallCounter
+        });
+    } catch (error) {
+        console.error('Error fetching call count:', error);
+        res.status(500).json({
+            error: "Failed to fetch call count",
+            details: error.message
+        });
+    }
+});
+
+// Path for storing call data
+const dataFilePath = join(__dirname, 'call-data.json');
+
+// Load existing call data if available
+try {
+    if (fs.existsSync(dataFilePath)) {
+        const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
+        globalCallCounter = data.globalCallCount || 0;
+        console.log(`Loaded global call count: ${globalCallCounter}`);
+    } else {
+        // Create file with initial data
+        fs.writeFileSync(dataFilePath, JSON.stringify({ globalCallCount: 0 }));
+        console.log('Created new call data file');
+    }
+} catch (error) {
+    console.error('Error loading call data:', error);
+}
+
+// Save call data periodically and on server shutdown
+const saveCallData = () => {
+    try {
+        fs.writeFileSync(dataFilePath, JSON.stringify({ globalCallCount: globalCallCounter }));
+        console.log(`Saved global call count: ${globalCallCounter}`);
+    } catch (error) {
+        console.error('Error saving call data:', error);
+    }
+};
+
+// Save data every 5 minutes
+setInterval(saveCallData, 5 * 60 * 1000);
 
 // Enhanced fetch function with caching
 const fetchIGAData = async (year, endpoint) => {
@@ -1010,6 +1133,26 @@ app.post("/:year/bills/stats", async (req, res) => {
     }
 });
 
+// Remove your existing /issues/* route and use this one instead
+// Place this at the very end of your routes, just before error handlers
+app.use((req, res, next) => {
+    console.log('Catch-all middleware hit:', req.path);
+    
+    if (req.path.startsWith('/issues/')) {
+      console.log('Serving issues.html for path:', req.path);
+      return res.sendFile(join(__dirname, 'issues', 'index.html'));
+    }
+    
+    // For any other paths, continue to the next handler
+    next();
+  });
+
+process.on('SIGINT', () => {
+    console.log('Server shutting down, saving call data...');
+    saveCallData();
+    process.exit(0);
+});  
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -1021,5 +1164,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+    console.log(`Server running on port ${PORT} at ${new Date().toISOString()}`);
+    console.log(`Server directory: ${__dirname}`);
+    console.log('Ready to handle requests');
+  });
