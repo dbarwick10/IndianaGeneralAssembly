@@ -23,9 +23,14 @@ window.onload = async () => {
             // Update the legislators array
             legislators = data.items;
             // console.log('Loaded legislators from API:', legislators.length);
+
+            // console.log('Checking URL parameters after loading legislators');
+            handleUrlParameters();
         } else {
             throw new Error('No legislators returned from API');
         }
+
+        handleUrlParameters();
     } catch (error) {
         console.error('Error loading legislators from API:', error);
         console.log('Attempting to load from localStorage...');
@@ -38,7 +43,7 @@ window.onload = async () => {
                 const parsed = JSON.parse(storedLegislators);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     legislators = parsed;
-                    console.log('Loaded legislators from localStorage:', legislators.length);
+                    // console.log('Loaded legislators from localStorage:', legislators.length);
                 }
             } catch (parseError) {
                 console.error('Error parsing localStorage data:', parseError);
@@ -668,12 +673,18 @@ document.getElementById('yearInput').addEventListener('change', async () => {
     clearResults();
 });
 
+// Find this section in your code - it should be around line 347-352 in index.js
 document.getElementById('viewToggle').addEventListener('change', () => {
     if (bills.size > 0) {
         updateView();
+        
+        // ADD THIS LINE HERE - after updateView() call:
+        updateUrlWithSearch(searchTerm, document.getElementById('yearInput').value, 
+                           document.getElementById('viewToggle').checked ? 'stats' : 'bills');
     }
 });
 
+// Find this section in your code - it should be around line 355-385 in index.js
 document.getElementById('searchButton').addEventListener('click', async () => {
     const year = document.getElementById('yearInput').value;
     if (!year) {
@@ -685,10 +696,16 @@ document.getElementById('searchButton').addEventListener('click', async () => {
 
     const names = searchTerm.split(',').map((name) => name.trim());
     const uniqueLegislators = names.map((name) =>
-        legislators.find((l) =>
-            l && l.fullName && abbreviateTitle(l.fullName).toLowerCase() === name.toLowerCase()
-        )
-    ).filter(Boolean);
+    legislators.find((l) => {
+        if (!l || !l.fullName) return false;
+        
+        // Remove prefixes for comparison
+        const cleanedLegName = abbreviateTitle(l.fullName).toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+        const cleanedSearchName = name.toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+        
+        return cleanedLegName === cleanedSearchName;
+    })
+).filter(Boolean);
 
     if (uniqueLegislators.length > 0) {
         loading = true;
@@ -709,6 +726,10 @@ document.getElementById('searchButton').addEventListener('click', async () => {
 
         loading = false;
         updateView();
+        
+        // ADD THIS LINE HERE - after updateView() call:
+        // console.log('Search successful, updating URL');
+        updateUrlWithSearch(searchTerm, year, document.getElementById('viewToggle').checked ? 'stats' : 'bills');
     } else {
         const noResultsElement = document.getElementById('noResults');
         if (noResultsElement) {
@@ -839,7 +860,7 @@ const fetchLegislatorsByAddress = async (street, city, zip) => {
         }
         
         const data = await response.json();
-        console.log('Legislators data received:', data);
+        // console.log('Legislators data received:', data);
         return data.items || [];
     } catch (error) {
         console.error('Error finding legislators by address:', error);
@@ -1052,7 +1073,7 @@ function saveLegislatorsToLocalStorage(legislators) {
     
     try {
         localStorage.setItem('legislators', JSON.stringify(legislators));
-        console.log('Saved legislators to localStorage:', legislators.length);
+        // console.log('Saved legislators to localStorage:', legislators.length);
     } catch (error) {
         console.error('Error saving legislators to localStorage:', error);
     }
@@ -1167,3 +1188,127 @@ function updateRecentSearchesList() {
         list.innerHTML = '<div class="recent-search-item error">Error loading recent searches</div>';
     }
 }
+
+// Function to parse URL parameters
+function getUrlParams() {
+    const searchParams = new URLSearchParams(window.location.search);
+    const params = {};
+    
+    // Check for legislator parameter
+    if (searchParams.has('legislator')) {
+      // Convert dashes back to spaces after decoding
+      const encoded = searchParams.get('legislator');
+      const decoded = decodeURIComponent(encoded);
+      const nameWithoutPrefix = decoded.replace(/-+/g, ' ');
+      
+      // Find the legislator to determine the right prefix
+      params.legislator = nameWithoutPrefix; // Store the name without prefix initially
+      
+    //   console.log('Found legislator in URL:', nameWithoutPrefix);
+    }
+    
+    // Check for year parameter
+    if (searchParams.has('year')) {
+      params.year = searchParams.get('year');
+    //   console.log('Found year in URL:', params.year);
+    }
+    
+    // Check for view parameter (bills or stats)
+    if (searchParams.has('view')) {
+      params.view = searchParams.get('view');
+    //   console.log('Found view in URL:', params.view);
+    }
+    
+    return params;
+  }
+  
+// Function to update URL with current search parameters
+function updateUrlWithSearch(legislatorNames, year, viewType) {
+    const params = new URLSearchParams();
+    
+    if (legislatorNames && legislatorNames.length > 0) {
+      // Remove "Sen." and "Rep." prefixes, then replace spaces with dashes
+      const cleanedNames = legislatorNames.replace(/\b(Sen\.|Rep\.)\s+/g, '');
+      const formattedNames = cleanedNames.replace(/\s+/g, '-');
+      params.set('legislator', encodeURIComponent(formattedNames));
+    }
+    
+    if (year) {
+      params.set('year', year);
+    }
+    
+    if (viewType) {
+      params.set('view', viewType === 'stats' ? 'stats' : 'bills');
+    }
+    
+    // Update the URL without reloading the page
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+  }
+
+// Handle URL parameters and perform search if needed
+function handleUrlParameters() {
+    // console.log('Handling URL parameters...');
+    const params = getUrlParams();
+    
+    if (params.legislator) {
+    //   console.log('Processing legislator from URL:', params.legislator);
+      
+      // Find the matching legislator to determine the correct prefix
+      const matchingLegislator = legislators.find(leg => {
+        const cleanedLegName = leg.fullName.toLowerCase().replace(/\b(senator|rep\.|representative)\s+/g, '');
+        const cleanedSearchName = params.legislator.toLowerCase();
+        return cleanedLegName === cleanedSearchName;
+      });
+      
+      // Add the appropriate prefix based on chamber
+      let displayName = params.legislator;
+      if (matchingLegislator) {
+        const prefix = matchingLegislator.chamber === 'S' ? 'Sen. ' : 'Rep. ';
+        displayName = prefix + params.legislator;
+      }
+      
+      // Set the search input with the prefix
+      document.getElementById('searchInput').value = displayName;
+      searchTerm = displayName;
+      
+      // Set the year if provided
+      if (params.year) {
+        document.getElementById('yearInput').value = params.year;
+      } else {
+        // Default to current year
+        const currentYear = new Date().getFullYear();
+        document.getElementById('yearInput').value = currentYear.toString();
+      }
+      
+      // Set view type if provided
+      if (params.view === 'stats') {
+        document.getElementById('viewToggle').checked = true;
+      } else {
+        document.getElementById('viewToggle').checked = false;
+      }
+      
+      // Trigger search after a short delay to ensure DOM is fully loaded
+    //   console.log('Scheduling search from URL parameters...');
+      setTimeout(() => {
+        // console.log('Executing search from URL parameters');
+        const searchButton = document.getElementById('searchButton');
+        if (searchButton) {
+          searchButton.click();
+        } else {
+          console.error('Search button not found in DOM');
+        }
+      }, 500); // Slightly longer delay to ensure everything is ready
+    } else {
+      console.log('No legislator parameter found in URL');
+    }
+  }
+
+// Add this event listener to detect URL changes (browser back/forward)
+window.addEventListener('popstate', function(event) {
+    // console.log('popstate event triggered - URL changed');
+    // Clear any existing search results first
+    clearResults();
+    // Get parameters from the new URL and perform search
+    handleUrlParameters();
+  });
