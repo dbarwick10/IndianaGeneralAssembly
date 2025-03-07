@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fetch and load issue content
     loadIssuesData();
+
+    handleRouting();
     
     // Setup legislator finder
     const findBtn = document.getElementById('find-my-legislators-btn');
@@ -86,13 +88,13 @@ async function loadIssuesData() {
         createIssuesSidebar(issuesData.issues);
         
         // Initial load - load the first issue
-        if (issuesData.issues && issuesData.issues.length > 0) {
-            loadIssueContent(issuesData.issues[0].id);
+        // if (issuesData.issues && issuesData.issues.length > 0) {
+        //     loadIssueContent(issuesData.issues[0].id);
             
-            // Set the first item as active
-            const firstItem = document.querySelector('.issue-item');
-            if (firstItem) firstItem.classList.add('active');
-        }
+        //     // Set the first item as active
+        //     const firstItem = document.querySelector('.issue-item');
+        //     if (firstItem) firstItem.classList.add('active');
+        // }
     } catch (error) {
         console.error('Error loading issues data:', error);
         document.querySelector('.issues-content').innerHTML = `
@@ -141,6 +143,12 @@ function createIssuesSidebar(issues) {
         
         sidebarList.appendChild(listItem);
     });
+
+    // Set up click handlers
+    setupIssueClickHandlers();
+    
+    // Handle initial routing
+    handleRouting();
 }
 
 // Load the content for a specific issue
@@ -186,8 +194,7 @@ async function loadIssueContent(issueId) {
         console.error(`Error loading issue ${issueId}:`, error);
         contentContainer.innerHTML = `
             <div class="error-message">
-                Failed to load issue content. Please try again later.
-                <br>Error: ${error.message}
+                Choose an issue from the list to view details.
             </div>
         `;
     }
@@ -905,3 +912,75 @@ function updateCallScriptText(legislator) {
         notice.innerHTML = `<strong>Your script has been personalized with ${title} ${legislator.lastName}'s name.</strong>`;
     }
 }
+
+// Function to handle URL routing
+function handleRouting() {
+    // Parse the current URL to get the issue ID
+    const path = window.location.pathname;
+    const issueId = path.split('/').pop(); // Get the last segment of the URL path
+    const hash = window.location.hash.substring(1);
+  
+if (hash) {
+    loadIssueContent(hash);
+    updateSelectedIssueVisibility(hash);
+} else {
+      // If no issue ID in URL, load the first issue from the list
+      const firstIssueItem = document.querySelector('.issue-item');
+      if (firstIssueItem) {
+        const firstIssueId = firstIssueItem.getAttribute('data-issue');
+        // Update URL with the first issue ID without reloading the page
+        updateURL(firstIssueId);
+        loadIssueContent(firstIssueId);
+        }
+    }
+}
+
+  function updateSelectedIssueVisibility(selectedIssueId) {
+    // Remove active class from all issues
+    document.querySelectorAll('.issue-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Add active class to the selected issue
+    const selectedItem = document.querySelector(`.issue-item[data-issue="${selectedIssueId}"]`);
+    if (selectedItem) {
+      selectedItem.classList.add('active');
+      
+      // Optionally scroll the item into view if it's not visible
+      selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+  
+  // Function to update the URL when an issue is selected
+  function updateURL(issueId) {
+    // Use history.pushState to update the URL without reloading the page
+    window.location.hash = issueId;
+  }
+  
+  // Modify your existing issue click handler
+  function setupIssueClickHandlers() {
+    document.querySelectorAll('.issue-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const issueId = this.getAttribute('data-issue');
+        
+        // Update the URL
+        updateURL(issueId);
+        
+        // Load the issue content
+        loadIssueContent(issueId);
+      });
+    });
+  }
+  
+  // Handle browser back/forward navigation
+  window.addEventListener('popstate', function(event) {
+    // Get the issue ID from the URL after navigation
+    const path = window.location.pathname;
+    const issueId = path.split('/').pop();
+    
+    if (issueId && issueId !== 'issues') {
+      loadIssueContent(issueId);
+    }
+  });
+  
+  

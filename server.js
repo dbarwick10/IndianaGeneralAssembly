@@ -1,13 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import 'dotenv/config';
 import NodeCache from 'node-cache';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_CACHE_TTL = 3600; // Cache API responses for 1 hour
+const API_CACHE_TTL = 3600;
 const apiCache = new NodeCache({ stdTTL: API_CACHE_TTL });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+app.use(express.static(__dirname));
 
 // Enable CORS and JSON parsing
 app.use(cors({
@@ -1010,6 +1016,22 @@ app.post("/:year/bills/stats", async (req, res) => {
     }
 });
 
+// Remove your existing /issues/* route and use this one instead
+// Place this at the very end of your routes, just before error handlers
+app.use((req, res, next) => {
+    console.log('Catch-all middleware hit:', req.path);
+    
+    if (req.path.startsWith('/issues/')) {
+      console.log('Serving issues.html for path:', req.path);
+      return res.sendFile(join(__dirname, 'issues', 'index.html'));
+    }
+    
+    // For any other paths, continue to the next handler
+    next();
+  });
+
+  
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
@@ -1021,5 +1043,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+    console.log(`Server running on port ${PORT} at ${new Date().toISOString()}`);
+    console.log(`Server directory: ${__dirname}`);
+    console.log('Ready to handle requests');
+  });

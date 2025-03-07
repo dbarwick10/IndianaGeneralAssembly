@@ -8,7 +8,7 @@ let searchTerm = '';
 let suggestions = [];
 let openBills = {};
 let billStats = null;
-const testing = false;
+const testing = true;
 const url = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
 
 // Initialize the application 
@@ -483,6 +483,7 @@ const renderBills = () => {
                                                         })}
                                                     </span>
                                                 ` : ''}
+                                        
                                             </div>
                                         ` : ''}
                                     </div>
