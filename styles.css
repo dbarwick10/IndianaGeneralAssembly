@@ -326,6 +326,7 @@ input:checked + .slider:before {
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    
 }
 
 .status-tag {
@@ -781,6 +782,15 @@ input:checked + .slider:before {
     font-size: 0.85rem;
     padding: 8px 16px;
     /* margin-top: 12px; */
+}
+
+.issues-button-container {
+    margin-left: 10px;
+}
+
+.issues-button {
+    font-size: 0.85rem;
+    padding: 8px 16px;
 }
 
 /* Error message */

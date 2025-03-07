@@ -378,7 +378,16 @@ const renderStatsView = () => {
     });
 };
 
-const renderBills = () => {
+const renderBills = async () => {
+    // Dynamically load issues data
+    let issuesData = { issues: [] };
+    try {
+        const response = await fetch('/issues/bills/index.json');
+        issuesData = await response.json();
+    } catch (error) {
+        console.error('Error loading issues data:', error);
+    }
+
     const results = document.getElementById('results');
     results.innerHTML = '';
 
@@ -422,10 +431,21 @@ const renderBills = () => {
                 <div class="space-y-4">
                     ${bills.map((bill) => {
                         const timing = bill.timing || {};
+                        
+                        // Precise matching for bill issues
+                        const matchingIssue = issuesData.issues.find(issue => {
+                            // Normalize bill name and issue title
+                            const normalizedBillName = bill.billName.replace(/\s+/g, '').toLowerCase();
+                            const normalizedIssueTitle = issue.title.replace(/\s+/g, '').toLowerCase();
+                            
+                            // Check if bill name is exactly in the issue title
+                            return normalizedIssueTitle.includes(normalizedBillName);
+                        });
+
                         return `
                         <div class="bill-card">
-                            <details ${openBills[bill.billName] ? 'open' : ''}>
-                                <summary onclick="handleBillClick('${bill.billName}', '${type}')">
+                            <details ${openBills[bill.billName] ? 'open' : ''} data-bill-name="${bill.billName}" data-bill-type="${type}">
+                                <summary>
                                     <div class="bill-header">
                                         <div class="bill-title">
                                             ${bill.billName} - ${bill.description}
@@ -449,6 +469,16 @@ const renderBills = () => {
                                                 `<span class="status-tag law">Became Law${
                                                     timing?.daysToBecomeLaw ? ` in ${timing.daysToBecomeLaw} days` : ''
                                                 }</span>` : ''}
+                                            ${matchingIssue ? `
+                                                <span class="issues-button-container">
+                                                    <a href="/issues/#${matchingIssue.id}" 
+                                                       class="button small-button issues-button"
+                                                       target="_blank"
+                                                       data-bill-name="${bill.billName}">
+                                                        Call Issue Avaialble
+                                                    </a>
+                                                </span>
+                                            ` : ''}
                                         </div>
                                         ${bill.details ? `
                                             <div class="bill-summary">
@@ -488,7 +518,6 @@ const renderBills = () => {
                                                         })}
                                                     </span>
                                                 ` : ''}
-                                        
                                             </div>
                                         ` : ''}
                                     </div>
@@ -607,6 +636,36 @@ const renderBills = () => {
         ${renderBillType('sponsored', groupedBills.sponsored)}
         ${renderBillType('cosponsored', groupedBills.cosponsored)}
     `;
+
+    // Add event listeners for bill card toggling
+    document.querySelectorAll('.bill-card details').forEach(details => {
+        details.querySelector('summary').addEventListener('click', (event) => {
+            // Only handle clicks that aren't on the issues button
+            if (!event.target.closest('.issues-button')) {
+                const billName = details.getAttribute('data-bill-name');
+                const billType = details.getAttribute('data-bill-type');
+                
+                // Update open state
+                if (billName) {
+                    openBills[billName] = !openBills[billName];
+                    console.log(`Bill ${billName} toggled: ${openBills[billName]}`);
+                }
+                
+                // No need to re-render the entire bill list
+                // Just let the details element toggle naturally
+            }
+        });
+    });
+
+    // Add event listeners for issues buttons
+    document.querySelectorAll('.issues-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent triggering the summary/details toggle
+            const billName = button.getAttribute('data-bill-name');
+            console.log(`Issues button clicked for bill: ${billName}`);
+            // The link will handle navigation
+        });
+    });
 };
 
 const updateLoadingProgress = (current, total) => {
@@ -692,23 +751,20 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         return;
     }
 
-    // Add this line to hide the autocomplete dropdown when the search button is clicked
-    document.getElementById('autocompleteDropdown').style.display = 'none';
-
     clearResults();
 
     const names = searchTerm.split(',').map((name) => name.trim());
     const uniqueLegislators = names.map((name) =>
-        legislators.find((l) => {
-            if (!l || !l.fullName) return false;
-            
-            // Remove prefixes for comparison
-            const cleanedLegName = abbreviateTitle(l.fullName).toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
-            const cleanedSearchName = name.toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
-            
-            return cleanedLegName === cleanedSearchName;
-        })
-    ).filter(Boolean);
+    legislators.find((l) => {
+        if (!l || !l.fullName) return false;
+        
+        // Remove prefixes for comparison
+        const cleanedLegName = abbreviateTitle(l.fullName).toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+        const cleanedSearchName = name.toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+        
+        return cleanedLegName === cleanedSearchName;
+    })
+).filter(Boolean);
 
     if (uniqueLegislators.length > 0) {
         loading = true;
@@ -740,6 +796,7 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         }
     }
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     // Highlight active nav link based on current page
     const currentPath = window.location.pathname;
@@ -771,9 +828,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make handleBillClick available globally
 window.handleBillClick = (billName, type) => {
+    // This function is kept for backward compatibility
+    // But we're now handling clicks with event listeners instead
+    console.log(`Legacy handleBillClick called for ${billName} (${type})`);
+    
+    // Still update the openBills state
     openBills[billName] = !openBills[billName];
-    renderBills();
+    
+    // No need to re-render the entire bill list since we're 
+    // letting the HTML details element handle its own state
 };
+
 
 // Create and inject the Find Legislator UI
 const setupFindLegislatorUI = () => {
