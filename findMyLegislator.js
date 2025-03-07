@@ -6,7 +6,7 @@ export function loadMyLegislators() {
     const senator = localStorage.getItem('mySenator');
     const infoContainer = document.getElementById('header-legislators-info');
     const findBtn = document.getElementById('find-my-legislators-btn');
-    const partyColor = JSON.parse(houseRep).party === 'Republican' ? 'style=background:red;' : 'style=background:blue;';
+    const partyColor = JSON.parse(houseRep).party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
     
     if (!infoContainer || !findBtn) return;
     

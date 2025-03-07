@@ -1,7 +1,8 @@
 // issues.js - Enhanced with Markdown support and call tracking
 import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "../findMyLegislator.js";
+const testing = false;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Get all issue items and issue details
     const currentPath = window.location.pathname;
     const billTrackerLink = document.getElementById('billTracker');
@@ -22,8 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fetch and load issue content
     loadIssuesData();
-
     handleRouting();
+    await initializeCallStats();
     
     // Setup legislator finder
     const findBtn = document.getElementById('find-my-legislators-btn');
@@ -189,6 +190,8 @@ async function loadIssueContent(issueId) {
         
         // Add call tracking functionality
         updateCallTracking();
+
+        await initializeCallStats();
         
     } catch (error) {
         console.error(`Error loading issue ${issueId}:`, error);
@@ -742,74 +745,185 @@ function updateCallTracking() {
     }
 }
 
-// Record a call result and move to the next legislator
-function recordCallResult(legislator, result) {
+// Initialize call statistics - this will run when the page loads
+async function initializeCallStats() {
+    // Get user's personal call count from localStorage
+    const userCallCount = parseInt(localStorage.getItem('userTotalCalls') || '0');
+    
+    // Try to get global count from server
+    let globalCallCount = 0;
+    try {
+      // Use the same URL base as your other API calls
+      const serverUrl = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
+      const response = await fetch(`${serverUrl}/api/calls/count`);
+      if (response.ok) {
+        const data = await response.json();
+        globalCallCount = data.globalCallCount;
+      }
+    } catch (error) {
+      console.error('Error fetching global call count:', error);
+      // Fall back to localStorage if server request fails
+      globalCallCount = parseInt(localStorage.getItem('globalCallCounter') || '0');
+    }
+    
+    // Create or update the call statistics display
+    updateCallStatsDisplay(userCallCount, globalCallCount);
+    
+    console.log(`Call stats initialized: user calls = ${userCallCount}, global calls = ${globalCallCount}`);
+}
+  
+// Create the call statistics display
+function updateCallStatsDisplay(userCalls, globalCalls) {
+    // Find the script container to add stats before or after it
+    const scriptContainer = document.querySelector('.script-container');
+    if (!scriptContainer) return;
+    
+    // Check if stats container already exists
+    let statsContainer = document.querySelector('.call-stats-container');
+    
+    if (!statsContainer) {
+      // Create new stats container
+      statsContainer = document.createElement('div');
+      statsContainer.className = 'call-stats-container';
+      
+      // Insert after script intro but before script content
+      const scriptIntro = scriptContainer.querySelector('.script-intro');
+      if (scriptIntro) {
+        scriptIntro.parentNode.insertBefore(statsContainer, scriptIntro.nextSibling);
+      } else {
+        // Insert at the beginning of script container if no intro
+        scriptContainer.insertBefore(statsContainer, scriptContainer.firstChild);
+      }
+    }
+    
+    // Update the content of the stats container
+    statsContainer.innerHTML = `
+      <div class="call-stats">
+        <div class="call-stat-item">
+          <span class="call-stat-value">${userCalls}</span>
+          <span class="call-stat-label">Your Total Calls</span>
+        </div>
+        <div class="call-stat-item">
+          <span class="call-stat-value">${globalCalls}</span>
+          <span class="call-stat-label">All Users' Calls</span>
+        </div>
+      </div>
+    `;
+}
+  
+async function recordCallResult(legislator, result) {
     console.log(`Recording call result for ${legislator.chamber === 'S' ? 'Senator' : 'Rep'}: ${result}`);
     
     try {
-        // Check if we need to reset progress due to date change
-        checkForDailyReset();
+      // Check if we need to reset progress due to date change
+      checkForDailyReset();
+      
+      // Get existing completed calls or initialize empty array
+      const completedCalls = JSON.parse(localStorage.getItem('completedCalls') || '[]');
+      const issueID = window.location.hash.substring(1);
+      
+      // Add this call to completed calls if not skipped
+      if (result !== 'skip') {
+        completedCalls.push({
+          legislatorId: legislator.id || `${legislator.chamber}-${legislator.district}`,
+          issueID: issueID,
+          result: result,
+          timestamp: new Date().toISOString()
+        });
         
-        // Get existing completed calls or initialize empty array
-        const completedCalls = JSON.parse(localStorage.getItem('completedCalls') || '[]');
+        // Save back to localStorage
+        localStorage.setItem('completedCalls', JSON.stringify(completedCalls));
         
-        // Add this call to completed calls if not skipped
-        if (result !== 'skip') {
-            completedCalls.push({
-                legislatorId: legislator.id || `${legislator.chamber}-${legislator.district}`,
-                result: result,
-                timestamp: new Date().toISOString()
-            });
+        // Increment user's personal call counter
+        const userCalls = parseInt(localStorage.getItem('userTotalCalls') || '0') + 1;
+        localStorage.setItem('userTotalCalls', userCalls.toString());
+        
+        // Report to server to increment global counter
+        let globalCalls = parseInt(localStorage.getItem('globalCallCounter') || '0') + 1;
+        
+        try {
+          // Use the same URL base as your other API calls
+          const serverUrl = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
+          const response = await fetch(`${serverUrl}/api/calls/record`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              legislatorId: legislator.id || `${legislator.chamber}-${legislator.district}`,
+              result: result,
+              issueID: window.location.hash.substring(1)
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            globalCalls = data.globalCallCount;
+            // Update localStorage with latest from server
+            localStorage.setItem('globalCallCounter', globalCalls.toString());
+          }
+        } catch (error) {
+          console.error('Error reporting call to server:', error);
+          // Fallback: Just use the local counter if server unavailable
+        }
+        
+        // Update the call stats display
+        updateCallStatsDisplay(userCalls, globalCalls);
+        
+        // Apply highlight effect to show counter increase
+        setTimeout(() => {
+          const statValues = document.querySelectorAll('.call-stat-value');
+          statValues.forEach(value => {
+            value.classList.add('call-stat-highlight');
             
-            // Save back to localStorage
-            localStorage.setItem('completedCalls', JSON.stringify(completedCalls));
-        }
+            // Remove class after animation completes
+            setTimeout(() => {
+              value.classList.remove('call-stat-highlight');
+            }, 1000);
+          });
+        }, 100);
         
-        // Move to the next legislator
-        const legislators = [];
-        const mySenator = localStorage.getItem('mySenator');
-        const myHouseRep = localStorage.getItem('myHouseRep');
-        
-        if (mySenator) {
-            try { legislators.push(JSON.parse(mySenator)); } catch (e) {}
-        }
-        
-        if (myHouseRep) {
-            try { legislators.push(JSON.parse(myHouseRep)); } catch (e) {}
-        }
-        
-        // Get current index and calculate next
-        let currentIndex = parseInt(localStorage.getItem('activeCallLegislatorIndex') || '0');
-        let nextIndex = (currentIndex + 1) % legislators.length;
-        
-        // Save next index
-        localStorage.setItem('activeCallLegislatorIndex', nextIndex.toString());
-        
-        // Update the call tracking to show the next legislator
-        updateCallTracking();
+        console.log(`Call counters updated: user calls = ${userCalls}, global calls = ${globalCalls}`);
+      }
+      
+      // Rest of your existing function...
+    const legislators = [];
+    const mySenator = localStorage.getItem('mySenator');
+    const myHouseRep = localStorage.getItem('myHouseRep');
+    
+    if (mySenator) {
+    try { legislators.push(JSON.parse(mySenator)); } catch (e) {}
+    }
+    
+    if (myHouseRep) {
+    try { legislators.push(JSON.parse(myHouseRep)); } catch (e) {}
+    }
+    
+    // Get current index and calculate next
+    let currentIndex = parseInt(localStorage.getItem('activeCallLegislatorIndex') || '0');
+    let nextIndex = (currentIndex + 1) % legislators.length;
+    
+    // Save next index
+    localStorage.setItem('activeCallLegislatorIndex', nextIndex.toString());
+    
+    // Update the call tracking to show the next legislator
+    updateCallTracking();
 
-        // Get the next legislator
-        const nextLegislator = legislators[nextIndex];
-        if (nextLegislator) {
-            // Update the call script text with the next legislator's info
-            updateCallScriptText(nextLegislator);
-            
-            // Also update the phone display in the personalized notice
-            const phoneDisplay = document.getElementById('legislator-phone-display');
-            if (phoneDisplay) {
-                phoneDisplay.textContent = getLegislatorPhone(nextLegislator);
-            }
-        }
-        
-        // Scroll to script
-        const scriptContainer = document.querySelector('.script-container');
-        if (scriptContainer) {
-            scriptContainer.scrollIntoView({ behavior: 'smooth' });
-        }
+    const nextLegislator = legislators[nextIndex];
+    if (nextLegislator) {
+    updateCallScriptText(nextLegislator);
+    }
+    
+    // Scroll to script
+    const scriptContainer = document.querySelector('.script-container');
+    if (scriptContainer) {
+    scriptContainer.scrollIntoView({ behavior: 'smooth' });
+    }
     } catch (error) {
-        console.error('Error recording call result:', error);
+      console.error('Error recording call result:', error);
     }
 }
+  
 
 function updateCallProgress(completedCalls, legislators) {
     // Find the progress elements

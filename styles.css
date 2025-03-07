@@ -1567,6 +1567,45 @@ input:checked + .slider:before {
     font-size: 1.1em;
     margin: 10px 0;
 }
+/* Call Statistics Styles */
+.call-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+    background-color: #1f2937;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #374151;
+  }
+  
+  .call-stat-item {
+    text-align: center;
+    flex: 1;
+  }
+  
+  .call-stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-bottom: 4px;
+  }
+  
+  .call-stat-label {
+    font-size: 14px;
+    color: #d1d5db;
+  }
+  
+  /* Add a nice transition effect for the counter */
+  .call-stat-value {
+    transition: all 0.3s ease;
+  }
+  
+  /* Highlight effect when counter increases */
+  .call-stat-highlight {
+    animation: highlight-pulse 1s ease;
+  }
+  
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1743,3 +1782,18 @@ input:checked + .slider:before {
         width: 100%;
     }
 }
+
+@keyframes highlight-pulse {
+    0% {
+      color: #60a5fa;
+      transform: scale(1);
+    }
+    50% {
+      color: #3b82f6;
+      transform: scale(1.1);
+    }
+    100% {
+      color: #60a5fa;
+      transform: scale(1);
+    }
+  }
