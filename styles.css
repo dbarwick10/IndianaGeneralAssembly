@@ -1027,7 +1027,7 @@ input:checked + .slider:before {
 }
 
 .personalized-notice {
-    background-color: #2563eb;
+    background-color: #1f2937;
     color: white;
     padding: 10px;
     border-radius: 6px;
@@ -1035,13 +1035,9 @@ input:checked + .slider:before {
     font-size: 0.9rem;
 }
 
-.personalized-notice {
-    background-color: #2563eb;
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0;
-    font-size: 0.9rem;
+.personalized-notice.call {
+    background-color: #60a5fa;
+
 }
 
 .call-tracking {
@@ -1531,6 +1527,46 @@ input:checked + .slider:before {
     display: none;
 }
 
+/* phone styles */
+.legislator-phone a,
+#legislator-phone-display {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    border-bottom: 1px dotted #2563eb;
+    transition: all 0.2s ease;
+}
+
+.legislator-phone a:hover,
+#legislator-phone-display:hover {
+    color: #1d4ed8;
+    border-bottom: 1px solid #1d4ed8;
+}
+
+.personalized-notice.call {
+    background-color: #2563eb;
+    color: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 0.95rem;
+}
+
+.personalized-notice.call a {
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    border-bottom: 1px dotted white;
+}
+
+.personalized-notice.call a:hover {
+    border-bottom: 1px solid white;
+}
+
+.legislator-call-instruction {
+    font-size: 1.1em;
+    margin: 10px 0;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

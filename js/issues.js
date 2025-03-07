@@ -318,6 +318,25 @@ function processRenderedContent() {
     }
 }
 
+function getLegislatorPhone(legislator) {
+    // First try to use the legislator's own phone if available
+    if (legislator.phone) {
+        return legislator.phone;
+    }
+    
+    // Next try officePhone if available
+    if (legislator.officePhone) {
+        return legislator.officePhone;
+    }
+    
+    // If no specific phone number, use the chamber's general phone number
+    if (legislator.chamber === 'S') {
+        return '800-382-9467'; // Senate general number
+    } else {
+        return '800-382-9841'; // House general number
+    }
+}
+
 // Update call scripts with legislator information
 function updateCallScripts() {
     console.log('Updating call scripts...');
@@ -331,10 +350,42 @@ function updateCallScripts() {
         houseRep: myHouseRep ? 'yes' : 'no' 
     });
     
-    // If neither is available, return early
-    if (!mySenator && !myHouseRep) {
-        console.log('No legislators found in localStorage');
+    // Get the script container
+    const scriptContainer = document.querySelector('.script-container');
+    if (!scriptContainer) {
+        console.log('No script container found in the DOM');
         return;
+    }
+    
+    // If neither legislator is available, show the find legislators button in the script container
+    if (!mySenator && !myHouseRep) {
+        console.log('No legislators found in localStorage, adding find legislator button');
+        
+        // Check if notice already exists
+        const existingNotice = document.querySelector('.legislator-notice');
+        if (!existingNotice) {
+            // Create the notice with the button
+            const notice = document.createElement('div');
+            notice.className = 'personalized-notice legislator-notice';
+            notice.innerHTML = `
+                <strong>To personalize this script with your legislator's information:</strong>
+                <button id="script-find-legislators-btn" class="button small-button">Find My Legislators</button>
+            `;
+            
+            // Insert at the top of the script container
+            scriptContainer.insertBefore(notice, scriptContainer.firstChild);
+            
+            // Add event listener to the new button
+            document.getElementById('script-find-legislators-btn').addEventListener('click', showLegislatorFinder);
+        }
+        
+        return;
+    }
+    
+    // If we have legislators, remove the find legislators notice if it exists
+    const existingFindNotice = document.querySelector('.legislator-notice');
+    if (existingFindNotice) {
+        existingFindNotice.remove();
     }
     
     try {
@@ -376,12 +427,6 @@ function updateCallScripts() {
         }
         
         // Find and update script content in the DOM
-        const scriptContainer = document.querySelector('.script-content');
-        if (!scriptContainer) {
-            console.log('No script container found in the DOM');
-            return;
-        }
-        
         console.log('Found script container, looking for content to update');
         
         // Get the active legislator index from localStorage or default to 0
@@ -404,6 +449,7 @@ function updateCallScripts() {
             if (activeLegislator) {
                 // Construct the full name with appropriate format
                 const title = activeLegislator.chamber === 'S' ? 'Sen.' : 'Rep.';
+                const phone = getLegislatorPhone(activeLegislator);
                 
                 // Use the available name properties
                 let fullName = '';
@@ -419,8 +465,8 @@ function updateCallScripts() {
                 
                 console.log(`Active legislator ${activeLegislator.chamber}: "${fullName}"`);
                 
-                // Define placeholder patterns
-                const patterns = [
+                // Define placeholder patterns for names
+                const namePatterns = [
                     { pattern: /\[REP\/SEN NAME\]/g, chamber: 'both' },
                     { pattern: /\[REP \/ SEN NAME\]/g, chamber: 'both' },
                     { pattern: /\[REP\/SEN[\s]+NAME\]/g, chamber: 'both' },
@@ -429,14 +475,34 @@ function updateCallScripts() {
                     { pattern: /\[REP NAME\]/g, chamber: 'H' }
                 ];
                 
-                // Check and replace each pattern
-                patterns.forEach(pattern => {
+                // Define placeholder patterns for phone numbers
+                const phonePatterns = [
+                    { pattern: /\[PHONE\]/g, chamber: 'both' },
+                    { pattern: /\[PHONE NUMBER\]/g, chamber: 'both' },
+                    { pattern: /\[REP\/SEN PHONE\]/g, chamber: 'both' },
+                    { pattern: /\[SEN PHONE\]/g, chamber: 'S' },
+                    { pattern: /\[REP PHONE\]/g, chamber: 'H' }
+                ];
+                
+                // Check and replace name patterns
+                namePatterns.forEach(pattern => {
                     if ((pattern.chamber === 'both' || pattern.chamber === activeLegislator.chamber) && 
                         pattern.pattern.test(updatedContent)) {
-                        console.log(`Found matching pattern: ${pattern.pattern}`);
+                        console.log(`Found matching name pattern: ${pattern.pattern}`);
                         
                         // Replace the pattern with the legislator's name
                         updatedContent = updatedContent.replace(pattern.pattern, fullName);
+                    }
+                });
+                
+                // Check and replace phone patterns
+                phonePatterns.forEach(pattern => {
+                    if ((pattern.chamber === 'both' || pattern.chamber === activeLegislator.chamber) && 
+                        pattern.pattern.test(updatedContent)) {
+                        console.log(`Found matching phone pattern: ${pattern.pattern}`);
+                        
+                        // Replace the pattern with the legislator's phone
+                        updatedContent = updatedContent.replace(pattern.pattern, phone);
                     }
                 });
             }
@@ -451,34 +517,56 @@ function updateCallScripts() {
             }
         });
         
-        // Show the personalization notice if any updates were made
-        if (anyUpdates) {
-            console.log('Updates made, adding personalization notice');
-            
-            // Check if notice already exists
-            const existingNotice = document.querySelector('.personalized-notice');
-            if (!existingNotice) {
-                // Add the notice to the script container
-                const scriptContainer = document.querySelector('.script-container');
-                if (scriptContainer) {
-                    const notice = document.createElement('div');
-                    notice.className = 'personalized-notice';
-                    notice.innerHTML = `<strong>Your script has been personalized with your legislator's name.</strong>`;
-                    
-                    // Insert at the top of the script container
-                    scriptContainer.insertBefore(notice, scriptContainer.firstChild);
-                }
-            }
+        // Show the personalization notice if any updates were made or always for active legislator
+        // Get active legislator info for the notice
+        const title = activeLegislator.chamber === 'S' ? 'Sen.' : 'Rep.';
+        const phone = getLegislatorPhone(activeLegislator);
+        
+        // Format legislator name
+        let lastName = '';
+        let fullName = '';
+        
+        if (activeLegislator.firstName && activeLegislator.lastName) {
+            fullName = `${title} ${activeLegislator.firstName} ${activeLegislator.lastName}`;
+            lastName = activeLegislator.lastName;
+        } else if (activeLegislator.displayName) {
+            fullName = `${title} ${activeLegislator.displayName}`;
+            // Try to extract last name from display name
+            const nameParts = activeLegislator.displayName.split(' ');
+            lastName = nameParts[nameParts.length - 1] || 'Unknown';
+        } else if (activeLegislator.name) {
+            fullName = `${title} ${activeLegislator.name}`;
+            // Try to extract last name from name
+            const nameParts = activeLegislator.name.split(' ');
+            lastName = nameParts[nameParts.length - 1] || 'Unknown';
         } else {
-            console.log('No updates were made to any paragraphs');
+            fullName = `${title} [Name unavailable]`;
+            lastName = 'Unknown';
         }
+        
+        // Always create or update the personalization notice to show current legislator
+        // Check if notice already exists
+        let existingNotice = document.querySelector('.personalized-notice');
+        
+        if (!existingNotice) {
+            // Create new notice
+            existingNotice = document.createElement('div');
+            existingNotice.className = 'personalized-notice call';
+            
+            // Insert at the top of the script container
+            scriptContainer.insertBefore(existingNotice, scriptContainer.firstChild);
+        }
+        
+        // Always update the notice content with current legislator info
+        existingNotice.innerHTML = `
+            <strong>Your script has been personalized with your legislator's name.</strong>
+        `;
         
     } catch (error) {
         console.error('Error updating call scripts:', error);
     }
 }
 
-// Add call tracking functionality similar to 5calls
 function updateCallTracking() {
     console.log('Setting up call tracking...');
     
@@ -588,15 +676,15 @@ function updateCallTracking() {
                 fullName = '[Name unavailable]';
             }
             
-            // Format phone if available
-            const phone = activeLegislator.phone || activeLegislator.officePhone || '[Phone unavailable]';
+            // Format phone using our helper function
+            const phone = getLegislatorPhone(activeLegislator);
             
             // Current legislator info
             const currentCallInfo = document.createElement('div');
             currentCallInfo.className = 'current-call-info';
             currentCallInfo.innerHTML = `
                 <h4>Currently Calling: ${title} ${fullName}</h4>
-                <p class="legislator-phone"><strong>Phone:</strong> ${phone}</p>
+                <p class="legislator-phone"><strong>Phone:</strong> <a href="tel:${phone.replace(/\D/g, '')}">${phone}</a></p>
                 <p>District: ${activeLegislator.district || 'N/A'}</p>
                 <p>Party: ${activeLegislator.party || 'N/A'}</p>
             `;
@@ -700,10 +788,18 @@ function recordCallResult(legislator, result) {
         // Update the call tracking to show the next legislator
         updateCallTracking();
 
+        // Get the next legislator
         const nextLegislator = legislators[nextIndex];
-            if (nextLegislator) {
-                updateCallScriptText(nextLegislator);
+        if (nextLegislator) {
+            // Update the call script text with the next legislator's info
+            updateCallScriptText(nextLegislator);
+            
+            // Also update the phone display in the personalized notice
+            const phoneDisplay = document.getElementById('legislator-phone-display');
+            if (phoneDisplay) {
+                phoneDisplay.textContent = getLegislatorPhone(nextLegislator);
             }
+        }
         
         // Scroll to script
         const scriptContainer = document.querySelector('.script-container');
@@ -714,7 +810,6 @@ function recordCallResult(legislator, result) {
         console.error('Error recording call result:', error);
     }
 }
-
 
 function updateCallProgress(completedCalls, legislators) {
     // Find the progress elements
@@ -802,31 +897,53 @@ function updateCallScriptText(legislator) {
     // Format the legislator name
     const title = legislator.chamber === 'S' ? 'Sen.' : 'Rep.';
     let fullName = '';
+    let lastName = '';
+    
     if (legislator.firstName && legislator.lastName) {
         fullName = `${title} ${legislator.firstName} ${legislator.lastName}`;
+        lastName = legislator.lastName;
     } else if (legislator.displayName) {
         fullName = `${title} ${legislator.displayName}`;
+        // Try to extract last name from display name
+        const nameParts = legislator.displayName.split(' ');
+        lastName = nameParts[nameParts.length - 1] || 'Unknown';
     } else if (legislator.name) {
         fullName = `${title} ${legislator.name}`;
+        // Try to extract last name from name
+        const nameParts = legislator.name.split(' ');
+        lastName = nameParts[nameParts.length - 1] || 'Unknown';
     } else {
         fullName = `${title} [Name unavailable]`;
+        lastName = 'Unknown';
     }
     
-    console.log(`Updating call script for next legislator: ${fullName}`);
+    // Get phone number using our helper function
+    const phone = getLegislatorPhone(legislator);
     
-    // Update each paragraph with the new legislator name
+    console.log(`Updating call script for next legislator: ${fullName} (${phone})`);
+    
+    // Update each paragraph with the new legislator name and phone
     paragraphs.forEach(paragraph => {
         let content = paragraph.innerHTML;
         let updatedContent = content;
         
-        // Define placeholder patterns
-        const patterns = [
+        // Define placeholder patterns for names
+        const namePatterns = [
             { pattern: /\[REP\/SEN NAME\]/g, chamber: 'both' },
             { pattern: /\[REP \/ SEN NAME\]/g, chamber: 'both' },
             { pattern: /\[REP\/SEN[\s]+NAME\]/g, chamber: 'both' },
             { pattern: /\[REP[\s]+\/[\s]+SEN[\s]+NAME\]/g, chamber: 'both' },
             { pattern: /\[SEN NAME\]/g, chamber: 'S' },
             { pattern: /\[REP NAME\]/g, chamber: 'H' }
+        ];
+        
+        // Define placeholder patterns for phone numbers
+        const phonePatterns = [
+            { pattern: /\[PHONE\]/g, chamber: 'both' },
+            { pattern: /\[PHONE NUMBER\]/g, chamber: 'both' },
+            { pattern: /\[REP\/SEN PHONE\]/g, chamber: 'both' },
+            { pattern: /\[SEN PHONE\]/g, chamber: 'S' },
+            { pattern: /\[REP PHONE\]/g, chamber: 'H' }
         ];
         
         // Also replace any existing legislator name from the previous legislator
@@ -880,13 +997,23 @@ function updateCallScriptText(legislator) {
             } catch (e) {}
         }
         
-        // Also check for remaining placeholders
-        patterns.forEach(pattern => {
+        // Also check for remaining name placeholders
+        namePatterns.forEach(pattern => {
             if ((pattern.chamber === 'both' || pattern.chamber === legislator.chamber) && 
                 pattern.pattern.test(updatedContent)) {
                 
                 // Replace the pattern with the legislator's name
                 updatedContent = updatedContent.replace(pattern.pattern, fullName);
+            }
+        });
+        
+        // Check for phone number placeholders
+        phonePatterns.forEach(pattern => {
+            if ((pattern.chamber === 'both' || pattern.chamber === legislator.chamber) && 
+                pattern.pattern.test(updatedContent)) {
+                
+                // Replace the pattern with the legislator's phone
+                updatedContent = updatedContent.replace(pattern.pattern, phone);
             }
         });
         
@@ -904,12 +1031,14 @@ function updateCallScriptText(legislator) {
         if (!notice) {
             // Create new notice
             notice = document.createElement('div');
-            notice.className = 'personalized-notice';
+            notice.className = 'personalized-notice call';
             scriptContainer.insertBefore(notice, scriptContainer.firstChild);
         }
         
-        // Update notice text
-        notice.innerHTML = `<strong>Your script has been personalized with ${title} ${legislator.lastName}'s name.</strong>`;
+        // Update notice text with clickable phone number
+        notice.innerHTML = `
+            <strong>Your script has been personalized with your legislator's name.</strong>
+        `;
     }
 }
 
@@ -919,23 +1048,36 @@ function handleRouting() {
     const path = window.location.pathname;
     const issueId = path.split('/').pop(); // Get the last segment of the URL path
     const hash = window.location.hash.substring(1);
+    
+    // Check if we need to reload for legislator changes
+    const needsReload = sessionStorage.getItem('legislatorsJustUpdated');
+    if (needsReload) {
+        // Clear the flag so we don't enter a reload loop
+        sessionStorage.removeItem('legislatorsJustUpdated');
+        // Reload only if we're on the same page
+        if (window.location.href === sessionStorage.getItem('lastPageBeforeUpdate')) {
+            console.log('Legislators were just updated, reloading page to update scripts');
+            // No need to call loadIssueContent since we're reloading
+            return;
+        }
+    }
   
-if (hash) {
-    loadIssueContent(hash);
-    updateSelectedIssueVisibility(hash);
-} else {
-      // If no issue ID in URL, load the first issue from the list
-      const firstIssueItem = document.querySelector('.issue-item');
-      if (firstIssueItem) {
-        const firstIssueId = firstIssueItem.getAttribute('data-issue');
-        // Update URL with the first issue ID without reloading the page
-        updateURL(firstIssueId);
-        loadIssueContent(firstIssueId);
+    if (hash) {
+        loadIssueContent(hash);
+        updateSelectedIssueVisibility(hash);
+    } else {
+        // If no issue ID in URL, load the first issue from the list
+        const firstIssueItem = document.querySelector('.issue-item');
+        if (firstIssueItem) {
+            const firstIssueId = firstIssueItem.getAttribute('data-issue');
+            // Update URL with the first issue ID without reloading the page
+            updateURL(firstIssueId);
+            loadIssueContent(firstIssueId);
         }
     }
 }
 
-  function updateSelectedIssueVisibility(selectedIssueId) {
+function updateSelectedIssueVisibility(selectedIssueId) {
     // Remove active class from all issues
     document.querySelectorAll('.issue-item').forEach(item => {
       item.classList.remove('active');
@@ -949,16 +1091,16 @@ if (hash) {
       // Optionally scroll the item into view if it's not visible
       selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }
+}
   
-  // Function to update the URL when an issue is selected
-  function updateURL(issueId) {
+// Function to update the URL when an issue is selected
+function updateURL(issueId) {
     // Use history.pushState to update the URL without reloading the page
     window.location.hash = issueId;
-  }
+}
   
-  // Modify your existing issue click handler
-  function setupIssueClickHandlers() {
+// Modify your existing issue click handler
+function setupIssueClickHandlers() {
     document.querySelectorAll('.issue-item').forEach(item => {
       item.addEventListener('click', function() {
         const issueId = this.getAttribute('data-issue');
@@ -970,17 +1112,15 @@ if (hash) {
         loadIssueContent(issueId);
       });
     });
-  }
+}
   
-  // Handle browser back/forward navigation
-  window.addEventListener('popstate', function(event) {
+// Handle browser back/forward navigation
+window.addEventListener('popstate', function(event) {
     // Get the issue ID from the URL after navigation
-    const path = window.location.pathname;
-    const issueId = path.split('/').pop();
+    const hash = window.location.hash.substring(1);
     
-    if (issueId && issueId !== 'issues') {
-      loadIssueContent(issueId);
+    if (hash) {
+        loadIssueContent(hash);
+        updateSelectedIssueVisibility(hash);
     }
-  });
-  
-  
+});

@@ -326,6 +326,11 @@ function displayLegislatorResults(response) {
             
             // Show success message
             console.log('Your legislators have been saved!');
+
+            setTimeout(function() {
+                console.log('Reloading page to update scripts with legislator info');
+                window.location.reload();
+            }, 300);
         } catch (error) {
             console.error('Error saving legislators:', error);
             alert('Failed to save legislators. Please try again.');
