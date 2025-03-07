@@ -239,6 +239,7 @@ function processRenderedContent() {
                 <div class="script-container">
                     <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
                     <div class="script-content"></div>
+                    <p class="script-tip"><strong>Tip:</strong> These bills have passed from one chamber to the next, let the person that you are talking to know that you are calling both of your legislators for increased awareness.</p>
                     <p class="script-tip"><strong>Tip:</strong> Be respectful. The person you talk to is unlikely to be the Representative or Senator themselves.</p>
                 </div>
             `;
