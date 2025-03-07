@@ -692,20 +692,23 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         return;
     }
 
+    // Add this line to hide the autocomplete dropdown when the search button is clicked
+    document.getElementById('autocompleteDropdown').style.display = 'none';
+
     clearResults();
 
     const names = searchTerm.split(',').map((name) => name.trim());
     const uniqueLegislators = names.map((name) =>
-    legislators.find((l) => {
-        if (!l || !l.fullName) return false;
-        
-        // Remove prefixes for comparison
-        const cleanedLegName = abbreviateTitle(l.fullName).toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
-        const cleanedSearchName = name.toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
-        
-        return cleanedLegName === cleanedSearchName;
-    })
-).filter(Boolean);
+        legislators.find((l) => {
+            if (!l || !l.fullName) return false;
+            
+            // Remove prefixes for comparison
+            const cleanedLegName = abbreviateTitle(l.fullName).toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+            const cleanedSearchName = name.toLowerCase().replace(/\b(sen\.|rep\.)\s+/g, '');
+            
+            return cleanedLegName === cleanedSearchName;
+        })
+    ).filter(Boolean);
 
     if (uniqueLegislators.length > 0) {
         loading = true;
@@ -737,7 +740,6 @@ document.getElementById('searchButton').addEventListener('click', async () => {
         }
     }
 });
-
 document.addEventListener('DOMContentLoaded', () => {
     // Highlight active nav link based on current page
     const currentPath = window.location.pathname;
