@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import pg from 'pg';
 import 'dotenv/config';
 import NodeCache from 'node-cache';
 
@@ -53,8 +54,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-import pg from 'pg';
 
 // Create a connection pool
 const pool = new pg.Pool({
@@ -115,6 +114,19 @@ async function initializeDatabase() {
       console.log('Connected to PostgreSQL database:', res.rows[0]);
       // Initialize the database after successful connection
       initializeDatabase();
+    }
+  });
+
+  pool.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'call_logs'
+  `, (err, res) => {
+    if (err) {
+      console.error('Error checking table structure:', err);
+    } else {
+      console.log('call_logs table structure:');
+      console.log(res.rows);
     }
   });
 
