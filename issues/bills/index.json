@@ -34,6 +34,26 @@
         "id": "sb289",
         "title": "SB 289: Nondiscrimination in Employment and Education",
         "description": "Nondiscrimination in employment and education"
+      },
+      {
+        "id": "sb10",
+        "title": "SB 10: Voter Registration",
+        "description": "Voter Registration"
+      },
+      {
+        "id": "sb11",
+        "title": "SB 11: Minor Access and Use of Social Media",
+        "description": "Minor Access and Use of Social Media"
+      },
+      {
+        "id": "sb143",
+        "title": "SB 143: Parental Rights",
+        "description": "Parental Rights"
+      },
+      {
+        "id": "sb442",
+        "title": "SB 442: Instruction Concerning Human Sexuality",
+        "description": "Instruction concerning human sexuality"
       }
     ]
   }
