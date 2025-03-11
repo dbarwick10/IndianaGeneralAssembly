@@ -810,7 +810,17 @@ app.get("/:year/address/legislators", async (req, res) => {
         
         console.log(`Finding legislators for address: ${street}, ${city}, Indiana ${zip || ''}`);
         
-        // STEP 1: Convert address to coordinates using Census Geocoder
+        // STEP 1: Fetch current legislators data from IGA API
+        let legislatorsData;
+        try {
+            legislatorsData = await fetchIGAData(year, "legislators");
+            console.log(`Fetched ${legislatorsData.itemCount} legislators from IGA API`);
+        } catch (error) {
+            console.error('Error fetching legislators data:', error);
+            throw new Error(`Failed to fetch legislators data: ${error.message}`);
+        }
+        
+        // STEP 2: Convert address to coordinates using Census Geocoder
         const formattedAddress = `${street}, ${city}, Indiana ${zip || ''}`;
         const geocodeUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(formattedAddress)}&benchmark=Public_AR_Current&format=json`;
         
@@ -853,7 +863,7 @@ app.get("/:year/address/legislators", async (req, res) => {
         
         console.log(`Coordinates found: lon ${longitude}, lat ${latitude}`);
         
-        // STEP 2: Query the Indiana GIS service to find the voting district
+        // STEP 3: Query the Indiana GIS service to find the voting district
         let houseDistrict, senateDistrict;
         
         // Try to get district info from cache first
@@ -897,36 +907,173 @@ app.get("/:year/address/legislators", async (req, res) => {
             }
         }
         
-        // STEP 3: Look up the legislators from our local data
-        // Find House representative
-        const houseRep = houseRepresentatives.find(rep => rep.district === houseDistrict);
+        // STEP 4: Look up the legislators from the API data
+        // Function to extract legislator ID from link
+        const extractLegislatorId = (link) => {
+            // Parse the ID from links like "/2023/legislators/david_abbott_1"
+            const parts = link.split('/');
+            return parts[parts.length - 1];
+        };
+
+        // Add debug logging for districts
+        console.log(`Looking for legislators in House district ${houseDistrict} and Senate district ${senateDistrict}`);
         
-        // Find Senator
-        const senator = stateSenatorsData.find(sen => sen.district === senateDistrict);
-        
-        // Prepare the legislators in the format expected by the frontend
+        // Find House representative and Senator from the API data
         const legislators = [];
         
-        if (houseRep) {
-            legislators.push({
-                firstName: houseRep.name.split(' ')[0],
-                lastName: houseRep.name.split(' ').slice(1).join(' '),
-                district: houseRep.district.toString(),
-                chamber: 'H',
-                party: 'Republican', // Add actual party data if available
-                link: `/legislators/${houseRep.name.replace(/\s+/g, '_').toLowerCase()}`
+        // Try to find legislators both in API data and local data
+        let foundHouseRepFromAPI = false;
+        let foundSenatorFromAPI = false;
+        
+        // First try to find legislators in the API data
+        if (legislatorsData && legislatorsData.items && legislatorsData.items.length > 0) {
+            console.log(`Searching through ${legislatorsData.items.length} legislators from API`);
+            
+            // Log a few sample legislators to debug format
+            if (legislatorsData.items.length > 0) {
+                console.log(`Sample legislator from API: ${JSON.stringify(legislatorsData.items[0])}`);
+            }
+            
+            // Find House representative by district
+            const houseRep = legislatorsData.items.find(item => {
+                // Convert both to strings for comparison
+                const itemDistrict = item.district !== undefined ? String(item.district) : null;
+                const targetDistrict = String(houseDistrict);
+                
+                return item.position_title === "Representative" && itemDistrict === targetDistrict;
             });
+            
+            // Find Senator by district
+            const senator = legislatorsData.items.find(item => {
+                // Convert both to strings for comparison
+                const itemDistrict = item.district !== undefined ? String(item.district) : null;
+                const targetDistrict = String(senateDistrict);
+                
+                return item.position_title === "Senator" && itemDistrict === targetDistrict;
+            });
+            
+            // Add house representative to results if found
+            if (houseRep) {
+                foundHouseRepFromAPI = true;
+                console.log(`Found House representative in API: ${houseRep.firstname} ${houseRep.lastname}`);
+                
+                legislators.push({
+                    firstName: houseRep.firstname,
+                    lastName: houseRep.lastname,
+                    district: String(houseRep.district),
+                    chamber: 'H',
+                    party: houseRep.partyid, // Use party from API
+                    link: `/legislators/${extractLegislatorId(houseRep.link)}`
+                });
+            } else {
+                console.log(`House representative for district ${houseDistrict} not found in API data`);
+            }
+            
+            // Add senator to results if found
+            if (senator) {
+                foundSenatorFromAPI = true;
+                console.log(`Found Senator in API: ${senator.firstname} ${senator.lastname}`);
+                
+                legislators.push({
+                    firstName: senator.firstname,
+                    lastName: senator.lastname,
+                    district: String(senator.district),
+                    chamber: 'S',
+                    party: senator.partyid, // Use party from API
+                    link: `/legislators/${extractLegislatorId(senator.link)}`
+                });
+            } else {
+                console.log(`Senator for district ${senateDistrict} not found in API data`);
+            }
+        } else {
+            console.log(`No API data available or empty items array`);
         }
         
-        if (senator) {
-            legislators.push({
-                firstName: senator.name.split(' ')[0],
-                lastName: senator.name.split(' ').slice(1).join(' '),
-                district: senator.district.toString(),
-                chamber: 'S',
-                party: 'Republican', // Add actual party data if available
-                link: `/legislators/${senator.name.replace(/\s+/g, '_').toLowerCase()}`
-            });
+        // Fallback to local data for any legislators not found in API, but try to get party info from API individually
+        if (!foundHouseRepFromAPI) {
+            console.log(`Looking for House district ${houseDistrict} in local data`);
+            const houseRep = houseRepresentatives.find(rep => rep.district === houseDistrict);
+            
+            if (houseRep) {
+                console.log(`Found House representative in local data: ${houseRep.name}`);
+                
+                // Try to find this rep in the API data by name to get party info
+                let repParty = 'Unknown';
+                if (legislatorsData && legislatorsData.items) {
+                    // Split the name to handle different formats
+                    const nameParts = houseRep.name.split(' ');
+                    const firstName = nameParts[0];
+                    const lastName = nameParts.slice(1).join(' ');
+                    
+                    // Look for a match by name
+                    const matchingRepInAPI = legislatorsData.items.find(item => 
+                        item.position_title === "Representative" && 
+                        item.firstname.toLowerCase() === firstName.toLowerCase() && 
+                        item.lastname.toLowerCase().includes(lastName.toLowerCase().split(',')[0])
+                    );
+                    
+                    if (matchingRepInAPI) {
+                        console.log(`Found matching representative in API by name: ${matchingRepInAPI.firstname} ${matchingRepInAPI.lastname}`);
+                        repParty = matchingRepInAPI.partyid;
+                    } else {
+                        console.log(`Could not find matching representative in API by name`);
+                    }
+                }
+                
+                legislators.push({
+                    firstName: houseRep.name.split(' ')[0],
+                    lastName: houseRep.name.split(' ').slice(1).join(' '),
+                    district: String(houseRep.district),
+                    chamber: 'H',
+                    party: repParty,
+                    link: `/legislators/${houseRep.name.replace(/\s+/g, '_').toLowerCase()}`
+                });
+            } else {
+                console.log(`House representative for district ${houseDistrict} not found in local data`);
+            }
+        }
+        
+        if (!foundSenatorFromAPI) {
+            console.log(`Looking for Senate district ${senateDistrict} in local data`);
+            const senator = stateSenatorsData.find(sen => sen.district === senateDistrict);
+            
+            if (senator) {
+                console.log(`Found Senator in local data: ${senator.name}`);
+                
+                // Try to find this senator in the API data by name to get party info
+                let senatorParty = 'Unknown';
+                if (legislatorsData && legislatorsData.items) {
+                    // Split the name to handle different formats
+                    const nameParts = senator.name.split(' ');
+                    const firstName = nameParts[0];
+                    const lastName = nameParts.slice(1).join(' ');
+                    
+                    // Look for a match by name
+                    const matchingSenatorInAPI = legislatorsData.items.find(item => 
+                        item.position_title === "Senator" && 
+                        item.firstname.toLowerCase() === firstName.toLowerCase() && 
+                        item.lastname.toLowerCase().includes(lastName.toLowerCase().split(',')[0])
+                    );
+                    
+                    if (matchingSenatorInAPI) {
+                        console.log(`Found matching senator in API by name: ${matchingSenatorInAPI.firstname} ${matchingSenatorInAPI.lastname}`);
+                        senatorParty = matchingSenatorInAPI.partyid;
+                    } else {
+                        console.log(`Could not find matching senator in API by name`);
+                    }
+                }
+                
+                legislators.push({
+                    firstName: senator.name.split(' ')[0],
+                    lastName: senator.name.split(' ').slice(1).join(' '),
+                    district: String(senator.district),
+                    chamber: 'S',
+                    party: senatorParty,
+                    link: `/legislators/${senator.name.replace(/\s+/g, '_').toLowerCase()}`
+                });
+            } else {
+                console.log(`Senator for district ${senateDistrict} not found in local data`);
+            }
         }
         
         console.log(`Found ${legislators.length} legislators`);
