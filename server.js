@@ -1,1408 +1,354 @@
-import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-import pg from 'pg';
-import 'dotenv/config';
-import NodeCache from 'node-cache';
+// find-my-legislators.js
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const API_CACHE_TTL = 3600;
-const apiCache = new NodeCache({ stdTTL: API_CACHE_TTL });
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-let globalCallCounter = 0;
-
-app.use(express.static(__dirname));
-
-// Enable CORS and JSON parsing
-app.use(cors({
-    origin: function(origin, callback) {
-        console.log('Incoming origin:', origin);
-        const allowedOrigins = [
-            'http://127.0.0.1:5500',        
-            'http://localhost:5500',
-            'https://dbarwick10.github.io',
-            'https://dbarwick10.github.io/IndianaGeneralAssembly',
-            'https://indianageneralassembly-production.up.railway.app',
-            'https://legisalert.netlify.app',
-            'https://legisalert.org',
-            null 
-        ];
-        
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log('Origin not allowed:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'Origin', 
-        'Access-Control-Allow-Origin', 
-        'Accept'
-    ]
-}));
-
-app.use(express.json());
-
-// Create a connection pool
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Needed for Railway's PostgreSQL connection
-  }
-});
-
-// Function to initialize the database
-async function initializeDatabase() {
-    try {
-      // Create call_logs table
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS call_logs (
-          id SERIAL PRIMARY KEY,
-          timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
-          legislator_id VARCHAR(255),
-          issue_id VARCHAR(255),
-          result VARCHAR(50),
-          client_ip VARCHAR(50),
-          user_agent TEXT,
-          additional_data JSONB
-        )
-      `);
-      
-      // Create call_counter table
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS call_counter (
-          id VARCHAR(20) PRIMARY KEY,
-          count INTEGER NOT NULL
-        )
-      `);
-      
-      // Initialize the counter
-      await pool.query(`
-        INSERT INTO call_counter (id, count)
-        VALUES ('global', 0)
-        ON CONFLICT (id) DO NOTHING
-      `);
-      
-      // Create indexes
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_call_logs_timestamp ON call_logs(timestamp)`);
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_call_logs_legislator ON call_logs(legislator_id)`);
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_call_logs_issue ON call_logs(issue_id)`);
-      
-      console.log('Database initialized successfully');
-    } catch (error) {
-      console.error('Error initializing database:', error);
-    }
-  }
-  
-  // Test the database connection and initialize
-  pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-      console.error('Database connection error:', err.stack);
-    } else {
-      console.log('Connected to PostgreSQL database:', res.rows[0]);
-      // Initialize the database after successful connection
-      initializeDatabase();
-    }
-  });
-
-  pool.query(`
-    SELECT column_name, data_type 
-    FROM information_schema.columns 
-    WHERE table_name = 'call_logs'
-  `, (err, res) => {
-    if (err) {
-      console.error('Error checking table structure:', err);
-    } else {
-      console.log('call_logs table structure:');
-      console.log(res.rows);
-    }
-  });
-
-// Record a call endpoint
-app.post("/api/calls/record", async (req, res) => {
-  try {
-    // Get data from request
-    const { legislatorId, result, issueID } = req.body;
-    const timestamp = new Date();
-    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-    const userAgent = req.get('User-Agent') || 'unknown';
+// Function to load and display legislators in the header
+export function loadMyLegislators() {
+    const houseRep = localStorage.getItem('myHouseRep');
+    const senator = localStorage.getItem('mySenator');
+    const infoContainer = document.getElementById('header-legislators-info');
+    const findBtn = document.getElementById('find-my-legislators-btn');
+    const partyColor = JSON.parse(houseRep).party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
     
-    // Additional data as JSON
-    const additionalData = {
-      originalRequest: req.body,
-      source: req.get('Referer') || 'direct'
-    };
-
-    // Begin a transaction
-    const client = await pool.connect();
+    if (!infoContainer || !findBtn) return;
     
-    try {
-      await client.query('BEGIN');
-      
-      // Insert the call log
-      const insertLogQuery = `
-        INSERT INTO call_logs (legislator_id, issue_id, result, client_ip, user_agent, additional_data)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, timestamp`;
-      
-      const logResult = await client.query(insertLogQuery, [
-        legislatorId || null,
-        issueID || null,
-        result || null,
-        clientIP,
-        userAgent,
-        JSON.stringify(additionalData)
-      ]);
-      
-      // Increment the counter
-      const updateCounterQuery = `
-        UPDATE call_counter
-        SET count = count + 1
-        WHERE id = 'global'
-        RETURNING count`;
-      
-      const counterResult = await client.query(updateCounterQuery);
-      
-      // If no rows were affected, the counter doesn't exist yet
-      if (counterResult.rowCount === 0) {
-        await client.query(`
-          INSERT INTO call_counter (id, count) 
-          VALUES ('global', 1)`
-        );
-      }
-      
-      await client.query('COMMIT');
-      
-      // Get the latest global count
-      const getCountQuery = `SELECT count FROM call_counter WHERE id = 'global'`;
-      const countResult = await pool.query(getCountQuery);
-      const globalCallCount = countResult.rows[0]?.count || 1;
-      
-      // Log to console
-      console.log(`=== CALL RECORDED ===`);
-      console.log(`ID: ${logResult.rows[0].id}`);
-      console.log(`Timestamp: ${logResult.rows[0].timestamp}`);
-      console.log(`Global Counter: ${globalCallCount}`);
-      console.log(`Legislator ID: ${legislatorId || 'Not specified'}`);
-      console.log(`Issue ID: ${issueID || 'Not specified'}`);
-      console.log(`Call Result: ${result || 'Not specified'}`);
-      console.log(`====================`);
-      
-      // Return success response
-      res.json({
-        success: true,
-        globalCallCount,
-        timestamp: timestamp.toISOString(),
-        id: logResult.rows[0].id
-      });
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    // Clear previous content
+    infoContainer.innerHTML = '';
     
-  } catch (error) {
-    console.error('Error recording call:', error);
-    res.status(500).json({
-      error: "Failed to record call",
-      details: error.message
-    });
-  }
-});
-
-// Get call count endpoint
-app.get("/api/calls/count", async (req, res) => {
-  try {
-    const query = `SELECT count FROM call_counter WHERE id = 'global'`;
-    const result = await pool.query(query);
-    
-    const globalCallCount = result.rows[0]?.count || 0;
-    
-    res.json({
-      globalCallCount,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error fetching call count:', error);
-    res.status(500).json({
-      error: "Failed to fetch call count",
-      details: error.message
-    });
-  }
-});
-
-// Get call logs endpoint
-app.get("/api/calls/logs", async (req, res) => {
-  try {
-    // Get query parameters
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = parseInt(req.query.offset) || 0;
-    const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
-    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
-    const legislatorId = req.query.legislatorId || null;
-    const issueId = req.query.issueId || null;
-    
-    // Build where clause
-    let whereClause = '';
-    const queryParams = [];
-    
-    if (startDate) {
-      whereClause += `${whereClause ? ' AND ' : 'WHERE '} timestamp >= $${queryParams.length + 1}`;
-      queryParams.push(startDate);
-    }
-    
-    if (endDate) {
-      whereClause += `${whereClause ? ' AND ' : 'WHERE '} timestamp <= $${queryParams.length + 1}`;
-      queryParams.push(endDate);
-    }
-    
-    if (legislatorId) {
-      whereClause += `${whereClause ? ' AND ' : 'WHERE '} legislator_id = $${queryParams.length + 1}`;
-      queryParams.push(legislatorId);
-    }
-    
-    if (issueId) {
-      whereClause += `${whereClause ? ' AND ' : 'WHERE '} issue_id = $${queryParams.length + 1}`;
-      queryParams.push(issueId);
-    }
-    
-    // Count total matching rows
-    const countQuery = `SELECT COUNT(*) as total FROM call_logs ${whereClause}`;
-    const countResult = await pool.query(countQuery, queryParams);
-    const total = parseInt(countResult.rows[0].total);
-    
-    // Add limit and offset params
-    queryParams.push(limit);
-    queryParams.push(offset);
-    
-    // Get the logs
-    const logsQuery = `
-      SELECT * FROM call_logs
-      ${whereClause}
-      ORDER BY timestamp DESC
-      LIMIT $${queryParams.length - 1}
-      OFFSET $${queryParams.length}
-    `;
-    
-    const logsResult = await pool.query(logsQuery, queryParams);
-    
-    res.json({
-      total,
-      limit,
-      offset,
-      logs: logsResult.rows
-    });
-    
-  } catch (error) {
-    console.error('Error fetching call logs:', error);
-    res.status(500).json({
-      error: "Failed to fetch call logs",
-      details: error.message
-    });
-  }
-});
-
-// Get summary statistics
-app.get("/api/calls/stats", async (req, res) => {
-    try {
-      // Get unique issues
-      const issuesQuery = `
-        SELECT issue_id, COUNT(*) as count
-        FROM call_logs
-        WHERE issue_id IS NOT NULL
-        GROUP BY issue_id
-        ORDER BY count DESC
-      `;
-      const issuesResult = await pool.query(issuesQuery);
-      
-      // Get unique legislators
-      const legislatorsQuery = `
-        SELECT legislator_id, COUNT(*) as count
-        FROM call_logs
-        WHERE legislator_id IS NOT NULL
-        GROUP BY legislator_id
-        ORDER BY count DESC
-      `;
-      const legislatorsResult = await pool.query(legislatorsQuery);
-      
-      // Get calls by result type
-      const resultsQuery = `
-        SELECT result, COUNT(*) as count
-        FROM call_logs
-        WHERE result IS NOT NULL
-        GROUP BY result
-        ORDER BY count DESC
-      `;
-      const resultsResult = await pool.query(resultsQuery);
-      
-      // Get calls by day
-      const dailyQuery = `
-        SELECT 
-          DATE_TRUNC('day', timestamp) as day,
-          COUNT(*) as count
-        FROM call_logs
-        GROUP BY day
-        ORDER BY day DESC
-        LIMIT 30
-      `;
-      const dailyResult = await pool.query(dailyQuery);
-      
-      res.json({
-        totalCalls: (await pool.query('SELECT count FROM call_counter WHERE id = \'global\'')).rows[0]?.count || 0,
-        byIssue: issuesResult.rows,
-        byLegislator: legislatorsResult.rows,
-        byResult: resultsResult.rows,
-        byDay: dailyResult.rows
-      });
-    } catch (error) {
-      console.error('Error fetching call stats:', error);
-      res.status(500).json({
-        error: "Failed to fetch call statistics",
-        details: error.message
-      });
-    }
-  });
-
-// Path for storing call data
-const dataFilePath = join(__dirname, 'call-data.json');
-
-// Load existing call data if available
-try {
-    if (fs.existsSync(dataFilePath)) {
-        const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-        globalCallCounter = data.globalCallCount || 0;
-        console.log(`Loaded global call count: ${globalCallCounter}`);
-    } else {
-        // Create file with initial data
-        fs.writeFileSync(dataFilePath, JSON.stringify({ globalCallCount: 0 }));
-        console.log('Created new call data file');
-    }
-} catch (error) {
-    console.error('Error loading call data:', error);
-}
-
-// Save call data periodically and on server shutdown
-const saveCallData = () => {
-    try {
-        fs.writeFileSync(dataFilePath, JSON.stringify({ globalCallCount: globalCallCounter }));
-        console.log(`Saved global call count: ${globalCallCounter}`);
-    } catch (error) {
-        console.error('Error saving call data:', error);
-    }
-};
-
-// Save data every 5 minutes
-setInterval(saveCallData, 5 * 60 * 1000);
-
-// Enhanced fetch function with caching
-const fetchIGAData = async (year, endpoint) => {
-    const cacheKey = `${year}-${endpoint}`;
-    const cachedData = apiCache.get(cacheKey);
-    
-    if (cachedData) {
-        // console.log(`Cache hit for ${cacheKey}`);
-        return cachedData;
-    }
-    
-    const url = `https://api.iga.in.gov/${year}/${endpoint}`;
-    
-    try {
-        // console.log(`Fetching from IGA API: ${url}`);
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json",
-                "x-api-key": process.env.MYIGA_API_KEY,
-                "User-Agent": `iga-api-client-${process.env.MYIGA_API_KEY}`
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API Error ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        apiCache.set(cacheKey, data);
-        return data;
-    } catch (error) {
-        console.error(`Error fetching from ${url}:`, error);
-        throw error;
-    }
-};
-
-// Helper functions for data analysis moved from client to server
-const hasBillPassedChamber = (bill) => {
-    if (!bill.actions) return false;
-    return bill.actions.some(action => 
-        action.description.toLowerCase().includes('referred to the')
-    );
-};
-
-const hasBillBecomeLaw = (bill) => {
-    if (!bill.actions) return false;
-    return bill.actions.some(action => 
-        action.description.toLowerCase().includes('public law')
-    );
-};
-
-const calculateBillTiming = (actions) => {
-    if (!actions || actions.length === 0) return null;
-
-    const sortedActions = actions.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const firstAction = new Date(sortedActions[0].date);
-    
-    let chamberPassage = null;
-    let returnedWithAmendments = null;
-    let lawPassage = null;
-
-    for (const action of sortedActions) {
-        const actionDate = new Date(action.date);
-        const description = action.description.toLowerCase();
-
-        if (!chamberPassage && description.includes('referred to the')) {
-            chamberPassage = actionDate;
-        }
-
-        if (!returnedWithAmendments && description.includes('returned to the senate with amendments' || 'returned to the house with amendments')) {
-            returnedWithAmendments = actionDate;
-        }
-
-        if (!lawPassage && description.includes('public law')) {
-            lawPassage = actionDate;
-        }
-    }
-
-    return {
-        daysToPassChamber: chamberPassage ? 
-            Math.ceil((chamberPassage - firstAction) / (1000 * 60 * 60 * 24)) : null,
-        daysToReturnWithAmendments: returnedWithAmendments ?
-            Math.ceil((returnedWithAmendments - chamberPassage) / (1000 * 60 * 60 * 24)) : null,
-        daysToBecomeLaw: lawPassage ? 
-            Math.ceil((lawPassage - firstAction) / (1000 * 60 * 60 * 24)) : null
-    };
-};
-
-const getPartyBreakdown = (legislators) => {
-    if (!legislators) return { total: 0, democrat: 0, republican: 0 };
-    
-    return legislators.reduce((acc, legislator) => {
-        acc.total++;
-        if (legislator.party?.toLowerCase().includes('democrat')) {
-            acc.democrat++;
-        } else if (legislator.party?.toLowerCase().includes('republican')) {
-            acc.republican++;
-        }
-        return acc;
-    }, { total: 0, democrat: 0, republican: 0 });
-};
-
-const analyzeAmendments = (bill, legislatorNames) => {
-    if (!bill.actions || !Array.isArray(legislatorNames)) {
-        return null;
-    }
-
-    // Clean up legislator names for matching
-    const searchNames = legislatorNames.map(name => 
-        name.replace(/^(Rep\.|Senator|Sen\.|Representative)\s+/, '')
-            .toLowerCase()
-            .trim()
-    );
-
-    // Find amendments related to the specified legislators
-    const amendments = bill.actions.filter(action => {
-        const desc = action.description.toLowerCase();
-        const isAmendment = desc.includes('amendment');
-        const hasRollCall = desc.includes('roll call');
-        const hasLegislatorName = searchNames.some(name => desc.includes(name));
+    // Check if we have saved legislators
+    if (houseRep || senator) {
+        let html = '';
         
-        return isAmendment && hasRollCall && hasLegislatorName;
-    });
-
-    // Count passed and failed amendments
-    return amendments.reduce((acc, action) => {
-        const desc = action.description.toLowerCase();
-        if (desc.includes('prevailed') || desc.includes('passed')) {
-            acc.passed++;
-        } else if (desc.includes('failed') || desc.includes('defeated')) {
-            acc.failed++;
-        }
-        return acc;
-    }, { passed: 0, failed: 0 });
-};
-
-const calculateAverageTiming = (bills) => {
-    const timings = bills.map(bill => calculateBillTiming(bill.actions))
-                        .filter(timing => timing !== null);
-
-    const chamberTimes = timings.map(t => t.daysToPassChamber).filter(days => days !== null);
-    const lawTimes = timings.map(t => t.daysToBecomeLaw).filter(days => days !== null);
-
-    return {
-        averageDaysToPassChamber: chamberTimes.length > 0 ? 
-            Math.round(chamberTimes.reduce((a, b) => a + b, 0) / chamberTimes.length) : null,
-        averageDaysToBecomeLaw: lawTimes.length > 0 ? 
-            Math.round(lawTimes.reduce((a, b) => a + b, 0) / lawTimes.length) : null
-    };
-};
-
-// Route to fetch all bills for a specific year
-app.get("/:year/bills", async (req, res) => {
-    try {
-        const { year } = req.params;
-        const data = await fetchIGAData(year, "bills");
-        
-        if (!data || !data.items) {
-            console.error('Invalid response format:', data);
-            return res.status(500).json({ 
-                error: "Invalid response format from IGA API",
-                details: "Response missing items array"
-            });
-        }
-        
-        console.log(`Successfully fetched ${data.items.length} bills for ${year}`);
-        
-        res.json({
-            items: data.items,
-            count: data.items.length,
-            year: year
-        });
-    } catch (error) {
-        console.error('Error in /:year/bills endpoint:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch bills",
-            details: error.message
-        });
-    }
-});
-
-// Route to fetch details for a specific bill
-app.get("/:year/bills/:name", async (req, res) => {
-    try {
-        const { year, name } = req.params;
-        const data = await fetchIGAData(year, `bills/${name}`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching bill details:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch bill details",
-            details: error.message
-        });
-    }
-});
-
-// Route to fetch actions for a specific bill
-app.get("/:year/bills/:name/actions", async (req, res) => {
-    try {
-        const { year, name } = req.params;
-        const data = await fetchIGAData(year, `bills/${name}/actions`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching bill actions:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch bill actions",
-            details: error.message
-        });
-    }
-});
-
-// Route to fetch all legislators
-app.get("/legislators", async (req, res) => {
-    try {
-        const data = await fetchIGAData("2023", "legislators");
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching legislators:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch legislators",
-            details: error.message
-        });
-    }
-});
-
-
-// Local district data
-const houseRepresentatives = [
-    {district: 1, name: "Carolyn Jackson"},
-    {district: 2, name: "Earl Harris, Jr."},
-    {district: 3, name: "Ragen Hatcher"},
-    {district: 4, name: "Edmond Soliday"},
-    {district: 5, name: "Dale DeVon"},
-    {district: 6, name: "Maureen Bauer"},
-    {district: 7, name: "Jake Teshka"},
-    {district: 8, name: "Ryan Dvorak"},
-    {district: 9, name: "Patricia Boy"},
-    {district: 10, name: "Charles Moseley"},
-    {district: 11, name: "Michael J. Aylesworth"},
-    {district: 12, name: "Mike Andrade"},
-    {district: 13, name: "Matt Commons"},
-    {district: 14, name: "Vernon Smith"},
-    {district: 15, name: "Harold Slager"},
-    {district: 16, name: "Kendell Culp"},
-    {district: 17, name: "Jack Jordan"},
-    {district: 18, name: "David Abbott"},
-    {district: 19, name: "Julie Olthoff"},
-    {district: 20, name: "Jim Pressel"},
-    {district: 21, name: "Timothy Wesco"},
-    {district: 22, name: "Craig Snow"},
-    {district: 23, name: "Ethan Manning"},
-    {district: 24, name: "Hunter Smith"},
-    {district: 25, name: "Becky Cash"},
-    {district: 26, name: "Chris Campbell"},
-    {district: 27, name: "Sheila Ann Klinker"},
-    {district: 28, name: "Jeffrey Thompson"},
-    {district: 29, name: "Alaina Shonkwiler"},
-    {district: 30, name: "Michael Karickhoff"},
-    {district: 31, name: "Lori Goss-Reaves"},
-    {district: 32, name: "Victoria Garcia Wilburn"},
-    {district: 33, name: "John Prescott"},
-    {district: 34, name: "Sue Errington"},
-    {district: 35, name: "Elizabeth Rowray"},
-    {district: 36, name: "Kyle Pierce"},
-    {district: 37, name: "Todd Huston"},
-    {district: 38, name: "Heath VanNatter"},
-    {district: 39, name: "Daniel Lopez"},
-    {district: 40, name: "Gregory Steuerwald"},
-    {district: 41, name: "Mark Genda"},
-    {district: 42, name: "Tim Yocum"},
-    {district: 43, name: "Tonya Pfaff"},
-    {district: 44, name: "Beau Baird"},
-    {district: 45, name: "Bruce Borders"},
-    {district: 46, name: "Bob Heaton"},
-    {district: 47, name: "Robb Greene"},
-    {district: 48, name: "Doug Miller"},
-    {district: 49, name: "Joanna King"},
-    {district: 50, name: "Lorissa Sweet"},
-    {district: 51, name: "Tony Isa"},
-    {district: 52, name: "Ben Smaltz"},
-    {district: 53, name: "Ethan Lawson"},
-    {district: 54, name: "Cory Criswell"},
-    {district: 55, name: "Lindsay Patterson"},
-    {district: 56, name: "Bradford Barrett"},
-    {district: 57, name: "Craig Haggard"},
-    {district: 58, name: "Michelle Davis"},
-    {district: 59, name: "Ryan Lauer"},
-    {district: 60, name: "Peggy Mayfield"},
-    {district: 61, name: "Matt Pierce"},
-    {district: 62, name: "Dave Hall"},
-    {district: 63, name: "Shane Lindauer"},
-    {district: 64, name: "Matt Hostettler"},
-    {district: 65, name: "Christopher May"},
-    {district: 66, name: "Zach Payne"},
-    {district: 67, name: "Alex Zimmerman"},
-    {district: 68, name: "Garrett Bascom"},
-    {district: 69, name: "Jim Lucas"},
-    {district: 70, name: "Karen Engleman"},
-    {district: 71, name: "Wendy Dant Chesser"},
-    {district: 72, name: "Edward Clere"},
-    {district: 73, name: "Jennifer Meltzer"},
-    {district: 74, name: "Steve Bartels"},
-    {district: 75, name: "Cindy Ledbetter"},
-    {district: 76, name: "Wendy McNamara"},
-    {district: 77, name: "Alex Burton"},
-    {district: 78, name: "Tim O'Brien"},
-    {district: 79, name: "Matthew Lehman"},
-    {district: 80, name: "Phil GiaQuinta"},
-    {district: 81, name: "Martin Carbaugh"},
-    {district: 82, name: "Kyle Miller"},
-    {district: 83, name: "Christopher Judy"},
-    {district: 84, name: "Bob Morris"},
-    {district: 85, name: "David Heine"},
-    {district: 86, name: "Edward DeLaney"},
-    {district: 87, name: "Carey Hamilton"},
-    {district: 88, name: "Chris Jeter"},
-    {district: 89, name: "Mitch Gore"},
-    {district: 90, name: "Andrew Ireland"},
-    {district: 91, name: "Robert Behning"},
-    {district: 92, name: "Renee Pack"},
-    {district: 93, name: "Julie McGuire"},
-    {district: 94, name: "Cherrish Pryor"},
-    {district: 95, name: "John L. Bartlett"},
-    {district: 96, name: "Gregory Porter"},
-    {district: 97, name: "Justin Moed"},
-    {district: 98, name: "Robin Shackleford"},
-    {district: 99, name: "Vanessa Summers"},
-    {district: 100, name: "Robert Johnson"}
-];
-
-const stateSenatorsData = [
-    {district: 1, name: "Dan Dernulc"},
-    {district: 2, name: "Lonnie Randolph"},
-    {district: 3, name: "Mark Spencer"},
-    {district: 4, name: "Rodney Pol Jr."},
-    {district: 5, name: "Ed Charbonneau"},
-    {district: 6, name: "Rick Niemeyer"},
-    {district: 7, name: "Brian Buchanan"},
-    {district: 8, name: "Mike Bohacek"},
-    {district: 9, name: "Ryan Mishler"},
-    {district: 10, name: "David Niezgodski"},
-    {district: 11, name: "Linda Rogers"},
-    {district: 12, name: "Blake Doriot"},
-    {district: 13, name: "Susan Glick"},
-    {district: 14, name: "Tyler Johnson"},
-    {district: 15, name: "Liz Brown"},
-    {district: 16, name: "Justin Busch"},
-    {district: 17, name: "Andy Zay"},
-    {district: 18, name: "Stacey Donato"},
-    {district: 19, name: "Travis Holdman"},
-    {district: 20, name: "Scott Baldwin"},
-    {district: 21, name: "James Buck"},
-    {district: 22, name: "Ronnie Alting"},
-    {district: 23, name: "Spencer Deery"},
-    {district: 24, name: "Brett A. Clark"},
-    {district: 25, name: "Mike Gaskill"},
-    {district: 26, name: "Scott Alexander"},
-    {district: 27, name: "Jeff Raatz"},
-    {district: 28, name: "Michael Crider"},
-    {district: 29, name: "J.D. Ford"},
-    {district: 30, name: "Fady Qaddoura"},
-    {district: 31, name: "Kyle Walker"},
-    {district: 32, name: "Aaron Freeman"},
-    {district: 33, name: "Greg Taylor"},
-    {district: 34, name: "La Keisha Jackson"},
-    {district: 35, name: "Michael Young"},
-    {district: 36, name: "Cyndi Carrasco"},
-    {district: 37, name: "Rodric D. Bray"},
-    {district: 38, name: "Greg Goode"},
-    {district: 39, name: "Eric Bassler"},
-    {district: 40, name: "Shelli Yoder"},
-    {district: 41, name: "Greg Walker"},
-    {district: 42, name: "Jean Leising"},
-    {district: 43, name: "Randy Maxwell"},
-    {district: 44, name: "Eric Koch"},
-    {district: 45, name: "Chris Garten"},
-    {district: 46, name: "Andrea Hunley"},
-    {district: 47, name: "Gary Byrne"},
-    {district: 48, name: "Daryl Schmitt"},
-    {district: 49, name: "Jim Tomes"},
-    {district: 50, name: "Vaneta Becker"}
-];
-
-// District cache to avoid frequent calls to GIS service
-const districtCache = new NodeCache({ stdTTL: 86400 }); // Cache for 24 hours
-
-// Route to fetch legislators by address
-app.get("/:year/address/legislators", async (req, res) => {
-    try {
-        const { year } = req.params;
-        const { street, city, zip } = req.query;
-        
-        if (!street || !city) {
-            return res.status(400).json({
-                error: "Missing address information",
-                details: "Street and city are required"
-            });
-        }
-        
-        console.log(`Finding legislators for address: ${street}, ${city}, Indiana ${zip || ''}`);
-        
-        // STEP 1: Convert address to coordinates using Census Geocoder
-        const formattedAddress = `${street}, ${city}, Indiana ${zip || ''}`;
-        const geocodeUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(formattedAddress)}&benchmark=Public_AR_Current&format=json`;
-        
-        console.log(`Geocoding URL: ${geocodeUrl}`);
-        
-        let geocodeResponse;
-        try {
-            geocodeResponse = await fetch(geocodeUrl);
-            
-            if (!geocodeResponse.ok) {
-                throw new Error(`Geocoding API returned ${geocodeResponse.status}`);
-            }
-        } catch (error) {
-            console.error('Error fetching from Census Geocoding API:', error);
-            throw new Error(`Failed to geocode address: ${error.message}`);
-        }
-        
-        let geocodeData;
-        try {
-            geocodeData = await geocodeResponse.json();
-            console.log('Geocode response received');
-        } catch (error) {
-            console.error('Error parsing geocode response:', error);
-            throw new Error('Failed to parse geocoding response');
-        }
-        
-        // Check if address was found
-        if (!geocodeData.result || !geocodeData.result.addressMatches || geocodeData.result.addressMatches.length === 0) {
-            console.log('No address matches found in geocoding response');
-            return res.status(404).json({
-                error: "Address not found",
-                details: "Could not locate the provided address"
-            });
-        }
-        
-        // Get coordinates from the first match
-        const match = geocodeData.result.addressMatches[0];
-        const longitude = match.coordinates.x;
-        const latitude = match.coordinates.y;
-        
-        console.log(`Coordinates found: lon ${longitude}, lat ${latitude}`);
-        
-        // STEP 2: Query the Indiana GIS service to find the voting district
-        let houseDistrict, senateDistrict;
-        
-        // Try to get district info from cache first
-        const cacheKey = `${longitude},${latitude}`;
-        const cachedDistricts = districtCache.get(cacheKey);
-        
-        if (cachedDistricts) {
-            console.log('Using cached district information');
-            houseDistrict = cachedDistricts.houseDistrict;
-            senateDistrict = cachedDistricts.senateDistrict;
-        } else {
-            // Need to query the GIS service
-            const gisUrl = `https://gisdata.in.gov/server/rest/services/Hosted/Voting_District_Boundaries_2023/FeatureServer/1/query?geometry=${longitude},${latitude}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=h,s&returnGeometry=false&f=json`;
-            
-            console.log(`GIS URL: ${gisUrl}`);
-            
-            try {
-                const gisResponse = await fetch(gisUrl);
-                
-                if (!gisResponse.ok) {
-                    throw new Error(`GIS service returned ${gisResponse.status}`);
-                }
-                
-                const gisData = await gisResponse.json();
-                
-                if (gisData.features && gisData.features.length > 0) {
-                    // Extract district numbers from the response
-                    const feature = gisData.features[0];
-                    houseDistrict = parseInt(feature.attributes.h);
-                    senateDistrict = parseInt(feature.attributes.s);
-                    
-                    // Cache the results
-                    districtCache.set(cacheKey, { houseDistrict, senateDistrict });
-                    
-                    console.log(`Districts found: House ${houseDistrict}, Senate ${senateDistrict}`);
-                } else {
-                    console.log('No district found for these coordinates');
-                }
-            } catch (error) {
-                console.error('Error querying GIS service:', error);
-            }
-        }
-        
-        // STEP 3: Look up the legislators from our local data
-        // Find House representative
-        const houseRep = houseRepresentatives.find(rep => rep.district === houseDistrict);
-        
-        // Find Senator
-        const senator = stateSenatorsData.find(sen => sen.district === senateDistrict);
-        
-        // Prepare the legislators in the format expected by the frontend
-        const legislators = [];
-        
+        html += `<div class="legislators-label">
+            <span class="your-legislators">Your legislators: </span>`;
         if (houseRep) {
-            legislators.push({
-                firstName: houseRep.name.split(' ')[0],
-                lastName: houseRep.name.split(' ').slice(1).join(' '),
-                district: houseRep.district.toString(),
-                chamber: 'H',
-                party: 'Republican', // Add actual party data if available
-                link: `/legislators/${houseRep.name.replace(/\s+/g, '_').toLowerCase()}`
-            });
+            const rep = JSON.parse(houseRep);
+            html += `<span class="legislator-name" ${partyColor}>Rep. ${rep.firstName} ${rep.lastName}</span>`;
         }
         
         if (senator) {
-            legislators.push({
-                firstName: senator.name.split(' ')[0],
-                lastName: senator.name.split(' ').slice(1).join(' '),
-                district: senator.district.toString(),
-                chamber: 'S',
-                party: 'Republican', // Add actual party data if available
-                link: `/legislators/${senator.name.replace(/\s+/g, '_').toLowerCase()}`
-            });
+            const sen = JSON.parse(senator);
+            html += `<span class="legislator-name" ${partyColor}>Sen. ${sen.firstName} ${sen.lastName}</span>
+                </div>`;
         }
         
-        console.log(`Found ${legislators.length} legislators`);
+        infoContainer.innerHTML = html;
         
-        // Return the results
-        res.json({
-            items: legislators,
-            count: legislators.length,
-            houseDistrict,
-            senateDistrict,
-            address: match.matchedAddress,
-            coordinates: { longitude, latitude }
-        });
+        // Update button text
+        findBtn.textContent = 'Change My Legislators';
+    } else {
+        // No saved legislators
+        infoContainer.innerHTML = '';
         
-    } catch (error) {
-        console.error('Error finding legislators by address:', error);
-        res.status(500).json({
-            error: "Failed to find legislators",
-            details: error.message
-        });
+        // Update button text
+        findBtn.textContent = 'Find My Legislators';
     }
-});
-
-// Regular routes for individual bill types
-app.get("/:year/legislators/:userId/bills", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching legislator bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch legislator bills",
-            details: error.message
-        });
-    }
-});
-
-app.get("/:year/legislators/:userId/bills/authored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/authored`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching authored bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch authored bills",
-            details: error.message
-        });
-    }
-});
-
-app.get("/:year/legislators/:userId/bills/coauthored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/coauthored`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching coauthored bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch coauthored bills",
-            details: error.message
-        });
-    }
-});
-
-app.get("/:year/legislators/:userId/bills/sponsored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/sponsored`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching sponsored bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch sponsored bills",
-            details: error.message
-        });
-    }
-});
-
-app.get("/:year/legislators/:userId/bills/cosponsored", async (req, res) => {
-    try {
-        const { year, userId } = req.params;
-        const data = await fetchIGAData(year, `legislators/${userId}/bills/cosponsored`);
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching cosponsored bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch cosponsored bills",
-            details: error.message
-        });
-    }
-});
-
-// NEW ENDPOINT: Consolidated bills data with details and actions
-app.get("/:year/legislators/:userId/complete-bills", async (req, res) => {
-    console.log(`=== COMPLETE BILLS REQUEST ===`);
-    console.log(`Names param: ${req.query.names}`);
     
-    try {
-        const { year, userId } = req.params;
-        const { names } = req.query; // Get legislator names for amendment analysis
-        const legislatorNames = names ? names.split(',') : [];
+    // Also update any call scripts with legislator names
+    updateCallScripts();
+}
+
+// Function to update call scripts with legislator names
+function updateCallScripts() {
+    const scripts = document.querySelectorAll('.script-content');
+    if (!scripts.length) return;
+    
+    const houseRep = localStorage.getItem('myHouseRep');
+    const senator = localStorage.getItem('mySenator');
+    
+    scripts.forEach(script => {
+        const scriptText = script.innerHTML;
+        let updatedText = scriptText;
         
-        // Fetch all bill types in parallel
-        const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
-        const billPromises = types.map(async (type) => {
-            try {
-                const data = await fetchIGAData(year, `legislators/${userId}/bills/${type}`);
-                return { type, bills: data.items || [] };
-            } catch (error) {
-                console.error(`Error fetching ${type} bills for userId ${userId}:`, error);
-                return { type, bills: [] };
+        // Replace [Rep./Sen. Name] with actual names if found
+        if (houseRep || senator) {
+            const rep = houseRep ? JSON.parse(houseRep) : null;
+            const sen = senator ? JSON.parse(senator) : null;
+            
+            if (rep) {
+                updatedText = updatedText.replace(/\[Rep\.\s*Name\]/g, `Rep. ${rep.firstName} ${rep.lastName}`);
+            }
+            
+            if (sen) {
+                updatedText = updatedText.replace(/\[Sen\.\s*Name\]/g, `Sen. ${sen.firstName} ${sen.lastName}`);
+            }
+            
+            // General replacement for [Representative Name] or [Senator Name]
+            if (rep) {
+                updatedText = updatedText.replace(/\[Representative Name\]/g, `Rep. ${rep.firstName} ${rep.lastName}`);
+            }
+            
+            if (sen) {
+                updatedText = updatedText.replace(/\[Senator Name\]/g, `Sen. ${sen.firstName} ${sen.lastName}`);
+            }
+        }
+        
+        script.innerHTML = updatedText;
+    });
+}
+
+// Function to clear saved legislators
+export function clearMyLegislators() {
+    localStorage.removeItem('myHouseRep');
+    localStorage.removeItem('mySenator');
+    loadMyLegislators();
+}
+
+// Function to show the finder modal
+export function showLegislatorFinder() {
+    // Create or show the finder modal
+    let finderModal = document.getElementById('legislator-finder-modal');
+    
+    if (!finderModal) {
+        // Create the modal if it doesn't exist
+        finderModal = document.createElement('div');
+        finderModal.id = 'legislator-finder-modal';
+        finderModal.className = 'modal';
+        finderModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Find Your Legislators</h2>
+                <div class="finder-form">
+                    <div class="form-group">
+                        <label for="street">Street Address</label>
+                        <input type="text" id="street" class="input" placeholder="123 Main St" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" class="input" placeholder="Indianapolis" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="zip">ZIP Code</label>
+                        <input type="text" id="zip" class="input" placeholder="46204">
+                    </div>
+                    <button id="search-legislators-btn" class="button">Search</button>
+                </div>
+                <div id="finder-loading" class="loading hidden">Searching for your legislators...</div>
+                <div id="finder-error" class="error-message hidden"></div>
+                <div id="finder-results" class="finder-results hidden"></div>
+            </div>
+        `;
+        document.body.appendChild(finderModal);
+        
+        // Add event listeners for the new modal
+        const closeBtn = finderModal.querySelector('.close-modal');
+        closeBtn.addEventListener('click', function() {
+            finderModal.style.display = 'none';
+        });
+        
+        const searchBtn = document.getElementById('search-legislators-btn');
+        searchBtn.addEventListener('click', searchLegislators);
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === finderModal) {
+                finderModal.style.display = 'none';
             }
         });
+    }
+    
+    // Show the modal
+    finderModal.style.display = 'block';
+}
+
+// Function to search for legislators
+async function searchLegislators() {
+    const street = document.getElementById('street').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+    
+    const resultsContainer = document.getElementById('finder-results');
+    const loadingElement = document.getElementById('finder-loading');
+    const errorElement = document.getElementById('finder-error');
+    
+    if (!resultsContainer || !loadingElement || !errorElement) return;
+    
+    // Validate inputs
+    if (!street || !city) {
+        errorElement.textContent = 'Please enter your street address and city.';
+        errorElement.classList.remove('hidden');
+        return;
+    }
+    
+    // Show loading, hide results and errors
+    loadingElement.classList.remove('hidden');
+    resultsContainer.classList.add('hidden');
+    errorElement.classList.add('hidden');
+    
+    try {
+        // URL encode the address components
+        const encodedStreet = encodeURIComponent(street);
+        const encodedCity = encodeURIComponent(city);
+        const encodedZip = encodeURIComponent(zip || '');
         
-        const billsByType = await Promise.all(billPromises);
+        // Get the API URL (assuming the same as in your bill tracker)
+        const apiUrl = 'https://indianageneralassembly-production.up.railway.app';
+        const year = new Date().getFullYear();
         
-        // Filter and normalize bills
-        const simpleBills = billsByType.flatMap(({ type, bills }) => 
-            (bills || [])
-                .filter(bill => bill && (bill.billName?.startsWith('SB') || bill.billName?.startsWith('HB')))
-                .map(bill => ({ ...bill, type }))
+        const response = await fetch(
+            `${apiUrl}/${year}/address/legislators?street=${encodedStreet}&city=${encodedCity}&zip=${encodedZip}`
         );
         
-        // Fetch details and actions for each bill in batches
-        const batchSize = 5;
-        const detailedBills = [];
-        
-        for (let i = 0; i < simpleBills.length; i += batchSize) {
-            const batch = simpleBills.slice(i, i + batchSize);
-            const batchPromises = batch.map(async (bill) => {
-                try {
-                    const [details, actionsData] = await Promise.all([
-                        fetchIGAData(year, `bills/${bill.billName}`),
-                        fetchIGAData(year, `bills/${bill.billName}/actions`)
-                    ]);
-                    const actions = actionsData.items || [];
-                    
-                    // Process bill data - fixed function calls
-                    const passedChamber = actions.some(action => 
-                        action.description?.toLowerCase().includes('referred to the'));
-                    
-                    const sentToChamber = actions.find(action => 
-                        action.description === 'Referred to the Senate' || 
-                        action.description === 'Referred to the House'
-                    );
-
-                    const returnedWithAmendments = actions.find(action => 
-                        action.description === 'Returned to the Senate with amendments' || 
-                        action.description === 'Returned to the House with amendments'
-                    );
-
-                    const becomeLaw = actions.some(action => 
-                        action.description?.toLowerCase().includes('public law'));
-
-                    // Properly calculate timing
-                    const timing = calculateBillTiming(actions);
-                    
-                    const processedBill = {
-                        ...bill,
-                        details,
-                        actions,
-                        passedChamber,
-                        sentToChamber,
-                        returnedWithAmendments,
-                        becomeLaw,
-                        timing
-                    };
-                    
-                    return processedBill;
-                } catch (error) {
-                    console.error(`Error processing bill ${bill.billName}:`, error);
-                    return { ...bill, error: true, actions: [] };
-                }
-            });
-            
-            const batchResults = await Promise.all(batchPromises);
-            detailedBills.push(...batchResults);
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
         
-        // Generate stats for all bills
-        const stats = {
-            overall: {
-                total: detailedBills.length,
-                passed: detailedBills.filter(bill => bill.passedChamber).length,
-                laws: detailedBills.filter(bill => bill.becomeLaw).length,
-                passageRate: detailedBills.length > 0 ? 
-                    ((detailedBills.filter(bill => bill.passedChamber).length / detailedBills.length) * 100).toFixed(1) : '0.0',
-                lawRate: detailedBills.length > 0 ? 
-                    ((detailedBills.filter(bill => bill.becomeLaw).length / detailedBills.length) * 100).toFixed(1) : '0.0',
-                timing: calculateAverageTiming(detailedBills)
-            }
-        };
-        
-        // Generate stats for each bill type
-        types.forEach(type => {
-            const typeBills = detailedBills.filter(bill => bill.type === type);
-            if (typeBills.length > 0) {
-                stats[type] = {
-                    total: typeBills.length,
-                    passed: typeBills.filter(bill => bill.passedChamber).length,
-                    laws: typeBills.filter(bill => bill.becomeLaw).length,
-                    passageRate: ((typeBills.filter(bill => bill.passedChamber).length / typeBills.length) * 100).toFixed(1),
-                    lawRate: ((typeBills.filter(bill => bill.becomeLaw).length / typeBills.length) * 100).toFixed(1),
-                    timing: calculateAverageTiming(typeBills),
-                    authors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.authors || [])),
-                    coauthors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.coauthors || [])),
-                    sponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.sponsors || [])),
-                    cosponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.cosponsors || []))
-                };
-            } else {
-                stats[type] = {
-                    total: 0,
-                    passed: 0,
-                    laws: 0,
-                    passageRate: '0.0',
-                    lawRate: '0.0',
-                    timing: { averageDaysToPassChamber: null, averageDaysToBecomeLaw: null },
-                    authors: { total: 0, democrat: 0, republican: 0 },
-                    coauthors: { total: 0, democrat: 0, republican: 0 },
-                    sponsors: { total: 0, democrat: 0, republican: 0 },
-                    cosponsors: { total: 0, democrat: 0, republican: 0 }
-                };
-            }
-        });
-        
-        // Process amendment information if legislator names were provided
-        if (legislatorNames && legislatorNames.length > 0) {
-            // Overall amendments
-            const overallAmendments = { passed: 0, failed: 0 };
-            
-            detailedBills.forEach(bill => {
-                const amendments = analyzeAmendments(bill, legislatorNames);
-                if (amendments) {
-                    overallAmendments.passed += amendments.passed;
-                    overallAmendments.failed += amendments.failed;
-                }
-            });
-            
-            const totalAmendments = overallAmendments.passed + overallAmendments.failed;
-            stats.overall.amendments = {
-                total: totalAmendments,
-                passed: overallAmendments.passed,
-                failed: overallAmendments.failed,
-                passRate: totalAmendments > 0 ? ((overallAmendments.passed / totalAmendments) * 100).toFixed(1) : '0.0',
-                failRate: totalAmendments > 0 ? ((overallAmendments.failed / totalAmendments) * 100).toFixed(1) : '0.0'
-            };
-            
-            // By type amendments
-            types.forEach(type => {
-                if (stats[type]) {
-                    const typeAmendments = { passed: 0, failed: 0 };
-                    
-                    detailedBills.filter(bill => bill.type === type).forEach(bill => {
-                        const amendments = analyzeAmendments(bill, legislatorNames);
-                        if (amendments) {
-                            typeAmendments.passed += amendments.passed;
-                            typeAmendments.failed += amendments.failed;
-                        }
-                    });
-                    
-                    const totalTypeAmendments = typeAmendments.passed + typeAmendments.failed;
-                    stats[type].amendments = {
-                        total: totalTypeAmendments,
-                        passed: typeAmendments.passed,
-                        failed: typeAmendments.failed,
-                        passRate: totalTypeAmendments > 0 ? ((typeAmendments.passed / totalTypeAmendments) * 100).toFixed(1) : '0.0',
-                        failRate: totalTypeAmendments > 0 ? ((typeAmendments.failed / totalTypeAmendments) * 100).toFixed(1) : '0.0'
-                    };
-                }
-            });
-        }
-        
-        // Return combined data
-        res.json({
-            bills: detailedBills,
-            stats: stats
-        });
-        
+        const data = await response.json();
+        displayLegislatorResults(data);
     } catch (error) {
-        console.error('Error fetching complete bills:', error);
-        res.status(500).json({ 
-            error: "Failed to fetch complete bills data",
-            details: error.message
-        });
-    }
-});
-
-// Fixed stats endpoint
-app.post("/:year/bills/stats", async (req, res) => {
-    try {
-        const { bills, legislatorNames } = req.body;
+        console.error('Error finding legislators:', error);
         
-        if (!Array.isArray(bills) || bills.length === 0) {
-            return res.status(400).json({
-                error: "Invalid request",
-                details: "Bills array is required"
-            });
+        // Show specific error message
+        if (error.message.includes('404')) {
+            errorElement.textContent = 'We couldn\'t find legislative districts for this address. Please verify your address and try again.';
+        } else if (error.message.includes('500')) {
+            errorElement.textContent = 'Server error while looking up your legislators. Please try again later.';
+        } else {
+            errorElement.textContent = 'Unable to find legislators for this address. Please check your address and try again.';
         }
         
-        // Process bills and generate statistics
-        const processedBills = bills.map(bill => {
-            // Check if actions property exists and is an array
-            const actions = Array.isArray(bill.actions) ? bill.actions : [];
-            
-            return {
-                ...bill,
-                // Direct implementation instead of using the helper functions
-                passedChamber: actions.some(action => 
-                    action.description?.toLowerCase().includes('referred to the')),
-                becomeLaw: actions.some(action => 
-                    action.description?.toLowerCase().includes('public law')),
-                timing: calculateBillTiming(actions)
-            };
-        });
-        
-        // Generate overall statistics
-        const totalBills = processedBills.length;
-        const passedBills = processedBills.filter(bill => bill.passedChamber);
-        const publicLaws = processedBills.filter(bill => bill.becomeLaw);
-        const timing = calculateAverageTiming(processedBills);
-        
-        // Group bills by type
-        const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
-        const statsByType = {};
-        
-        types.forEach(type => {
-            const typeBills = processedBills.filter(bill => bill.type === type);
-            if (typeBills.length > 0) {
-                statsByType[type] = {
-                    total: typeBills.length,
-                    passed: typeBills.filter(bill => bill.passedChamber).length,
-                    laws: typeBills.filter(bill => bill.becomeLaw).length,
-                    passageRate: typeBills.length > 0 ? 
-                        (typeBills.filter(bill => bill.passedChamber).length / typeBills.length * 100).toFixed(1) : '0.0',
-                    lawRate: typeBills.length > 0 ? 
-                        (typeBills.filter(bill => bill.becomeLaw).length / typeBills.length * 100).toFixed(1) : '0.0',
-                    timing: calculateAverageTiming(typeBills),
-                    authors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.authors || [])),
-                    coauthors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.coauthors || [])),
-                    sponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.sponsors || [])),
-                    cosponsors: getPartyBreakdown(typeBills.flatMap(bill => bill.details?.cosponsors || []))
-                };
-                
-                // Process amendments if legislatorNames provided
-                if (Array.isArray(legislatorNames) && legislatorNames.length > 0) {
-                    const typeAmendments = { passed: 0, failed: 0 };
-                    
-                    typeBills.forEach(bill => {
-                        // Check if bill has actions
-                        if (!Array.isArray(bill.actions)) return;
-                        
-                        // Clean legislator names
-                        const searchNames = legislatorNames.map(name => 
-                            name.replace(/^(Rep\.|Senator|Sen\.|Representative)\s+/, '')
-                                .toLowerCase()
-                                .trim()
-                        );
-                        
-                        // Find relevant amendments
-                        const amendments = bill.actions.filter(action => {
-                            const desc = action.description?.toLowerCase() || '';
-                            const isAmendment = desc.includes('amendment');
-                            const hasRollCall = desc.includes('roll call');
-                            const hasLegislatorName = searchNames.some(name => desc.includes(name));
-                            return isAmendment && hasRollCall && hasLegislatorName;
-                        });
-                        
-                        // Count passed and failed amendments
-                        amendments.forEach(action => {
-                            const desc = action.description?.toLowerCase() || '';
-                            if (desc.includes('prevailed') || desc.includes('passed')) {
-                                typeAmendments.passed++;
-                            } else if (desc.includes('failed') || desc.includes('defeated')) {
-                                typeAmendments.failed++;
-                            }
-                        });
-                    });
-                    
-                    const totalTypeAmendments = typeAmendments.passed + typeAmendments.failed;
-                    statsByType[type].amendments = {
-                        total: totalTypeAmendments,
-                        passed: typeAmendments.passed,
-                        failed: typeAmendments.failed,
-                        passRate: totalTypeAmendments > 0 ? 
-                            (typeAmendments.passed / totalTypeAmendments * 100).toFixed(1) : '0.0',
-                        failRate: totalTypeAmendments > 0 ? 
-                            (typeAmendments.failed / totalTypeAmendments * 100).toFixed(1) : '0.0'
-                    };
-                }
-            }
-        });
-        
-        // Calculate overall amendment statistics if legislatorNames provided
-        let amendmentStats = { passed: 0, failed: 0, total: 0, passRate: '0.0', failRate: '0.0' };
-        
-        if (Array.isArray(legislatorNames) && legislatorNames.length > 0) {
-            // Calculate overall amendment stats from the type stats we already computed
-            let totalPassed = 0;
-            let totalFailed = 0;
-            
-            Object.values(statsByType).forEach(typeStat => {
-                if (typeStat.amendments) {
-                    totalPassed += typeStat.amendments.passed;
-                    totalFailed += typeStat.amendments.failed;
-                }
-            });
-            
-            const totalAmendments = totalPassed + totalFailed;
-            amendmentStats = {
-                total: totalAmendments,
-                passed: totalPassed,
-                failed: totalFailed,
-                passRate: totalAmendments > 0 ? 
-                    (totalPassed / totalAmendments * 100).toFixed(1) : '0.0',
-                failRate: totalAmendments > 0 ? 
-                    (totalFailed / totalAmendments * 100).toFixed(1) : '0.0'
-            };
-        }
-        
-        const result = {
-            overall: {
-                total: totalBills,
-                passed: passedBills.length,
-                laws: publicLaws.length,
-                passageRate: totalBills > 0 ? (passedBills.length / totalBills * 100).toFixed(1) : '0.0',
-                lawRate: totalBills > 0 ? (publicLaws.length / totalBills * 100).toFixed(1) : '0.0',
-                timing: timing,
-                amendments: amendmentStats
-            },
-            byType: statsByType
-        };
-        
-        res.json(result);
-    } catch (error) {
-        console.error('Error generating bill statistics:', error);
-        res.status(500).json({ 
-            error: "Failed to generate statistics",
-            details: error.message
-        });
+        errorElement.classList.remove('hidden');
+    } finally {
+        loadingElement.classList.add('hidden');
     }
-});
+}
 
-// Remove your existing /issues/* route and use this one instead
-// Place this at the very end of your routes, just before error handlers
-app.use((req, res, next) => {
-    console.log('Catch-all middleware hit:', req.path);
+// Function to display search results and add one-click save button
+function displayLegislatorResults(response) {
+    const resultsContainer = document.getElementById('finder-results');
+    if (!resultsContainer) return;
     
-    if (req.path.startsWith('/issues/')) {
-      console.log('Serving issues.html for path:', req.path);
-      return res.sendFile(join(__dirname, 'issues', 'index.html'));
+    resultsContainer.innerHTML = '';
+    
+    const foundLegislators = Array.isArray(response) ? response : (response.items || []);
+    
+    if (!foundLegislators || foundLegislators.length === 0) {
+        resultsContainer.innerHTML = '<p>No legislators found for this address.</p>';
+        resultsContainer.classList.remove('hidden');
+        return;
     }
     
-    // For any other paths, continue to the next handler
-    next();
-  });
+    // Create header for results
+    const header = document.createElement('h3');
+    header.textContent = 'Your Legislators';
+    header.className = 'results-title';
+    resultsContainer.appendChild(header);
+    
+    // Add district information if available
+    if (response.houseDistrict || response.senateDistrict) {
+        const districtInfo = document.createElement('div');
+        districtInfo.className = 'district-info';
+        districtInfo.innerHTML = `
+            <p>Your address is in the following districts:</p>
+            <ul>
+                ${response.houseDistrict ? `<li>House District ${response.houseDistrict}</li>` : ''}
+                ${response.senateDistrict ? `<li>Senate District ${response.senateDistrict}</li>` : ''}
+            </ul>
+        `;
+        resultsContainer.appendChild(districtInfo);
+    }
+    
+    // Create a list for the legislators
+    const legislatorsList = document.createElement('div');
+    legislatorsList.className = 'legislators-list';
+    
+    // Group legislators by chamber
+    const houseRep = foundLegislators.find(leg => leg.chamber === 'H');
+    const senator = foundLegislators.find(leg => leg.chamber === 'S');
+    
+    // Add found legislators to the display
+    if (houseRep) {
+        const legislatorCard = document.createElement('div');
+        legislatorCard.className = 'legislator-card';
+        
+        legislatorCard.innerHTML = `
+            <div class="legislator-info">
+                <h4>Rep. ${houseRep.firstName} ${houseRep.lastName}</h4>
+                <p>House District ${houseRep.district}</p>
+                <p>Party: ${houseRep.party}</p>
+            </div>
+        `;
+        
+        legislatorsList.appendChild(legislatorCard);
+    }
+    
+    if (senator) {
+        const legislatorCard = document.createElement('div');
+        legislatorCard.className = 'legislator-card';
+        
+        legislatorCard.innerHTML = `
+            <div class="legislator-info">
+                <h4>Sen. ${senator.firstName} ${senator.lastName}</h4>
+                <p>Senate District ${senator.district}</p>
+                <p>Party: ${senator.party}</p>
+            </div>
+        `;
+        
+        legislatorsList.appendChild(legislatorCard);
+    }
+    
+    // Create a single save button section
+    const saveBtnContainer = document.createElement('div');
+    saveBtnContainer.className = 'save-legislators-container';
+    saveBtnContainer.style.marginTop = '20px';
+    saveBtnContainer.style.textAlign = 'center';
+    
+    // Create the save button
+    saveBtnContainer.innerHTML = `
+        <button id="save-all-legislators" class="button">
+            Save as My Legislators
+        </button>
+    `;
+    
+    // Add elements to the container
+    resultsContainer.appendChild(legislatorsList);
+    resultsContainer.appendChild(saveBtnContainer);
+    resultsContainer.classList.remove('hidden');
+    
+    // Add event listener to the save button
+    document.getElementById('save-all-legislators').addEventListener('click', function() {
+        try {
+            // Save both legislators
+            if (houseRep) {
+                localStorage.setItem('myHouseRep', JSON.stringify(houseRep));
+            }
+            
+            if (senator) {
+                localStorage.setItem('mySenator', JSON.stringify(senator));
+            }
+            
+            // Update the display
+            loadMyLegislators();
+            
+            // Close the modal
+            const modal = document.getElementById('legislator-finder-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            // Show success message
+            console.log('Your legislators have been saved!');
 
-process.on('SIGINT', () => {
-    console.log('Server shutting down, saving call data...');
-    saveCallData();
-    process.exit(0);
-});  
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({
-        error: "Internal server error",
-        details: err.message
+            setTimeout(function() {
+                console.log('Reloading page to update scripts with legislator info');
+                window.location.reload();
+            }, 300);
+        } catch (error) {
+            console.error('Error saving legislators:', error);
+            alert('Failed to save legislators. Please try again.');
+        }
     });
-});
+}
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} at ${new Date().toISOString()}`);
-    console.log(`Server directory: ${__dirname}`);
-    console.log('Ready to handle requests');
-  });
+// Initialize legislators functionality
+function initLegislators() {
+    // Load saved legislators
+    loadMyLegislators();
+    
+    // Set up button event listeners
+    const findBtn = document.getElementById('find-my-legislators-btn');
+    if (findBtn) {
+        findBtn.addEventListener('click', showLegislatorFinder);
+    }
+}
+
+// Set up the legislators functionality when the DOM is loaded
+document.addEventListener('DOMContentLoaded', initLegislators);
