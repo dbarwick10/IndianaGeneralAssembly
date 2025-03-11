@@ -1,4 +1,6 @@
 import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
+import { showIssuesGuide } from "./issuesWelcome.js";
+
 const testing = false;
 const year = new Date().getFullYear();
 
@@ -153,6 +155,7 @@ function createIssuesSidebar(issues) {
 }
 
 // Load the content for a specific issue
+// Load the content for a specific issue
 async function loadIssueContent(issueId) {
     const contentContainer = document.querySelector('.issues-content');
     if (!contentContainer) return;
@@ -166,9 +169,14 @@ async function loadIssueContent(issueId) {
     `;
     
     try {
-        // Fetch the markdown file for this issue
+        // If no issue ID is provided, show the guide
+        if (!issueId) {
+            showIssuesGuide(contentContainer);
+            return;
+        }
         
-        const response = await fetch(`/issues/${year}/bills/${issueId}.md`);
+        // Fetch the markdown file for this issue
+        const response = await fetch(`bills/${issueId}.md`);
         if (!response.ok) throw new Error(`Failed to load issue content: ${response.status}`);
         
         const markdownContent = await response.text();
@@ -191,16 +199,10 @@ async function loadIssueContent(issueId) {
         
         // Add call tracking functionality
         updateCallTracking();
-
-        await initializeCallStats();
         
     } catch (error) {
-        console.error(`Error loading issue ${issueId}:`, error);
-        contentContainer.innerHTML = `
-            <div class="error-message">
-                Choose an issue from the list to view details.
-            </div>
-        `;
+        // console.error(`Error loading issue ${issueId}:`, error);
+        showIssuesGuide(contentContainer);
     }
 }
 
@@ -374,7 +376,7 @@ function updateCallScripts() {
             const notice = document.createElement('div');
             notice.className = 'personalized-notice legislator-notice';
             notice.innerHTML = `
-                <strong>To personalize this script with your legislator's information:</strong>
+                <strong>To show the phone number and personalize this script with your legislator's information:</strong>
                 <button id="script-find-legislators-btn" class="button small-button">Find My Legislators</button>
             `;
             

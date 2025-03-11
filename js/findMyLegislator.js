@@ -6,7 +6,7 @@ export function loadMyLegislators() {
     const senator = localStorage.getItem('mySenator');
     const infoContainer = document.getElementById('header-legislators-info');
     const findBtn = document.getElementById('find-my-legislators-btn');
-    const partyColor = JSON.parse(houseRep).party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
+    let partyColor = '';
     
     if (!infoContainer || !findBtn) return;
     
@@ -21,11 +21,15 @@ export function loadMyLegislators() {
             <span class="your-legislators">Your legislators: </span>`;
         if (houseRep) {
             const rep = JSON.parse(houseRep);
+            partyColor = rep.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
+
             html += `<span class="legislator-name" ${partyColor}>Rep. ${rep.firstName} ${rep.lastName}</span>`;
         }
         
         if (senator) {
             const sen = JSON.parse(senator);
+            partyColor = sen.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
+
             html += `<span class="legislator-name" ${partyColor}>Sen. ${sen.firstName} ${sen.lastName}</span>
                 </div>`;
         }

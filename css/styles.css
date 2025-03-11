@@ -1979,6 +1979,168 @@ input:checked + .slider:before {
     text-decoration: underline;
 }
 
+#script-find-legislators-btn {
+    margin-left: 20px;
+}
+
+.issues-guide {
+    padding: 20px;
+    color: #f9fafb;
+    background-color: #1f2937;
+    border-radius: 10px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.issues-guide h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #f9fafb;
+    letter-spacing: -0.025em;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 15px;
+}
+
+.issues-guide h2 {
+    font-size: 1.5rem;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #60a5fa;
+    font-weight: 600;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #374151;
+}
+
+.issues-guide h3 {
+    font-size: 1.25rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #93c5fd;
+    font-weight: 600;
+}
+
+.issues-guide p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: #d1d5db;
+}
+
+.issues-guide ul {
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.issues-guide li {
+    margin-bottom: 10px;
+    color: #d1d5db;
+}
+
+.issues-guide strong {
+    color: #f9fafb;
+    font-weight: 700;
+}
+
+/* Step-by-step styling */
+.issues-guide h3:nth-of-type(1),
+.issues-guide h3:nth-of-type(2),
+.issues-guide h3:nth-of-type(3) {
+    background-color: #111827;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2563eb;
+    margin-left: -10px;
+    transition: transform 0.2s ease;
+}
+
+.issues-guide h3:nth-of-type(1):hover,
+.issues-guide h3:nth-of-type(2):hover,
+.issues-guide h3:nth-of-type(3):hover {
+    transform: translateX(5px);
+}
+
+.issues-guide h3:nth-of-type(1)::before,
+.issues-guide h3:nth-of-type(2)::before,
+.issues-guide h3:nth-of-type(3)::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-color: #2563eb;
+    border-radius: 50%;
+    margin-right: 10px;
+    color: white;
+    text-align: center;
+    line-height: 24px;
+    font-weight: bold;
+}
+
+.issues-guide h3:nth-of-type(1)::before {
+    content: "1";
+}
+
+.issues-guide h3:nth-of-type(2)::before {
+    content: "2";
+}
+
+.issues-guide h3:nth-of-type(3)::before {
+    content: "3";
+}
+
+/* Features section styling */
+.issues-guide h2:nth-of-type(2) + p + h3,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3 + p + h3,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3 + p + h3 + p + h3 {
+    background-color: #111827;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #374151;
+    transition: all 0.2s ease;
+}
+
+.issues-guide h2:nth-of-type(2) + p + h3:hover,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3:hover,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3 + p + h3:hover,
+.issues-guide h2:nth-of-type(2) + p + h3 + p + h3 + p + h3 + p + h3:hover {
+    transform: translateY(-3px);
+    border-color: #2563eb;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Tips section styling */
+.issues-guide h2:nth-of-type(3) {
+    background-color: #1a365d;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    color: #f9fafb;
+}
+
+.issues-guide h2:nth-of-type(3) + ul {
+    background-color: #1a365d;
+    padding: 15px 15px 15px 35px;
+    border-radius: 0 0 8px 8px;
+    border-left: 4px solid #3b82f6;
+    margin-top: -15px;
+}
+
+.issues-guide h2:nth-of-type(3) + ul li {
+    color: #e5e7eb;
+}
+
+/* Final paragraph styling */
+.issues-guide p:last-child {
+    text-align: center;
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #2563eb;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -2210,6 +2372,26 @@ input:checked + .slider:before {
     
     .team-grid {
         grid-template-columns: 1fr;
+    }
+
+    #script-find-legislators-btn {
+        margin-top: 5px;
+    }
+
+    .issues-guide {
+        padding: 15px;
+    }
+    
+    .issues-guide h1 {
+        font-size: 1.5rem;
+    }
+    
+    .issues-guide h2 {
+        font-size: 1.3rem;
+    }
+    
+    .issues-guide h3 {
+        font-size: 1.1rem;
     }
 }
 
