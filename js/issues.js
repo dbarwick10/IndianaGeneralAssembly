@@ -241,7 +241,8 @@ function processRenderedContent() {
                     <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
                     <div class="script-content"></div>
                     <p class="script-tip"><strong>Tip:</strong> These bills have passed from one chamber to the next. If you are told the issue you are calling about is in the other chamber, let the person know your legislator may not currently have a vote, but they do have a voice. You can also mention that you are calling both your House Rep. and Senator.</p>
-                    <p class="script-tip"><strong>Tip:</strong> Be respectful. The person you talk to is more likely to be an assistant than the Representative or Senator themselves.</p>
+                    <p class="script-tip"><strong>Tip:</strong> Be yourself. Adding personal stories can help show how this bill impacts your community. 
+                    Be respectful. The person you talk to is more likely to be an assistant than the Representative or Senator themselves.</p>
                 </div>
             `;
         }
