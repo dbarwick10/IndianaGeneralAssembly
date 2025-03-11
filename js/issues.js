@@ -1,6 +1,6 @@
-// issues.js - Enhanced with Markdown support and call tracking
-import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "../findMyLegislator.js";
+import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
 const testing = false;
+const year = new Date().getFullYear();
 
 document.addEventListener('DOMContentLoaded', async function() {
     // Get all issue items and issue details
@@ -61,7 +61,7 @@ function checkForDailyReset() {
     
     // If no last reset date or it's different from today, reset progress
     if (!lastResetDate || lastResetDate !== today) {
-        console.log('Performing daily reset of call progress');
+        // console.log('Performing daily reset of call progress');
         
         // Reset the call progress
         localStorage.removeItem('completedCalls');
@@ -167,7 +167,8 @@ async function loadIssueContent(issueId) {
     
     try {
         // Fetch the markdown file for this issue
-        const response = await fetch(`bills/${issueId}.md`);
+        
+        const response = await fetch(`/issues/${year}/bills/${issueId}.md`);
         if (!response.ok) throw new Error(`Failed to load issue content: ${response.status}`);
         
         const markdownContent = await response.text();
@@ -343,27 +344,27 @@ function getLegislatorPhone(legislator) {
 
 // Update call scripts with legislator information
 function updateCallScripts() {
-    console.log('Updating call scripts...');
+    // console.log('Updating call scripts...');
     
     // Get legislators from the correct localStorage keys
     const mySenator = localStorage.getItem('mySenator');
     const myHouseRep = localStorage.getItem('myHouseRep');
     
-    console.log('Found from localStorage:', { 
-        senator: mySenator ? 'yes' : 'no', 
-        houseRep: myHouseRep ? 'yes' : 'no' 
-    });
+    // console.log('Found from localStorage:', { 
+    //     senator: mySenator ? 'yes' : 'no', 
+    //     houseRep: myHouseRep ? 'yes' : 'no' 
+    // });
     
     // Get the script container
     const scriptContainer = document.querySelector('.script-container');
     if (!scriptContainer) {
-        console.log('No script container found in the DOM');
+        // console.log('No script container found in the DOM');
         return;
     }
     
     // If neither legislator is available, show the find legislators button in the script container
     if (!mySenator && !myHouseRep) {
-        console.log('No legislators found in localStorage, adding find legislator button');
+        // console.log('No legislators found in localStorage, adding find legislator button');
         
         // Check if notice already exists
         const existingNotice = document.querySelector('.legislator-notice');
@@ -403,7 +404,7 @@ function updateCallScripts() {
                 if (senator) {
                     senator.chamber = 'S'; // Ensure chamber is set
                     legislators.push(senator);
-                    console.log('Added senator:', senator);
+                    // console.log('Added senator:', senator);
                 }
             } catch (e) {
                 console.error('Error parsing senator data:', e);
@@ -417,7 +418,7 @@ function updateCallScripts() {
                 if (houseRep) {
                     houseRep.chamber = 'H'; // Ensure chamber is set
                     legislators.push(houseRep);
-                    console.log('Added house rep:', houseRep);
+                    // console.log('Added house rep:', houseRep);
                 }
             } catch (e) {
                 console.error('Error parsing house rep data:', e);
@@ -426,12 +427,12 @@ function updateCallScripts() {
         
         // If no valid legislators found, return
         if (legislators.length === 0) {
-            console.log('No valid legislators found after parsing');
+            // console.log('No valid legislators found after parsing');
             return;
         }
         
         // Find and update script content in the DOM
-        console.log('Found script container, looking for content to update');
+        // console.log('Found script container, looking for content to update');
         
         // Get the active legislator index from localStorage or default to 0
         const activeLegIndex = parseInt(localStorage.getItem('activeCallLegislatorIndex') || '0');
@@ -441,13 +442,13 @@ function updateCallScripts() {
         const paragraphs = scriptContainer.querySelectorAll('p');
         let anyUpdates = false;
         
-        console.log(`Found ${paragraphs.length} paragraphs in script container`);
+        // console.log(`Found ${paragraphs.length} paragraphs in script container`);
         
         paragraphs.forEach((paragraph, index) => {
             let content = paragraph.innerHTML;
             let updatedContent = content;
             
-            console.log(`Checking paragraph ${index + 1}:`, content);
+            // console.log(`Checking paragraph ${index + 1}:`, content);
             
             // Only use the active legislator for replacements
             if (activeLegislator) {
@@ -467,7 +468,7 @@ function updateCallScripts() {
                     fullName = `${title} [Name unavailable]`;
                 }
                 
-                console.log(`Active legislator ${activeLegislator.chamber}: "${fullName}"`);
+                // console.log(`Active legislator ${activeLegislator.chamber}: "${fullName}"`);
                 
                 // Define placeholder patterns for names
                 const namePatterns = [
@@ -492,7 +493,7 @@ function updateCallScripts() {
                 namePatterns.forEach(pattern => {
                     if ((pattern.chamber === 'both' || pattern.chamber === activeLegislator.chamber) && 
                         pattern.pattern.test(updatedContent)) {
-                        console.log(`Found matching name pattern: ${pattern.pattern}`);
+                        // console.log(`Found matching name pattern: ${pattern.pattern}`);
                         
                         // Replace the pattern with the legislator's name
                         updatedContent = updatedContent.replace(pattern.pattern, fullName);
@@ -503,7 +504,7 @@ function updateCallScripts() {
                 phonePatterns.forEach(pattern => {
                     if ((pattern.chamber === 'both' || pattern.chamber === activeLegislator.chamber) && 
                         pattern.pattern.test(updatedContent)) {
-                        console.log(`Found matching phone pattern: ${pattern.pattern}`);
+                        // console.log(`Found matching phone pattern: ${pattern.pattern}`);
                         
                         // Replace the pattern with the legislator's phone
                         updatedContent = updatedContent.replace(pattern.pattern, phone);
@@ -513,9 +514,9 @@ function updateCallScripts() {
             
             // Update paragraph content if changed
             if (updatedContent !== content) {
-                console.log('Paragraph updated:');
-                console.log('Before:', content);
-                console.log('After:', updatedContent);
+                // console.log('Paragraph updated:');
+                // console.log('Before:', content);
+                // console.log('After:', updatedContent);
                 paragraph.innerHTML = updatedContent;
                 anyUpdates = true;
             }
@@ -572,7 +573,7 @@ function updateCallScripts() {
 }
 
 function updateCallTracking() {
-    console.log('Setting up call tracking...');
+    // console.log('Setting up call tracking...');
     
     // Get legislators from localStorage
     const mySenator = localStorage.getItem('mySenator');
@@ -580,20 +581,20 @@ function updateCallTracking() {
     
     // If neither is available, return early
     if (!mySenator && !myHouseRep) {
-        console.log('No legislators found for call tracking');
+        // console.log('No legislators found for call tracking');
         return;
     }
     
     // Get the script container to add tracking after it
     const scriptContainer = document.querySelector('.script-container');
     if (!scriptContainer) {
-        console.log('No script container found for call tracking');
+        // console.log('No script container found for call tracking');
         return;
     }
     
     // Check if call tracking section already exists
     if (document.querySelector('.call-tracking')) {
-        console.log('Call tracking already exists, removing old one');
+        // console.log('Call tracking already exists, removing old one');
         document.querySelector('.call-tracking').remove();
     }
     
@@ -626,7 +627,7 @@ function updateCallTracking() {
         }
         
         if (legislators.length === 0) {
-            console.log('No valid legislators found for call tracking');
+            // console.log('No valid legislators found for call tracking');
             return;
         }
         
@@ -770,7 +771,7 @@ async function initializeCallStats() {
     // Create or update the call statistics display
     updateCallStatsDisplay(userCallCount, globalCallCount);
     
-    console.log(`Call stats initialized: user calls = ${userCallCount}, global calls = ${globalCallCount}`);
+    // console.log(`Call stats initialized: user calls = ${userCallCount}, global calls = ${globalCallCount}`);
 }
   
 // Create the call statistics display
@@ -798,22 +799,22 @@ function updateCallStatsDisplay(userCalls, globalCalls) {
     }
     
     // Update the content of the stats container
-    statsContainer.innerHTML = `
-      <div class="call-stats">
-        <div class="call-stat-item">
-          <span class="call-stat-value">${userCalls}</span>
-          <span class="call-stat-label">Your Total Calls</span>
-        </div>
-        <div class="call-stat-item">
-          <span class="call-stat-value">${globalCalls}</span>
-          <span class="call-stat-label">All Users' Calls</span>
-        </div>
-      </div>
-    `;
+    // statsContainer.innerHTML = `
+    //   <div class="call-stats">
+    //     <div class="call-stat-item">
+    //       <span class="call-stat-value">${userCalls}</span>
+    //       <span class="call-stat-label">Your Total Calls</span>
+    //     </div>
+    //     <div class="call-stat-item">
+    //       <span class="call-stat-value">${globalCalls}</span>
+    //       <span class="call-stat-label">All Users' Calls</span>
+    //     </div>
+    //   </div>
+    // `;
 }
   
 async function recordCallResult(legislator, result) {
-    console.log(`Recording call result for ${legislator.chamber === 'S' ? 'Senator' : 'Rep'}: ${result}`);
+    // console.log(`Recording call result for ${legislator.chamber === 'S' ? 'Senator' : 'Rep'}: ${result}`);
     
     try {
       // Check if we need to reset progress due to date change
@@ -884,7 +885,7 @@ async function recordCallResult(legislator, result) {
           });
         }, 100);
         
-        console.log(`Call counters updated: user calls = ${userCalls}, global calls = ${globalCalls}`);
+        // console.log(`Call counters updated: user calls = ${userCalls}, global calls = ${globalCalls}`);
       }
       
       // Rest of your existing function...
@@ -1035,7 +1036,7 @@ function updateCallScriptText(legislator) {
     // Get phone number using our helper function
     const phone = getLegislatorPhone(legislator);
     
-    console.log(`Updating call script for next legislator: ${fullName} (${phone})`);
+    // console.log(`Updating call script for next legislator: ${fullName} (${phone})`);
     
     // Update each paragraph with the new legislator name and phone
     paragraphs.forEach(paragraph => {
@@ -1171,7 +1172,7 @@ function handleRouting() {
         sessionStorage.removeItem('legislatorsJustUpdated');
         // Reload only if we're on the same page
         if (window.location.href === sessionStorage.getItem('lastPageBeforeUpdate')) {
-            console.log('Legislators were just updated, reloading page to update scripts');
+            // console.log('Legislators were just updated, reloading page to update scripts');
             // No need to call loadIssueContent since we're reloading
             return;
         }

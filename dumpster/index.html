@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget - LegisAlert</title>
+    <title>Issues - LegisAlert</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -17,38 +17,35 @@
                         <span>Indiana LegisAlert!</span>
                     </a>
                 </div>
-                
                 <div id="header-legislators-info" class="header-legislators-info"></div>
-                
+
                 <div class="nav-links">
                     <a href="/issues/2025/#hb1002" class="nav-link" id="issues">Issues</a>
                     <a href="/about-us/" class="nav-link" id="about">About Us</a>
                 </div>
             </nav>
         </header>
-        <div class="card">
-            <div class="card-header">
-                <h1 class="card-title">Indiana Budget
+        
+        <div class="issues-container">
+            <div class="issues-sidebar">
+                <h2 class="sidebar-title">Key Issues
                     <div id="header-legislators-action" class="header-legislators-action">
                         <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
                     </div>
-                </h1>
-                <p class="note">All figures are from the Latest Fiscal Notes from each budget year</p>
-                <div id="categoryButtons" class="category-buttons"></div>
+                </h2>
+                
+                <ul class="issues-list">
+                    <li class="issue-item" data-issue="loading">Loading issues...</li>
+                </ul>
             </div>
-            <div class="card-content">
-                <div class="chart-container">
-                    <canvas id="chartCanvas"></canvas>
+            
+            <div class="issues-content">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading issues...</div>
                 </div>
-                <div id="legendContainer" class="legend-container"></div>
             </div>
         </div>
-        <footer class="footer">
-            <div class="footer-note">
-              <p class="note">Note: Years 2026 and 2027 represent proposed budget figures, not actual appropriations</p>
-              <p class="note">When searching with inflation set to true, inflation rates come from the <a href="https://www.bls.gov/data/inflation_calculator.htm">Bureau of Labor Statistics</a>. The Years 2026 and 2027 are projected inflation rates</p>
-            </div>
-        </footer>
         <footer class="site-footer">
             <div class="footer-container">
                 <div class="footer-nav">
@@ -61,7 +58,7 @@
                 <div class="footer-nav">
                     <h3 class="footer-heading">Resources</h3>
                     <ul class="footer-links">
-                        <li><a href="/issues/2025/#hb1002">Issues</a></li>
+                        <li><a href="/issues/#hb1002">Key Issues</a></li>
                         <li><a href="/about-us">About Us</a></li>
                     </ul>
                 </div>
@@ -78,6 +75,6 @@
         </footer>
     </div>
 
-    <script type="module" src="../js/budget.js"></script>
+    <script type="module" src="../js/issues.js"></script>
 </body>
 </html>

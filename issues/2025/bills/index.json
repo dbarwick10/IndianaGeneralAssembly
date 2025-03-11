@@ -1,8 +1,13 @@
 {
     "issues": [
       {
+        "id": "hb1002",
+        "title": "HB 1002: Various Education Matters",
+        "description": "Various Education Matters"
+      },
+      {
         "id": "hb1041",
-        "title": "HB 1041: Transgender Athletes",
+        "title": "HB 1041: Student Eligibility in Interscholastic Sports",
         "description": "Student eligibility in interscholastic sports"
       },
       {
@@ -14,26 +19,6 @@
         "id": "hb1531",
         "title": "HB 1531: Various Immigration Matters",
         "description": "Various immigration matters"
-      },
-      {
-        "id": "hb1002",
-        "title": "HB 1002: Various Education Matters",
-        "description": "Various Education Matters"
-      },
-      {
-        "id": "sb518",
-        "title": "SB 518: School Property Taxes",
-        "description": "School property taxes"
-      },
-      {
-        "id": "sb523",
-        "title": "SB 523: School Chaplains",
-        "description": "School Chaplains"
-      },
-      {
-        "id": "sb289",
-        "title": "SB 289: Nondiscrimination in Employment and Education",
-        "description": "Nondiscrimination in employment and education"
       },
       {
         "id": "sb10",
@@ -51,9 +36,29 @@
         "description": "Parental Rights"
       },
       {
+        "id": "sb289",
+        "title": "SB 289: Nondiscrimination in Employment and Education",
+        "description": "Nondiscrimination in employment and education"
+      },
+      {
         "id": "sb442",
         "title": "SB 442: Instruction Concerning Human Sexuality",
         "description": "Instruction concerning human sexuality"
+      },
+      {
+        "id": "sb518",
+        "title": "SB 518: School Property Taxes",
+        "description": "School property taxes"
+      },
+      {
+        "id": "sb523",
+        "title": "SB 523: School Chaplains",
+        "description": "School Chaplains"
+      },
+      {
+        "id": "dontsee",
+        "title": "Don't see your issue?",
+        "description": "Don't see your issue?"
       }
     ]
   }

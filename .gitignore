@@ -1,8 +1,9 @@
 # dotenv
 .env
 
-#package-lock.json
+#json
 package-lock.json
+call-data.json
 
 # nodes
 node_modules/

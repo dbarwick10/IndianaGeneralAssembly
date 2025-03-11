@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget - LegisAlert</title>
+    <title>Bill Tracker - LegisAlert</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="../css/styles.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -19,34 +18,56 @@
                 </div>
                 
                 <div id="header-legislators-info" class="header-legislators-info"></div>
-                
+
                 <div class="nav-links">
                     <a href="/issues/2025/#hb1002" class="nav-link" id="issues">Issues</a>
                     <a href="/about-us/" class="nav-link" id="about">About Us</a>
                 </div>
             </nav>
         </header>
-        <div class="card">
-            <div class="card-header">
-                <h1 class="card-title">Indiana Budget
-                    <div id="header-legislators-action" class="header-legislators-action">
-                        <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
-                    </div>
-                </h1>
-                <p class="note">All figures are from the Latest Fiscal Notes from each budget year</p>
-                <div id="categoryButtons" class="category-buttons"></div>
+        <h1 class="title">Bill Tracker</h1>
+        <div class="search-container">
+            <div class="relative">
+                <input
+                    type="text"
+                    class="input"
+                    id="yearInput"
+                    value="2025"
+                    placeholder="Enter year (e.g., 2025)"
+                />
+                <input
+                    type="text"
+                    class="input"
+                    id="searchInput"
+                    placeholder="Enter legislator(s) separated by a comma... "
+                />
+                <ul class="autocomplete-dropdown" id="autocompleteDropdown"></ul>
+            <button class="button" id="searchButton">Search</button>
             </div>
-            <div class="card-content">
-                <div class="chart-container">
-                    <canvas id="chartCanvas"></canvas>
-                </div>
-                <div id="legendContainer" class="legend-container"></div>
+            
+            
+            <div class="view-toggle">
+                <span id="viewLabel">Bill View</span>
+                <label class="switch">
+                    <input type="checkbox" id="viewToggle">
+                    <span class="slider round"></span>
+                </label>
+                <span id="viewLabel">Stats View</span>
+            </div>
+            <div id="header-legislators-action" class="header-legislators-action">
+                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
             </div>
         </div>
-        <footer class="footer">
-            <div class="footer-note">
-              <p class="note">Note: Years 2026 and 2027 represent proposed budget figures, not actual appropriations</p>
-              <p class="note">When searching with inflation set to true, inflation rates come from the <a href="https://www.bls.gov/data/inflation_calculator.htm">Bureau of Labor Statistics</a>. The Years 2026 and 2027 are projected inflation rates</p>
+        <div id="loading" class="loading-spinner hidden">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading bills...</div>
+          </div>
+        <div id="results" class="space-y-6"></div>
+        <div id="noResults" class="no-results hidden">No bills found for your search.</div>
+        <footer>
+            <div class="note">
+                <p><small>This page uses INscribe to fetch the legislator(s) and their Bills.
+                    INscribe and the Indiana General Assembly cannot vouch for the data or analyses derived from these data after the data have been retrieved from INscribe.</small></p>
             </div>
         </footer>
         <footer class="site-footer">
@@ -77,7 +98,7 @@
             </div>
         </footer>
     </div>
-
-    <script type="module" src="../js/budget.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+    <script type="module" src="../js/index.js"></script>
 </body>
 </html>
