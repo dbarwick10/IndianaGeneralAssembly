@@ -1036,7 +1036,7 @@ input:checked + .slider:before {
 }
 
 .personalized-notice.call {
-    background-color: #60a5fa;
+    background-color: #1f2937;
 
 }
 
@@ -1544,7 +1544,7 @@ input:checked + .slider:before {
 }
 
 .personalized-notice.call {
-    background-color: #2563eb;
+    background-color: #1f2937;
     color: white;
     padding: 15px;
     border-radius: 6px;

@@ -566,6 +566,9 @@ function updateCallScripts() {
         // Always update the notice content with current legislator info
         existingNotice.innerHTML = `
             <strong>Your script has been personalized with your legislator's name.</strong>
+            <div id="header-legislators-action" class="header-legislators-action">
+                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+            </div>
         `;
         
     } catch (error) {
