@@ -1,5 +1,5 @@
 import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./findMyLegislator.js";
-import { showIssuesGuide } from "./issuesWelcome.js";
+import { baseUrl } from "./const.js";
 
 const testing = false;
 const year = new Date().getFullYear();
@@ -169,12 +169,27 @@ async function loadIssueContent(issueId) {
     `;
     
     try {
-        // If no issue ID is provided, show the guide
-        if (!issueId) {
-            showIssuesGuide(contentContainer);
-            return;
-        }
         
+        if (issueId === 'how-to') {
+            // Fetch the how-to guide markdown
+            const guideResponse = await fetch('bills/how-to.md');
+            if (!guideResponse.ok) throw new Error(`Failed to load guide: ${guideResponse.status}`);
+            
+            // Get the markdown content
+            const guideMarkdown = await guideResponse.text();
+            
+            // Parse the markdown
+            const parsedGuide = marked.parse(guideMarkdown);
+            
+            // Set the content with the special guide class
+            contentContainer.innerHTML = `
+                <div class="issue-detail active issues-guide">
+                    ${parsedGuide}
+                </div>
+            `;
+            return; // Exit the function early since we've handled the special case
+        }
+
         // Fetch the markdown file for this issue
         const response = await fetch(`bills/${issueId}.md`);
         if (!response.ok) throw new Error(`Failed to load issue content: ${response.status}`);
@@ -201,8 +216,7 @@ async function loadIssueContent(issueId) {
         updateCallTracking();
         
     } catch (error) {
-        // console.error(`Error loading issue ${issueId}:`, error);
-        showIssuesGuide(contentContainer);
+        console.error(`Error loading issue ${issueId}:`, error);
     }
 }
 
@@ -567,9 +581,9 @@ function updateCallScripts() {
         
         // Always update the notice content with current legislator info
         existingNotice.innerHTML = `
-            <strong>Your script has been personalized with your legislator's name.</strong>
+            <strong>Your script has been personalized with your legislator's name and phone number.</strong>
             <div id="header-legislators-action" class="header-legislators-action">
-                <button id="find-my-legislators-btn" class="button small-button">Find My Legislators</button>
+                <button id="find-my-legislators-btn" class="button small-button">Change My Legislators</button>
             </div>
         `;
         
@@ -762,8 +776,7 @@ async function initializeCallStats() {
     let globalCallCount = 0;
     try {
       // Use the same URL base as your other API calls
-      const serverUrl = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
-      const response = await fetch(`${serverUrl}/api/calls/count`);
+      const response = await fetch(`${baseUrl}/api/calls/count`);
       if (response.ok) {
         const data = await response.json();
         globalCallCount = data.globalCallCount;
@@ -851,8 +864,7 @@ async function recordCallResult(legislator, result) {
         
         try {
           // Use the same URL base as your other API calls
-          const serverUrl = testing ? 'http://localhost:3000' : 'https://indianageneralassembly-production.up.railway.app';
-          const response = await fetch(`${serverUrl}/api/calls/record`, {
+          const response = await fetch(`${baseUrl}/api/calls/record`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -1159,7 +1171,7 @@ function updateCallScriptText(legislator) {
         
         // Update notice text with clickable phone number
         notice.innerHTML = `
-            <strong>Your script has been personalized with your legislator's name.</strong>
+            <strong>Your script has been personalized with your legislator's name and phone number.</strong>
         `;
     }
 }
