@@ -1,6 +1,5 @@
 /* Global Styles */
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #111827; /* Dark background */
@@ -56,7 +55,7 @@ body {
     text-decoration: none;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-size: 1.05rem;
     font-weight: 500;
     transition: all 0.2s ease;
 }
@@ -352,6 +351,7 @@ input:checked + .slider:before {
     color: #093f1e;
 }
 
+/* Bill Summary Styles */
 .bill-summary {
     display: flex;
     flex-wrap: wrap;
@@ -369,7 +369,8 @@ input:checked + .slider:before {
     white-space: nowrap;
 }
 
-.bill-card summary::after {
+/* Only target the top-level details element within bill-card */
+.bill-card > details > summary::after {
     content: '+';
     position: absolute;
     right: 20px;
@@ -379,12 +380,38 @@ input:checked + .slider:before {
     transition: all 0.2s ease;
 }
 
-.bill-card details[open] summary::after {
+.bill-card > details[open] > summary::after {
     content: '−';
 }
 
-.bill-card details[open] summary {
+.bill-card > details[open] > summary {
     border-bottom: 1px solid #4b5563;
+}
+
+/* Define different styles for the nested digest details */
+.bill-card details details summary {
+    cursor: pointer;
+    padding: 8px 0;
+    color: #e5e7eb;
+    font-weight: 500;
+    position: relative;
+    list-style: none; 
+    padding-right: 24px;
+    padding-left: 12px;
+}
+
+/* Custom indicator for digest details - using same +/- as main card but positioned differently */
+.bill-card details details summary::after {
+    content: '+';
+    color: #6b7280;
+    position: absolute;
+    right: 8px; /* Move it inward from the edge */
+    top: 8px;
+    font-size: 16px;
+}
+
+.bill-card details details[open] summary::after {
+    content: '−';
 }
 
 .bill-card div.space-y-4 {
@@ -1367,26 +1394,26 @@ input:checked + .slider:before {
     margin-right: 1rem;
 }
 
-.legislators-label {
+/* .legislators-label {
     background-color: #1d4ed8;
     padding: 4px 8px;
     border: 4px solid rgba(69, 68, 68, 0.1);
     border-radius: 4px;
-}
+} */
 
 .your-legislators {
     margin-left: 8px;
     margin-right: 1rem;
 }
 
-.legislator-name {
+/* .legislator-name {
     background: #374151;
     color: #f9f9f9;
     border-radius: 4px;
     padding: 4px 8px;
     margin-right: 8px;
     white-space: nowrap;
-}
+} */
 
 /* Find My Legislators button area */
 .header-legislators-action {
@@ -1646,7 +1673,7 @@ input:checked + .slider:before {
 .footer-links a {
     color: #9ca3af;
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 1rem;
     transition: color 0.2s ease;
 }
 
@@ -2139,6 +2166,25 @@ input:checked + .slider:before {
     border-radius: 8px;
     color: white;
     font-weight: 500;
+}
+
+.footer-nav .legislators-info {
+    margin-top: 10px;
+}
+
+.footer-nav .legislators-label {
+    display: flex;
+    flex-direction: column;
+    /* gap: 8px; */
+}
+
+.footer-nav .legislator-name {
+    display: inline-block;
+    /* padding: 3px 8px; */
+    border-radius: 4px;
+    color: #9ca3af;
+    font-size: 1rem;
+    /* margin-bottom: 5px; */
 }
 
 /* Responsive Design */

@@ -382,7 +382,7 @@ const renderBills = async () => {
     // Dynamically load issues data
     let issuesData = { issues: [] };
     try {
-        const response = await fetch('/issues/bills/index.json');
+        const response = await fetch('/issues/2025/bills/index.json');
         issuesData = await response.json();
     } catch (error) {
         console.error('Error loading issues data:', error);
@@ -471,7 +471,7 @@ const renderBills = async () => {
                                                 }</span>` : ''}
                                             ${matchingIssue ? `
                                                 <span class="issues-button-container">
-                                                    <a href="/issues/#${matchingIssue.id}" 
+                                                    <a href="/issues/2025/#${matchingIssue.id}" 
                                                        class="button small-button issues-button"
                                                        target="_blank"
                                                        data-bill-name="${bill.billName}">

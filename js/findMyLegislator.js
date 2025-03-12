@@ -21,16 +21,16 @@ export function loadMyLegislators() {
             <span class="your-legislators">Your legislators: </span>`;
         if (houseRep) {
             const rep = JSON.parse(houseRep);
-            partyColor = rep.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
+            // partyColor = rep.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
 
-            html += `<span class="legislator-name" ${partyColor}>Rep. ${rep.firstName} ${rep.lastName}</span>`;
+            html += `<span class="legislator-name">Rep. ${rep.firstName} ${rep.lastName}</span>`;
         }
         
         if (senator) {
             const sen = JSON.parse(senator);
-            partyColor = sen.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
+            // partyColor = sen.party === 'Republican' ? 'style=background:#cc6767;' : 'style=background:#6a6aff;';
 
-            html += `<span class="legislator-name" ${partyColor}>Sen. ${sen.firstName} ${sen.lastName}</span>
+            html += `<span class="legislator-name">Sen. ${sen.firstName} ${sen.lastName}</span>
                 </div>`;
         }
         
@@ -289,22 +289,79 @@ function displayLegislatorResults(response) {
         legislatorsList.appendChild(legislatorCard);
     }
     
-    // Create a single save button section
-    const saveBtnContainer = document.createElement('div');
-    saveBtnContainer.className = 'save-legislators-container';
-    saveBtnContainer.style.marginTop = '20px';
-    saveBtnContainer.style.textAlign = 'center';
+    // Add elements to the container
+    resultsContainer.appendChild(legislatorsList);
+    
+    // Check if we're on the bill tracker page
+    const isBillTracker = window.location.pathname.includes('/bill-tracker/');
+    
+    // Create buttons container
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'legislators-actions-container';
+    btnContainer.style.marginTop = '20px';
+    btnContainer.style.textAlign = 'center';
     
     // Create the save button
-    saveBtnContainer.innerHTML = `
+    btnContainer.innerHTML = `
         <button id="save-all-legislators" class="button">
             Save as My Legislators
         </button>
     `;
     
-    // Add elements to the container
-    resultsContainer.appendChild(legislatorsList);
-    resultsContainer.appendChild(saveBtnContainer);
+    // Add view bills button if we're on the bill tracker page
+    if (isBillTracker) {
+        // Prepare legislator names for search
+        let legislatorNames = [];
+        if (houseRep) {
+            legislatorNames.push(`${houseRep.firstName}-${houseRep.lastName}`);
+        }
+        if (senator) {
+            legislatorNames.push(`${senator.firstName}-${senator.lastName}`);
+        }
+        
+        // Create search button if we have legislators
+        if (legislatorNames.length > 0) {
+            const currentYear = new Date().getFullYear();
+            const searchUrl = `/bill-tracker/?legislators=${legislatorNames.join(',')}&year=${currentYear}&view=bills`;
+            
+            btnContainer.innerHTML += `
+                <button id="view-legislator-bills" class="button" style="margin-left: 10px;">
+                    Save and View Their Bills
+                </button>
+            `;
+            
+            // Add the buttons container
+            resultsContainer.appendChild(btnContainer);
+            
+            // Add event listener once the button is added to the DOM
+            setTimeout(() => {
+                document.getElementById('view-legislator-bills').addEventListener('click', function() {
+                    // Save legislators first
+                    try {
+                        // Save both legislators
+                        if (houseRep) {
+                            localStorage.setItem('myHouseRep', JSON.stringify(houseRep));
+                        }
+                        
+                        if (senator) {
+                            localStorage.setItem('mySenator', JSON.stringify(senator));
+                        }
+                        
+                        // Navigate to the bills view
+                        window.location.href = searchUrl;
+                    } catch (error) {
+                        console.error('Error saving legislators before viewing bills:', error);
+                        // Continue to the bills view even if saving fails
+                        window.location.href = searchUrl;
+                    }
+                });
+            }, 0);
+        }
+    } else {
+        // If not on bill tracker, just add the save button container
+        resultsContainer.appendChild(btnContainer);
+    }
+    
     resultsContainer.classList.remove('hidden');
     
     // Add event listener to the save button
@@ -342,10 +399,53 @@ function displayLegislatorResults(response) {
     });
 }
 
+// Function to update legislators in the footer
+function updateFooterLegislators() {
+    const houseRep = localStorage.getItem('myHouseRep');
+    const senator = localStorage.getItem('mySenator');
+    const footerContainer = document.getElementById('footer-legislators-info');
+    let party = '';
+    
+    if (!footerContainer) return;
+    
+    // Clear previous content
+    footerContainer.innerHTML = '';
+    
+    // Check if we have saved legislators
+    if (houseRep || senator) {
+        let html = '';
+        
+        // We don't include "Your legislators:" text since it's already in the heading
+        html += `<div class="legislators-label">`;
+        
+        if (houseRep) {
+            const rep = JSON.parse(houseRep);
+            party = rep.party === 'Republican' ? 'R' : 'D';
+
+            html += `<span class="legislator-name">Rep. ${rep.firstName} ${rep.lastName} (${party})</span>`;
+        }
+        
+        if (senator) {
+            const sen = JSON.parse(senator);
+            party = sen.party === 'Republican' ? 'R' : 'D';
+
+            html += `<span class="legislator-name">Sen. ${sen.firstName} ${sen.lastName} (${party})</span>`;
+        }
+        
+        html += `</div>`;
+        footerContainer.innerHTML = html;
+    } else {
+        // No saved legislators
+        footerContainer.innerHTML = '<p>No legislators selected</p>';
+    }
+}
+
 // Initialize legislators functionality
 function initLegislators() {
     // Load saved legislators
     loadMyLegislators();
+
+    updateFooterLegislators();
     
     // Set up button event listeners
     const findBtn = document.getElementById('find-my-legislators-btn');
