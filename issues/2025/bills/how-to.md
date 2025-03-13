@@ -11,7 +11,7 @@ Once you select an issue, you will see the "Find My Legislators" button. Click t
 ### Step 3: Call Your Representatives
 Once your legislators are saved, the call scripts will have a phone number for you to call and be personalized with their names. Use the tracking system to record your calls and track your daily progress.
 
-## Features Available
+## Features
 
 ### Bill Descriptions
 Get detailed information about each bill, including its purpose and potential impact.
