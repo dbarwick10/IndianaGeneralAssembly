@@ -1765,6 +1765,14 @@ input:checked + .slider:before {
     min-height: 250px;
 }
 
+.feature-card.bill-tracking {
+    align-items: end;
+}
+
+.feature-card.call-scripts {
+    align-items: center;
+}
+
 .feature-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1784,7 +1792,7 @@ input:checked + .slider:before {
 }
 
 .feature-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
     color: #f9fafb;
     margin-bottom: 12px;
@@ -1796,7 +1804,13 @@ input:checked + .slider:before {
     flex-grow: 1;
 }
 
+.feature-description.call-scripts {
+    text-align: center;
+    font-size: 1.2rem;
+}
+
 .feature-link {
+    font-size: 1.5rem;
     margin-top: 16px;
     color: #60a5fa;
     text-decoration: none;

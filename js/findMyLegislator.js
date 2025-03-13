@@ -1,4 +1,5 @@
 import { baseUrl } from "./const.js";
+const year = new Date().getFullYear();
 
 // Local state
 let myLegislators = {
@@ -132,18 +133,18 @@ let myLegislators = {
     
     // Check if we have saved legislators
     if (myLegislators.houseRep || myLegislators.senator) {
-        let html = '<div class="legislators-label">';
+        let html = '<div class="legislators-label footer-links">';
       
         if (myLegislators.houseRep) {
             const rep = myLegislators.houseRep;
             const party = rep.partyAbbreviation || (rep.party === 'Republican' ? 'R' : 'D');
-            html += `<span class="legislator-name">Rep. ${rep.firstName} ${rep.lastName} (${party})</span>`;
+            html += `<span class="legislator-name"><a href="/bill-tracker/?legislators=${rep.firstName}-${rep.lastName}&year=${year}&view=bills">Rep. ${rep.firstName} ${rep.lastName} (${party})</a></span>`;
         }
       
         if (myLegislators.senator) {
             const sen = myLegislators.senator;
             const party = sen.partyAbbreviation || (sen.party === 'Republican' ? 'R' : 'D');
-            html += `<span class="legislator-name">Sen. ${sen.firstName} ${sen.lastName} (${party})</span>`;
+            html += `<span class="legislator-name"><a href="/bill-tracker/?legislators=${sen.firstName}-${sen.lastName}&year=${year}&view=bills">Sen. ${sen.firstName} ${sen.lastName} (${party})<a/></span>`;
         }
       
         html += '</div>';
