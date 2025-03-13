@@ -1,0 +1,29 @@
+[[plugins]]
+  package = "netlify-plugin-js-obfuscator"
+  
+  [plugins.inputs]
+    # Compact code output on one line.
+        compact = false
+    # Enables numbers conversion to expressions
+        # numbersToExpressions = true
+    # Enables additional code obfuscation through simplification.
+        simplify = true
+    # Randomly shuffles the stringArray array items
+        # shuffleStringArray = true
+    # Splits literal strings into chunks with length of splitStringsChunkLength option value
+        # splitStrings = true
+
+[[plugins]]
+  package = "netlify-plugin-minify-html"
+  
+    [plugins.inputs]
+        contexts = [
+            'production',
+            'branch-deploy',
+            'deploy-preview'
+        ]
+
+    # Optionally, override the default options for the minification
+    [plugins.inputs.minifierOptions]
+        removeComments = false
+        collapseInlineTagWhitespace = false
