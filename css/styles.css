@@ -1795,7 +1795,7 @@ input:checked + .slider:before {
     color: var(--text-cream);
     text-decoration: none;
     font-weight: 600;
-    /* border-bottom: 1px dotted var(--text-cream); */
+    border-bottom: 1px solid var(--text-cream);
     transition: all 0.2s ease;
 }
 
@@ -2310,10 +2310,10 @@ font-variant: var(--text-cream);  }
         gap: 8px;
     }
 
-    .nav-link {
+    /* .nav-link {
         padding: 8px 12px;
         font-size: 0.9rem;
-    }
+    } */
 }
 
 /* Hero Container - remove image and adjust for mobile */
@@ -2357,6 +2357,7 @@ font-variant: var(--text-cream);  }
         flex-direction: column;
         height: auto;
         padding: 20px;
+        width: 90%;
     }
     
     .features-grid-box {
@@ -2386,7 +2387,7 @@ font-variant: var(--text-cream);  }
     
     .feature-description,
     .feature-description.call-scripts {
-        text-align: center;
+        text-align: start;
         font-size: 1rem;
     }
 }
@@ -2418,7 +2419,7 @@ font-variant: var(--text-cream);  }
     }
     
     .input {
-        width: 100%;
+        /* width: 100%; */
         margin-right: 0;
         margin-bottom: 10px;
     }
@@ -2426,6 +2427,7 @@ font-variant: var(--text-cream);  }
     .button {
         width: 100%;
         margin-bottom: 10px;
+        text-align: center;
     }
     
     .view-toggle {
