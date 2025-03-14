@@ -2282,190 +2282,63 @@ font-variant: var(--text-cream);  }
         padding: 16px;
     } 
 }
+/* Mobile Responsive Adjustments */
+
+/* Global container adjustment */
+.container {
+    padding: 16px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Header/Navigation adjustments */
 @media (max-width: 768px) {
-    .container {
-        padding: 16px;
-        max-width: 90%;
-    }
-
-    .search-container {
-        flex-direction: column;
-        padding: 16px;
-    }
-
-    .input {
-        width: 85%;
-        margin-right: 0;
-        margin-bottom: 8px;
-    }
-
-    .view-toggle {
-        margin-left: 0;
-        margin-bottom: 8px;
-    }
-
-    .button {
-        width: 85%;
-    }
-
-    .stats-container {
-        grid-template-columns: 1fr;
-    }
-
-    .title {
-        font-size: 24px;
-    }
-
     .nav-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+    }
+
+    .nav-logo {
+        margin-bottom: 10px;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: center;
         flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .nav-link {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Hero Container - remove image and adjust for mobile */
+@media (max-width: 768px) {
+    .hero-container {
+        flex-direction: column;
+        padding: 20px;
+        height: auto;
+        min-height: auto;
     }
     
-    .header-legislators {
-        margin-left: 0;
-        margin-top: 10px;
-        width: 100%;
-    }
-    
-    .header-legislators button {
-        width: 100%;
-    }
-    
-    .legislators-dropdown {
-        position: fixed;
-        top: 60px;
-        left: 0;
-        right: 0;
-        width: auto;
-        margin: 0 15px;
-    }
-    
-    .legislators-dropdown:before {
+    /* Hide hero image on mobile */
+    .hero-container-box:last-child {
         display: none;
     }
     
-    .modal-content {
-        margin: 15% auto;
-        width: 95%;
-        padding: 15px;
-    }
-
-    .nav-links {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .legislators-list {
-        grid-template-columns: 1fr;
+    .hero-container-box {
+        min-width: 100%;
     }
     
-    .secondary-button {
-        margin-left: 0;
-        width: 100%;
-        margin-top: 12px;
-    }
-
-    .issues-container {
-        grid-template-columns: 1fr; 
-    }
-
-    .issues-sidebar {
-        border-right: none;
-        border-bottom: 1px solid #374151;
-        padding: 16px;
-    }
-
-    .issues-list {
-        display: flex;
-        flex-direction: column; 
-    }
-
-    .issue-item {
-        white-space: normal;
-        border-left: none;
-        border-bottom: 3px solid transparent;
-        padding: 12px;
-        margin-bottom: 8px;
-    }
-
-    .issue-item.active {
-        border-left-color: transparent;
-        border-bottom-color: #2563eb;
-    }
-
-    .issues-content {
-        padding: 16px;
-    }
-
-    .nav-container {
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px;
-    }
-    
-    .nav-logo {
-        width: 100%;
-        text-align: center;
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-    
-    .header-legislators-info {
-        order: 2;
-        margin-right: 0;
-        margin-top: 10px;
-        width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .header-legislators-action {
-        order: 3;
-        margin-right: 0;
-        margin-top: 10px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .nav-links {
-        order: 1;
-        width: 100%;
-        justify-content: center;
-        margin-left: 0;
-    }
-    
-    .legislator-name {
-        margin-bottom: 5px;
-    }
-    
-    .modal-content {
-        margin: 15% auto;
-        width: 95%;
-        padding: 15px;
-    }
-    
-    .legislators-list {
-        grid-template-columns: 1fr;
-    }
-
-    .result-buttons {
-        flex-direction: column;
-    }
-    
-    .result-btn {
-        width: 100%;
-    }
-
-    .footer-container {
-        grid-template-columns: 1fr;
-        max-width: 90%;
-    }
-    
-    .footer-bottom {
-        max-width: 90%;
-    }
-
     .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-sub-title {
         font-size: 1.8rem;
     }
     
@@ -2474,50 +2347,199 @@ font-variant: var(--text-cream);  }
     }
     
     .cta-buttons {
+        justify-content: center;
+    }
+}
+
+/* Features grid - remove images and adjust for mobile */
+@media (max-width: 768px) {
+    .features-grid {
         flex-direction: column;
-        align-items: center;
+        height: auto;
+        padding: 20px;
     }
     
-    .feature-card {
+    .features-grid-box {
+        width: 100%;
+        flex: 1 1 auto !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 15px 0;
+    }
+    
+    /* Hide feature images on mobile */
+    .feature-image-left, 
+    .feature-image-right {
+        display: none;
+    }
+    
+    .features-grid-box:first-child,
+    .features-grid-box:nth-child(2),
+    .features-grid-box:last-child {
+        flex: 1 1 100% !important;
+    }
+    
+    .feature-title {
+        font-size: 2rem;
+        text-align: center;
+    }
+    
+    .feature-description,
+    .feature-description.call-scripts {
+        text-align: center;
+        font-size: 1rem;
+    }
+}
+
+/* Testimonial section adjustments */
+@media (max-width: 768px) {
+    .testimonial-section {
         padding: 20px;
-        min-height: auto;
+    }
+    
+    .testimonial-title {
+        font-size: 2rem;
+    }
+    
+    .testimonial-quote {
+        font-size: 1rem;
+    }
+}
+
+/* Search container adjustments */
+@media (max-width: 768px) {
+    .search-container {
+        flex-direction: column;
+        padding: 15px;
+    }
+    
+    .relative {
+        width: 100%;
+    }
+    
+    .input {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .view-toggle {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Bill card adjustments */
+@media (max-width: 768px) {
+    .bill-card summary {
+        padding: 12px;
+    }
+    
+    .bill-title {
+        font-size: 0.9rem;
+    }
+    
+    .bill-card ul {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Stats view adjustments */
+@media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Issues container layout */
+@media (max-width: 768px) {
+    .issues-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .issues-sidebar {
+        max-height: 200px;
+        overflow-y: auto;
+        border-right: none;
+        border-bottom: 1px solid #374151;
+    }
+    
+    .issues-content {
+        padding: 15px;
+    }
+    
+    .issue-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* Footer adjustments */
+@media (max-width: 768px) {
+    .footer-container {
+        flex-direction: column;
+        padding: 15px;
+        margin: 15px;
+    }
+    
+    .footer-nav:nth-child(1),
+    .footer-nav:nth-child(2),
+    .footer-nav:nth-child(3) {
+        flex: 1 1 100%;
         margin-bottom: 20px;
     }
     
-    .hero-container {
-        padding: 30px 20px;
+    .footer-lines {
+        display: none;
     }
     
-    .features-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    .footer-bottom {
+        margin-top: 0;
+        max-width: 100%;
     }
-    
-    .testimonial-section {
-        margin-top: 30px;
-    }
+}
 
+/* About page adjustments */
+@media (max-width: 768px) {
     .about-container {
-        padding: 25px;
+        padding: 20px;
     }
     
     .about-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
     
     .about-subtitle {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
     
     .team-grid {
         grid-template-columns: 1fr;
     }
+}
 
-    #script-find-legislators-btn {
-        margin-top: 5px;
+/* Budget section adjustments */
+@media (max-width: 768px) {
+    .budget-container {
+        padding: 15px;
     }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .legend-container {
+        grid-template-columns: 1fr;
+    }
+}
 
+/* Issues guide adjustments */
+@media (max-width: 768px) {
     .issues-guide {
         padding: 15px;
     }
@@ -2533,39 +2555,30 @@ font-variant: var(--text-cream);  }
     .issues-guide h3 {
         font-size: 1.1rem;
     }
+}
 
-    .logo-image {
-        width: 100%;
-        height: auto;
-    }
-
-    .hero-container {
-        flex-direction: column; /* Stack vertically on mobile */
-        padding: 30px 20px;
+/* Find legislators modal adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 15px;
     }
     
-    .hero-container-box:last-child {
-        order: -1; /* Optional: Display image first on mobile */
+    .legislators-list {
+        grid-template-columns: 1fr;
     }
-    .features-grid {
-        height: auto;
+}
+
+/* Call tracking adjustments */
+@media (max-width: 768px) {
+    .result-buttons {
         flex-direction: column;
     }
-
-    .hero-image {
-        display: none;
-    }
-
-    .feature-card.call-scripts {
-        align-items: start;
-        padding-left: 0px;
-    }
-
-    .feature-image-left {
-        display: none;
-    }
-    .feature-image-right {
-        display: none;
+    
+    .result-btn {
+        width: 100%;
+        margin-bottom: 8px;
     }
 }
 
