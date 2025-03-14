@@ -12,36 +12,57 @@
         <header class="nav-header">
             <nav class="nav-container">
                 <div class="nav-logo">
-                    <a href="/" class="nav-link" id="about">
-                        <span>Indiana LegisAlert!</span>
+                    <a href="/" class="nav-link logo-link" id="about">
+                        <img src="/images/logo.png" alt="legisalert logo" class="logo-image">
                     </a>
                 </div>
 
                 <div class="nav-links">
-                    <a href="/issues/2025" class="nav-link" id="issues">Issues</a>
-                    <a href="/about-us" class="nav-link" id="about">About Us</a>
+                    <a href="/issues/2025" class="nav-link" id="issues">ISSUES</a>
+                    <a href="/about-us" class="nav-link" id="about">ABOUT US</a>
                 </div>
             </nav>
         </header>
         
         <section class="hero-container">
-            <h1 class="hero-title">Making Your Voice Heard in Indiana Politics</h1>
-            <h4 class="hero-subtitle">LegisAlert simplifies the process of contacting your Indiana state legislators. Similar to 5Calls but focused on Indiana state legislation,
-                 we provide tools to help you track bills, learn about key issues, and understand the state budget with resources written from a progressive perspective.</h4>
-            
-            <div class="cta-buttons">
-                <a href="/issues/2025" class="button cta-button primary-button">Browse Key Issues</a>
-                <button id="find-my-legislators-btn" class="button cta-button secondary-button">Find My Legislators</button>
+            <div class="hero-container-box">
+                <h1 class="hero-title">Making Your Voice Heard</h1>
+                <h2 class="hero-sub-title">in Indiana Politics</h2>
+                <h4 class="hero-subtitle">LegisAlert simplifies the process of contacting your Indiana 
+                    <br>state legislators. Similar to 5Calls but focused on Indiana 
+                    <br>state legislation, we provide tools to help you track bills,
+                    <br> learn about key issues, and understand the state budget 
+                    <br>with resources written from a progressive perspective.</h4>
+                
+                <div class="cta-buttons">
+                    <a href="/issues/2025" class="button cta-button primary-button">BROWSE KEY ISSUES</a>
+                    <button id="find-my-legislators-btn" class="button cta-button secondary-button">FIND MY LEGISLATORS</button>
+                </div>
+            </div>
+            <div class="hero-container-box">
+                <img src="/images/collage.png" alt="legisalert collage" class="hero-image">
             </div>
         </section>
         
         <div class="features-grid">
-            <div class="feature-card call-scripts">
-                <div class="feature-icon">📞</div>
-                <h3 class="feature-title">Call Scripts</h3>
-                <p class="feature-description call-scripts">Ready-to-use scripts make contacting your representatives easy. 
-                    <br> Our concise, effective talking points help you communicate your position clearly.</p>
-                <a href="/issues/2025" class="feature-link">View call scripts <span class="arrow-icon">→</span></a>
+            <div class="features-grid-box">
+                <img src="/images/red-phone.png" alt="red phone" class="feature-image-left">
+            </div>
+            <div class="features-grid-box">
+                <div class="feature-card call-scripts">
+                    <h1 class="feature-title">Call Scripts</h1>
+                    <p class="feature-description call-scripts">Ready-to-use scripts make contacting
+                        <br> your representatives easy. 
+                        <br>
+                        <br> Our concise, effective talking points help
+                        <br> you communicate your position clearly.</p>
+                        <div class="call-scripts-btn">
+                            <a href="/issues/2025" class="button feature-button primary-button">MAKE A CALL</a>
+                        </div>
+                </div>
+            </div>
+            <div class="features-grid-box">
+                <img src="/images/phone-cord.png" alt="phone cord" class="feature-image-right">
             </div>
         </div>
 
@@ -73,27 +94,27 @@
 
         <footer class="site-footer">
             <div class="footer-container">
-                <div class="footer-nav">
-                    <h3 class="footer-heading">Your Legislators</h3>
-                    <div id="footer-legislators-info" class="legislators-info"></div>
+                <div class="footer-nav legislators">
+                    <div class="legislators-column">
+                        <h3 class="footer-heading">Your Legislators</h3>
+                        <div id="footer-legislators-info" class="legislators-info"></div>
+                    </div>
+                    <div class="legislators-column">
+                        <img src="/images/footer-lines.png" alt="decorative lines" class="footer-lines">
+                    </div>
                 </div>
-                <div class="footer-nav">
+                <div class="footer-nav tools">
                     <h3 class="footer-heading">Tools</h3>
                     <ul class="footer-links">
+                        <li><a href="/issues/2025">Issues</a></li>
                         <li><a href="/bill-tracker" id="footerBillTracker">Bill Tracker</a></li>
                         <li><a href="/budget" id="footerBudget">State Budget</a></li>
                     </ul>
                 </div>
-                <div class="footer-nav">
-                    <h3 class="footer-heading">Resources</h3>
-                    <ul class="footer-links">
-                        <li><a href="/issues/2025">Issues</a></li>
-                        <li><a href="/about-us">About Us</a></li>
-                    </ul>
-                </div>
-                <div class="footer-nav">
+                <div class="footer-nav contact">
                     <h3 class="footer-heading">Contact</h3>
                     <ul class="footer-links">
+                        <li><a href="/about-us">About Us</a></li>
                         <li><a href="mailto:legisalert@gmail.com">Email Us</a></li>
                     </ul>
                 </div>

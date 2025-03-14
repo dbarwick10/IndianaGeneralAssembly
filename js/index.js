@@ -463,7 +463,7 @@ const renderBills = async () => {
 
         return `
             <div class="space-y-6">
-                <h2 class="title capitalize">${type} Bills</h2>
+                <h2 class="title capitalize">${type === 'authored' ? 'Authored' : type === 'coauthored' ? 'Coauthored' : type === 'sponsored' ? 'Sponsored' : type === 'cosponsored' ? 'Cosponsored' : '' } Bills</h2>
                 <div class="space-y-4">
                     ${bills.map((bill) => {
                         const timing = bill.timing || {};

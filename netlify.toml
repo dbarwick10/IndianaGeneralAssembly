@@ -25,5 +25,5 @@
 
     # Optionally, override the default options for the minification
     [plugins.inputs.minifierOptions]
-        removeComments = false
-        collapseInlineTagWhitespace = false
+        removeComments = true
+        collapseInlineTagWhitespace = true

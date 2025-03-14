@@ -112,17 +112,21 @@ function initializeChart(selectedCategory) {
         x: {
           type: 'category',
           grid: {
-            color: 'rgba(255, 255, 255, 0.1)'
-          }
+            color: 'rgba(243, 233, 210, 0.1)'
+          },
+          ticks: {
+            color: '#f3e9d2'
+        }
         },
         y: {
           grid: {
-            color: 'rgba(255, 255, 255, 0.1)'
+            color: 'rgba(243, 233, 210, 0.1)'
           },
           ticks: {
             callback: function(value) {
               return formatValue(value);
-            }
+            },
+            color: '#f3e9d2'
           }
         }
       },
