@@ -1297,7 +1297,7 @@ input:checked + .slider:before {
 
 .script-content p {
     margin-bottom: 10px;
-    color: #d1d5db;
+    color: var(--text-cream);
 }
 
 .script-tip {
@@ -1306,16 +1306,16 @@ input:checked + .slider:before {
     background-color: var(--color-blue);
     padding: 10px;
     border-radius: 6px;
-    border-left: 3px solid var(--color-cream);
+    border-left: 3px solid var(--color-red);
 }
 
 .bill-title a {
-    color: #cccccc;
+    color: var(--text-cream);
 }
 
 .personalized-notice {
     background-color: var(--color-blue);
-    color: white;
+    color: var(--text-cream);
     padding: 10px;
     border-radius: 6px;
     margin: 10px 0;
@@ -1359,7 +1359,7 @@ input:checked + .slider:before {
 
 .progress-bar {
     height: 8px;
-    background-color: var(--color-light-blue);
+    background-color: var(--color-cream);
     border-radius: 4px;
     overflow: hidden;
     margin-bottom: 20px;

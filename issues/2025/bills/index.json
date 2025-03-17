@@ -26,6 +26,11 @@
         "description": "Voter Registration"
       },
       {
+        "id": "sb2",
+        "title": "SB 2: Medicaid Matters",
+        "description": "Medicaid Matters"
+      },
+      {
         "id": "sb11",
         "title": "SB 11: Minor Access and Use of Social Media",
         "description": "Minor Access and Use of Social Media"
