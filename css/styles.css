@@ -23,7 +23,6 @@ body {
 }
 
 .container {
-    padding: 24px;
     max-width: 80%;
     margin: 0 auto;
 }
@@ -2282,13 +2281,14 @@ font-variant: var(--text-cream);  }
         padding: 16px;
     } 
 }
-/* Mobile Responsive Adjustments */
 
-/* Global container adjustment */
-.container {
-    padding: 16px;
-    max-width: 100%;
-    margin: 0 auto;
+/* Mobile Container */
+@media (max-width: 786px) {
+    .container {
+        padding: 15px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
 }
 
 /* Header/Navigation adjustments */
