@@ -1003,7 +1003,6 @@ input:checked + .slider:before {
 .finder-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
 }
 
 .finder-form h2 {
@@ -1666,11 +1665,11 @@ input:checked + .slider:before {
     text-decoration: none;
 }
 
-/* Finder form styles */
-.finder-form {
-    margin-bottom: 20px;
+.save-legislator {
+    color: var(--color-cream)
 }
 
+/* Finder form styles */
 .form-group {
     margin-bottom: 15px;
 }
@@ -1716,6 +1715,7 @@ input:checked + .slider:before {
 
 .district-info p {
     color: var(--color-cream);
+    margin-top: 0px;
     margin-bottom: 5px;
 }
 
