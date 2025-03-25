@@ -648,7 +648,7 @@ input:checked + .slider:before {
     right: 20px;
     top: 16px;
     font-size: 20px;
-    color: #6b7280;
+    color: var(--color-cream);
     transition: all 0.2s ease;
 }
 
@@ -657,7 +657,7 @@ input:checked + .slider:before {
 }
 
 .bill-card > details[open] > summary {
-    border-bottom: 1px solid #4b5563;
+    border-bottom: 1px solid var(--color-cream);
 }
 
 /* Define different styles for the nested digest details */
@@ -676,7 +676,7 @@ input:checked + .slider:before {
 /* Custom indicator for digest details - using same +/- as main card but positioned differently */
 .bill-card details details summary::after {
     content: '+';
-    color: #6b7280;
+    color: var(--color-cream);
     position: absolute;
     right: 8px; /* Move it inward from the edge */
     top: 8px;
