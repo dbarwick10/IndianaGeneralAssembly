@@ -361,7 +361,7 @@ let myLegislators = {
     
     // Create the save button
     btnContainer.innerHTML = `
-      <p class="save-legislator">Save these legislators for easy access in the bottom of the webpage.</p>
+      <p class="save-legislator">Save these legislators for easy access at the bottom of the page.</p>
       <button id="save-all-legislators" class="button">
         Save as My Legislators
       </button>
