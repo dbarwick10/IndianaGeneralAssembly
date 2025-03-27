@@ -21,14 +21,14 @@
         "description": "Various immigration matters"
       },
       {
-        "id": "sb10",
-        "title": "SB 10: Voter Registration",
-        "description": "Voter Registration"
-      },
-      {
         "id": "sb2",
         "title": "SB 2: Medicaid Matters",
         "description": "Medicaid Matters"
+      },
+      {
+        "id": "sb10",
+        "title": "SB 10: Voter Registration",
+        "description": "Voter Registration"
       },
       {
         "id": "sb11",
