@@ -713,7 +713,7 @@ function updateCallTracking() {
             <div class="progress-bar">
                 <div class="progress-fill" style="width: ${(completedCalls.length / totalCalls) * 100}%"></div>
             </div>
-            <p class="script-tip"><strong>Tip:</strong> You can now easily contact your legislator via Email! Copy and paste (use ctrl/cmd + shift + v to remove formatting) the contact script above, the legislator's email address from below, include your subject line (I like to use the bill's name as the subject line - below), and add any additional info and send from your personal email! Remember to let us know you sent an email with the purple button below.</p>
+            <p class="script-tip"><strong>Tip:</strong> You can now easily contact your legislator via Email! Clink the 'Copy Script' button below and paste it in your email body, the legislator's email address from below, include your subject line (I like to use the bill's name as the subject line - below), and add any additional info and send from your personal email! Remember to let us know you sent an email with the purple button below.</p>
 
         `;
         
@@ -1338,3 +1338,132 @@ window.addEventListener('popstate', function(event) {
         updateSelectedIssueVisibility(hash);
     }
 });
+
+// Function to modify the updateCallTracking function to add the copy button
+function enhanceUpdateCallTracking() {
+    // Store reference to the original function
+    const originalUpdateCallTracking = updateCallTracking;
+    
+    // Override with new function that adds the copy button
+    window.updateCallTracking = function() {
+      // Call the original function first
+      originalUpdateCallTracking.apply(this, arguments);
+      
+      // Add the copy button after the email
+      setTimeout(addCopyButtonNextToEmail, 100);
+    };
+  }
+  
+  // Function to add copy button next to email
+  function addCopyButtonNextToEmail() {
+    // Find the email paragraph
+    const emailParagraph = document.querySelector('.legislator-email');
+    if (!emailParagraph) return;
+    
+    // Check if button already exists
+    if (emailParagraph.querySelector('.copy-script-btn')) return;
+    
+    // Create the copy button
+    const copyButton = document.createElement('button');
+    copyButton.className = 'copy-script-btn';
+    copyButton.textContent = 'Copy Script';
+    
+    // Create success message
+    const successMessage = document.createElement('span');
+    successMessage.className = 'copy-success';
+    successMessage.textContent = 'Copied!';
+    
+    // Add the button and success message to the email paragraph
+    emailParagraph.appendChild(copyButton);
+    emailParagraph.appendChild(successMessage);
+    
+    // Add click event listener to the copy button
+    copyButton.addEventListener('click', function() {
+      // Find the script content
+      const scriptContent = document.querySelector('.script-content');
+      if (!scriptContent) return;
+      
+      // Get the text content from all paragraphs in the script content
+      const paragraphs = scriptContent.querySelectorAll('p');
+      let textToCopy = '';
+      
+      paragraphs.forEach(paragraph => {
+        // Get the text content without HTML tags
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = paragraph.innerHTML;
+        textToCopy += tempDiv.textContent + '\n\n';
+      });
+      
+      // Create a temporary textarea element to copy from
+      const textarea = document.createElement('textarea');
+      textarea.value = textToCopy;
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      
+      // Select and copy the text
+      textarea.select();
+      document.execCommand('copy');
+      
+      // Remove the temporary textarea
+      document.body.removeChild(textarea);
+      
+      // Show success message
+      successMessage.classList.add('show-success');
+      
+      // Hide the success message after 2 seconds
+      setTimeout(() => {
+        successMessage.classList.remove('show-success');
+      }, 2000);
+    });
+  }
+  
+  // Also modify the updateCallScriptText function to ensure button exists
+  function enhanceUpdateCallScriptText() {
+    // Store reference to the original function
+    const originalUpdateCallScriptText = updateCallScriptText;
+    
+    // Override with new function
+    window.updateCallScriptText = function() {
+      // Call the original function first
+      originalUpdateCallScriptText.apply(this, arguments);
+      
+      // Add the copy button
+      setTimeout(addCopyButtonNextToEmail, 100);
+    };
+  }
+  
+  // Initialize on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function() {
+    enhanceUpdateCallTracking();
+    enhanceUpdateCallScriptText();
+    
+    // Also call it once to add to any existing content
+    setTimeout(addCopyButtonNextToEmail, 1000);
+  });
+  
+  // Find where the email button is created in updateCallTracking
+  // This is a targeted modification for your specific code
+  function updateCurrentCallInfoTemplate() {
+    // Find the original function that creates the currentCallInfo HTML
+    const originalUpdateCallTracking = updateCallTracking;
+    
+    window.updateCallTracking = function() {
+      // Save arguments
+      const args = arguments;
+      
+      // Call the original function
+      const result = originalUpdateCallTracking.apply(this, args);
+      
+      // Now find the newly created email paragraph and add our button
+      const emailParagraph = document.querySelector('.legislator-email');
+      if (emailParagraph && !emailParagraph.querySelector('.copy-script-btn')) {
+        addCopyButtonNextToEmail();
+      }
+      
+      return result;
+    };
+  }
+  
+  // Initialize this modification as well
+  document.addEventListener('DOMContentLoaded', updateCurrentCallInfoTemplate);
