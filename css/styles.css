@@ -447,8 +447,11 @@ a {
 }
 
 .button:hover {
-    background-color: var(--color-blue); /* Darker blue */
-    /* transform: translateY(-1px); */
+    background-color: var(--color-blue); 
+}
+
+#script-find-legislators-btn:hover {
+    background-color: var(--color-dark-blue);
 }
 
 .button:active {
@@ -1362,6 +1365,12 @@ input:checked + .slider:before {
     color: var(--text-cream) !important;
 }
 
+.legislator-email {
+    font-size: 1.1em;
+    font-weight: 100;
+    color: var(--text-cream) !important;
+}
+
 .result-prompt {
     margin-bottom: 10px;
     color: var(--text-cream);
@@ -1386,25 +1395,51 @@ input:checked + .slider:before {
     min-width: 100px;
 }
 
+.email-button {
+    background: none;
+    border: none;
+    color: var(--text-cream);
+    border-bottom: 1px solid var(--text-cream);
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    padding: 0;
+    text-align: left;
+    text-decoration: none;
+}
+
+/* .email-button:hover {
+    color: var(--text-cream);
+    font-weight: 500;
+} */
+
 .result-btn:hover {
     background-color: #4b5563;
     transform: translateY(-1px);
 }
 
 .result-btn[data-result="contacted"] {
-    background-color: #10b981;
-}
-
-.result-btn[data-result="contacted"]:hover {
-    background-color: #059669;
-}
-
-.result-btn[data-result="voicemail"] {
     background-color: #3b82f6;
 }
 
-.result-btn[data-result="voicemail"]:hover {
+.result-btn[data-result="contacted"]:hover {
     background-color: #2563eb;
+}
+
+.result-btn[data-result="emailed"] {
+    background-color: #9333ea;
+}
+
+.result-btn[data-result="emailed"]:hover {
+    background-color: #7e22ce;
+}
+
+.result-btn[data-result="voicemail"] {
+    background-color: #10b981;
+}
+
+.result-btn[data-result="voicemail"]:hover {
+    background-color: #059669;
 }
 
 .all-calls-complete {

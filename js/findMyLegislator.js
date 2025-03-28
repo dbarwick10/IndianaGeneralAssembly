@@ -216,6 +216,13 @@ let myLegislators = {
           finderModal.style.display = 'none';
         }
       });
+
+      // ESC key listener to close the modal
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && finderModal.style.display === 'block') {
+          finderModal.style.display = 'none';
+        }
+      });
     }
     
     // Show the modal

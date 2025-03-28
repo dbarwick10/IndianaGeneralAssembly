@@ -252,13 +252,13 @@ function processRenderedContent() {
             section.className = 'call-script';
             // Add a heading and wrapper to the call script
             section.innerHTML = `
-                <h3>Call Script</h3>
+                <h3>Contact Script</h3>
                 <div class="script-container">
-                    <p class="script-intro">When calling your representative about this bill, consider using the following script:</p>
-                    <div class="script-content"></div>
+                    <p class="script-intro">When contacting your representative about this bill, consider using the following script:</p>
                     <p class="script-tip"><strong>Tip:</strong> These bills have passed from one chamber to the next. If you are told the issue you are calling about is in the other chamber, let the person know your legislator may not currently have a vote, but they do have a voice. You can also mention that you are calling both your House Rep. and Senator.</p>
                     <p class="script-tip"><strong>Tip:</strong> Be yourself. Adding personal stories can help show how this bill impacts your community. 
                     Be respectful. The person you talk to is more likely to be an assistant than the Representative or Senator themselves.</p>
+                    <div class="script-content"></div>
                 </div>
             `;
         }
@@ -390,7 +390,7 @@ function updateCallScripts() {
             const notice = document.createElement('div');
             notice.className = 'personalized-notice legislator-notice';
             notice.innerHTML = `
-                <strong>To show the phone number and personalize this script with your legislator's information:</strong>
+                <strong>To show your legislator's contact information:</strong>
                 <button id="script-find-legislators-btn" class="button small-button">Find My Legislators</button>
             `;
             
@@ -565,6 +565,27 @@ function updateCallScripts() {
             fullName = `${title} [Name unavailable]`;
             lastName = 'Unknown';
         }
+
+        const activeIndex = parseInt(localStorage.getItem('activeCallLegislatorIndex') || '0');
+
+        let nextLegislatorIndex = (activeIndex + 1) % legislators.length;
+        let nextLegislator = legislators[nextLegislatorIndex];
+        let nextLegislatorName = 'your next legislator';
+
+        if (nextLegislator) {
+            const nextTitle = nextLegislator.chamber === 'S' ? 'Sen.' : 'Rep.';
+            
+            // Format name based on available properties
+            if (nextLegislator.firstName && nextLegislator.lastName) {
+                nextLegislatorName = `${nextTitle} ${nextLegislator.firstName} ${nextLegislator.lastName}`;
+            } else if (nextLegislator.displayName) {
+                nextLegislatorName = `${nextTitle} ${nextLegislator.displayName}`;
+            } else if (nextLegislator.name) {
+                nextLegislatorName = `${nextTitle} ${nextLegislator.name}`;
+            } else {
+                nextLegislatorName = `${nextTitle} [Name unavailable]`;
+            }
+        }
         
         // Always create or update the personalization notice to show current legislator
         // Check if notice already exists
@@ -581,7 +602,7 @@ function updateCallScripts() {
         
         // Always update the notice content with current legislator info
         existingNotice.innerHTML = `
-            <strong>Your script has been personalized with your legislator's name and phone number.</strong>
+            <strong>Your legislators are: ${fullName} & ${nextLegislatorName}</strong>
             <div id="header-legislators-action" class="header-legislators-action">
                 <button id="find-my-legislators-btn" class="button small-button">Change My Legislators</button>
             </div>
@@ -590,6 +611,18 @@ function updateCallScripts() {
     } catch (error) {
         console.error('Error updating call scripts:', error);
     }
+}
+
+function getLegislatorEmail(legislator) {
+    // Format is [chamber][district]@iga.in.gov
+    // Chamber is 'h' for House, 's' for Senate
+    if (legislator && legislator.chamber && legislator.district) {
+        const chamberCode = legislator.chamber.toLowerCase();
+        return `${chamberCode}${legislator.district}@iga.in.gov`;
+    }
+    
+    // Return a generic contact if we don't have enough info
+    return 'contact@iga.in.gov';
 }
 
 function updateCallTracking() {
@@ -672,14 +705,16 @@ function updateCallTracking() {
         
         progressHeader.innerHTML = `
             <div class="tracking-header">
-                <h4>Calling Progress</h4>
+                <h4>Contact Progress</h4>
                 ${remainingCalls > 0 ? 
-                    `<span class="calls-remaining">${remainingCalls} call${remainingCalls !== 1 ? 's' : ''} remaining</span>` : 
+                    `<span class="calls-remaining">${remainingCalls} Legislator${remainingCalls !== 1 ? 's' : ''} Remaining</span>` : 
                     '<span class="calls-complete">All calls completed!</span>'}
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: ${(completedCalls.length / totalCalls) * 100}%"></div>
             </div>
+            <p class="script-tip"><strong>Tip:</strong> You can now easily contact your legislator via Email! Copy and paste (use ctrl/cmd + shift + v to remove formatting) the contact script above, the legislator's email address from below, include your subject line (I like to use the bill's name as the subject line - below), and add any additional info and send from your personal email! Remember to let us know you sent an email with the purple button below.</p>
+
         `;
         
         trackingSection.appendChild(progressHeader);
@@ -704,27 +739,72 @@ function updateCallTracking() {
             // Format phone using our helper function
             const phone = getLegislatorPhone(activeLegislator);
             
+            let issueTitle = "Current Issue";
+            const issueTitleElement = document.querySelector('.issue-detail h1');
+            if (issueTitleElement) {
+                issueTitle = issueTitleElement.textContent;
+            } else {
+                // Try to get from active sidebar item if h1 not found
+                const activeIssueItem = document.querySelector('.issue-item.active');
+                if (activeIssueItem) {
+                    issueTitle = activeIssueItem.textContent;
+                } else {
+                    // Try to get from URL hash as last resort
+                    const issueId = window.location.hash.substring(1);
+                    if (issueId) {
+                        // Convert something like "hb1001" to "HB 1001"
+                        issueTitle = issueId.toUpperCase().replace(/([a-z]+)(\d+)/i, '$1 $2');
+                    }
+                }
+            }
+
             // Current legislator info
             const currentCallInfo = document.createElement('div');
             currentCallInfo.className = 'current-call-info';
             currentCallInfo.innerHTML = `
                 <h4>Currently Calling: ${title} ${fullName}</h4>
+                <p><strong>${issueTitle}</strong></p>
                 <p class="legislator-phone"><strong>Phone:</strong> <a href="tel:${phone.replace(/\D/g, '')}">${phone}</a></p>
+                <p class="legislator-email"><strong>Email:</strong>
+                    <button class="email-button" onclick="window.location.href='mailto:${getLegislatorEmail(activeLegislator)}'">
+                         ${getLegislatorEmail(activeLegislator)}
+                    </button>
+                </p>
                 <p>District: ${activeLegislator.district || 'N/A'}</p>
                 <p>Party: ${activeLegislator.party || 'N/A'}</p>
             `;
             
             trackingSection.appendChild(currentCallInfo);
             
+            let nextLegislatorIndex = (activeIndex + 1) % legislators.length;
+            let nextLegislator = legislators[nextLegislatorIndex];
+            let nextLegislatorName = 'your next legislator';
+
+            if (nextLegislator) {
+                const nextTitle = nextLegislator.chamber === 'S' ? 'Sen.' : 'Rep.';
+                
+                // Format name based on available properties
+                if (nextLegislator.firstName && nextLegislator.lastName) {
+                    nextLegislatorName = `${nextTitle} ${nextLegislator.firstName} ${nextLegislator.lastName}`;
+                } else if (nextLegislator.displayName) {
+                    nextLegislatorName = `${nextTitle} ${nextLegislator.displayName}`;
+                } else if (nextLegislator.name) {
+                    nextLegislatorName = `${nextTitle} ${nextLegislator.name}`;
+                } else {
+                    nextLegislatorName = `${nextTitle} [Name unavailable]`;
+                }
+            }
+
             // Call result buttons
             const callResults = document.createElement('div');
             callResults.className = 'call-results';
             callResults.innerHTML = `
-                <p class="result-prompt"><strong>After your call, share the result to show the next representative:</strong></p>
+                <p class="result-prompt"><strong>After contacting ${title === 'Senator' ? 'Sen.' : 'Rep.'} ${fullName}, share the result to show ${nextLegislatorName}'s information:</strong></p>
                 <div class="result-buttons">
                     <button class="result-btn" data-result="unavailable">Unavailable</button>
                     <button class="result-btn" data-result="voicemail">Left Voicemail</button>
                     <button class="result-btn" data-result="contacted">Made Contact</button>
+                    <button class="result-btn" data-result="emailed">Sent Email</button>
                     <button class="result-btn" data-result="skip">Skip</button>
                 </div>
             `;
