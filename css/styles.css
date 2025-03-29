@@ -2277,10 +2277,9 @@ font-variant: var(--text-cream);  }
 }
 
 .copy-script-btn {
-    background-color: #4a7aa7;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    background-color: var(--color-blue);
+    border: 1px solid var(--color-cream);
+    color: var(--color-cream);
     padding: 4px 8px;
     font-size: 14px;
     cursor: pointer;
@@ -2289,12 +2288,13 @@ font-variant: var(--text-cream);  }
   }
   
   .copy-script-btn:hover {
-    background-color: #3a6891;
+    background-color: var(--color-light-blue);
   }
   
   .copy-success {
-    color: #4CAF50;
+    color: var(--text-cream);
     font-size: 14px;
+    font-weight: 200;
     opacity: 0;
     transition: opacity 0.3s;
     margin-left: 10px;
@@ -2496,7 +2496,7 @@ font-variant: var(--text-cream);  }
     }
     
     .issues-sidebar {
-        max-height: 200px;
+        max-height: 250px;
         overflow-y: auto;
         border-right: none;
         border-bottom: 1px solid #374151;

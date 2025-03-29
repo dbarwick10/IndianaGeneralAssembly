@@ -705,7 +705,7 @@ function updateCallTracking() {
         
         progressHeader.innerHTML = `
             <div class="tracking-header">
-                <h4>Contact Progress</h4>
+                <h4>Daily Contact Progress</h4>
                 ${remainingCalls > 0 ? 
                     `<span class="calls-remaining">${remainingCalls} Legislator${remainingCalls !== 1 ? 's' : ''} Remaining</span>` : 
                     '<span class="calls-complete">All calls completed!</span>'}
@@ -713,7 +713,7 @@ function updateCallTracking() {
             <div class="progress-bar">
                 <div class="progress-fill" style="width: ${(completedCalls.length / totalCalls) * 100}%"></div>
             </div>
-            <p class="script-tip"><strong>Tip:</strong> You can now easily contact your legislator via Email! Clink the 'Copy Script' button below and paste it in your email body, the legislator's email address from below, include your subject line (I like to use the bill's name as the subject line - below), and add any additional info and send from your personal email! Remember to let us know you sent an email with the purple button below.</p>
+            <p class="script-tip"><strong>Tip:</strong> Email your legislators! Click the email to open your preferred email provider, use the 'Copy Script' button and paste the contact script into the body of your email (fill in your name and address), and set your subject line (I like to use the issue name). All of this below ↓</p>
 
         `;
         
@@ -762,7 +762,7 @@ function updateCallTracking() {
             const currentCallInfo = document.createElement('div');
             currentCallInfo.className = 'current-call-info';
             currentCallInfo.innerHTML = `
-                <h4>Currently Calling: ${title} ${fullName}</h4>
+                <h4>Current Contact: ${title} ${fullName}</h4>
                 <p><strong>${issueTitle}</strong></p>
                 <p class="legislator-phone"><strong>Phone:</strong> <a href="tel:${phone.replace(/\D/g, '')}">${phone}</a></p>
                 <p class="legislator-email"><strong>Email:</strong>
