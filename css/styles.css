@@ -1243,10 +1243,10 @@ input:checked + .slider:before {
 }
 
 .script-container {
-    background-color: var(--color-dark-blue);
+    background-color: var(--color-blue);
     padding: 20px;
     /* border-radius: 8px; */
-    border-left: 4px solid var(--color-cream);
+    /* border-left: 4px solid var(--color-cream); */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -1257,12 +1257,11 @@ input:checked + .slider:before {
 }
 
 .script-content {
-    background-color: var(--color-blue);
+    background-color: var(--color-dark-blue);
     padding: 15px;
     /* border-radius: 6px; */
     margin-bottom: 15px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    border: 1px solid #374151;
 }
 
 .script-content p {
@@ -1276,7 +1275,11 @@ input:checked + .slider:before {
     background-color: var(--color-blue);
     padding: 10px;
     /* border-radius: 6px; */
-    border-left: 3px solid var(--color-red);
+    border-left: 3px solid var(--color-cream);
+}
+
+.script-tip strong {
+font-size: 16px;
 }
 
 .bill-title a {
@@ -1292,17 +1295,11 @@ input:checked + .slider:before {
     font-size: 0.9rem;
 }
 
-.personalized-notice.call {
-    background-color: var(--color-blue);
-
-}
-
 .call-tracking {
-    background-color: var(--color-dark-blue);
+    background-color: var(--color-blue);
     /* border-radius: 8px; */
     padding: 20px;
     margin-top: 20px;
-    border: 1px solid #374151;
 }
 
 .tracking-header {
@@ -1344,8 +1341,8 @@ input:checked + .slider:before {
 .current-call-info {
     background-color: var(--color-blue);
     /* border-radius: 6px; */
-    padding: 15px;
-    margin-bottom: 20px;
+    /* padding: 15px;
+    margin-bottom: 20px; */
 }
 
 .current-call-info h4 {
@@ -1374,6 +1371,11 @@ input:checked + .slider:before {
 .result-prompt {
     margin-bottom: 10px;
     color: var(--text-cream);
+}
+
+.result-prompt strong {
+    font-weight: 500;
+    font-size: 14.5px;
 }
 
 .result-buttons {
@@ -1807,7 +1809,7 @@ input:checked + .slider:before {
 }
 
 .personalized-notice.call {
-    background-color: var(--color-blue);
+    background-color: var(--color-dark-blue);
     color: var(--text-cream);
     padding: 15px;
     /* border-radius: 6px; */
@@ -1971,7 +1973,7 @@ font-variant: var(--text-cream);  }
     margin-bottom: 20px;
     line-height: 1.2;
     letter-spacing: -0.025em;
-    border-bottom: 2px solid #374151;
+    border-bottom: 1px solid var(--color-cream);
     padding-bottom: 15px;
 }
 
@@ -2062,7 +2064,7 @@ font-variant: var(--text-cream);  }
 }
 
 .callout {
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: var(--color-blue);
     border-left: 4px solid var(--color-cream);
     padding: 20px;
     /* border-radius: 8px; */
