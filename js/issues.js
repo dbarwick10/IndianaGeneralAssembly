@@ -1354,14 +1354,22 @@ function enhanceUpdateCallTracking() {
     };
   }
   
-  // Function to add copy button next to email
-  function addCopyButtonNextToEmail() {
+// Simplified function to add copy button next to email
+function addCopyButtonNextToEmail() {
     // Find the email paragraph
     const emailParagraph = document.querySelector('.legislator-email');
-    if (!emailParagraph) return;
+    if (!emailParagraph) {
+      console.log('Email paragraph not found');
+      return;
+    }
     
-    // Check if button already exists
-    if (emailParagraph.querySelector('.copy-script-btn')) return;
+    // Check if button already exists to avoid duplicates
+    if (emailParagraph.querySelector('.copy-script-btn')) {
+      console.log('Copy button already exists');
+      return;
+    }
+    
+    console.log('Adding copy button to email paragraph');
     
     // Create the copy button
     const copyButton = document.createElement('button');
@@ -1372,6 +1380,7 @@ function enhanceUpdateCallTracking() {
     const successMessage = document.createElement('span');
     successMessage.className = 'copy-success';
     successMessage.textContent = 'Copied!';
+    successMessage.style.display = 'none'; // Hide initially
     
     // Add the button and success message to the email paragraph
     emailParagraph.appendChild(copyButton);
@@ -1381,7 +1390,10 @@ function enhanceUpdateCallTracking() {
     copyButton.addEventListener('click', function() {
       // Find the script content
       const scriptContent = document.querySelector('.script-content');
-      if (!scriptContent) return;
+      if (!scriptContent) {
+        console.log('Script content not found');
+        return;
+      }
       
       // Get the text content from all paragraphs in the script content
       const paragraphs = scriptContent.querySelectorAll('p');
@@ -1394,28 +1406,106 @@ function enhanceUpdateCallTracking() {
         textToCopy += tempDiv.textContent + '\n\n';
       });
       
-      // Create a temporary textarea element to copy from
-      const textarea = document.createElement('textarea');
-      textarea.value = textToCopy;
-      textarea.style.position = 'absolute';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
+      // Copy to clipboard using modern API if available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy)
+          .then(() => {
+            console.log('Text copied to clipboard successfully');
+            // Show success message
+            successMessage.style.display = 'inline';
+            
+            // Hide the success message after 2 seconds
+            setTimeout(() => {
+              successMessage.style.display = 'none';
+            }, 2000);
+          })
+          .catch(err => {
+            console.error('Failed to copy text: ', err);
+            // Fallback to the older method
+            fallbackCopyTextToClipboard(textToCopy);
+          });
+      } else {
+        // Fallback for browsers that don't support the Clipboard API
+        fallbackCopyTextToClipboard(textToCopy);
+      }
       
-      // Select and copy the text
-      textarea.select();
-      document.execCommand('copy');
-      
-      // Remove the temporary textarea
-      document.body.removeChild(textarea);
-      
-      // Show success message
-      successMessage.classList.add('show-success');
-      
-      // Hide the success message after 2 seconds
-      setTimeout(() => {
-        successMessage.classList.remove('show-success');
-      }, 2000);
+      function fallbackCopyTextToClipboard(text) {
+        // Create a temporary textarea element to copy from
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // Ensure it's always on screen
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        
+        // Select and copy the text
+        textarea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            console.log('Fallback: Text copied to clipboard');
+            // Show success message
+            successMessage.style.display = 'inline';
+            
+            // Hide the success message after 2 seconds
+            setTimeout(() => {
+              successMessage.style.display = 'none';
+            }, 2000);
+          } else {
+            console.error('Fallback: Unable to copy');
+          }
+        } catch (err) {
+          console.error('Fallback: Error copying text: ', err);
+        }
+        
+        // Remove the temporary textarea
+        document.body.removeChild(textarea);
+      }
     });
+  }
+  
+  // More reliable way to hook into call tracking updates
+  function setupCopyButtonHooks() {
+    // Add a mutation observer to watch for updates to the DOM
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        // Check if new nodes were added
+        if (mutation.addedNodes.length) {
+          // Look for the email paragraph
+          const emailParagraph = document.querySelector('.legislator-email');
+          if (emailParagraph && !emailParagraph.querySelector('.copy-script-btn')) {
+            console.log('Detected email paragraph update, adding copy button');
+            addCopyButtonNextToEmail();
+          }
+        }
+      });
+    });
+    
+    // Start observing the document with the configured parameters
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also try to add the button immediately and after a delay
+    setTimeout(addCopyButtonNextToEmail, 500);
+    setTimeout(addCopyButtonNextToEmail, 1500);
+    
+    // Add a direct hook to the updateCallTracking function
+    if (typeof window.updateCallTracking === 'function') {
+      const originalUpdateCallTracking = window.updateCallTracking;
+      
+      window.updateCallTracking = function() {
+        // Call the original function
+        const result = originalUpdateCallTracking.apply(this, arguments);
+        
+        // Add the copy button with a delay to ensure DOM is updated
+        setTimeout(addCopyButtonNextToEmail, 100);
+        
+        return result;
+      };
+      
+      console.log('Successfully hooked into updateCallTracking function');
+    } else {
+      console.warn('Could not hook into updateCallTracking function');
+    }
   }
   
   // Also modify the updateCallScriptText function to ensure button exists
