@@ -1353,7 +1353,7 @@ function enhanceUpdateCallTracking() {
       setTimeout(addCopyButtonNextToEmail, 100);
     };
   }
-  
+
 // Simplified function to add copy button next to email
 function addCopyButtonNextToEmail() {
     // Find the email paragraph
@@ -1369,16 +1369,18 @@ function addCopyButtonNextToEmail() {
       return;
     }
     
-    // console.log('Adding copy button to email paragraph');
+    console.log('Adding copy button to email paragraph');
     
     // Create the copy button
     const copyButton = document.createElement('button');
     copyButton.className = 'copy-script-btn';
+    copyButton.id = 'copy-script-button'; // Add ID for easier targeting
     copyButton.textContent = 'Copy Script';
     
     // Create success message
     const successMessage = document.createElement('span');
     successMessage.className = 'copy-success';
+    successMessage.id = 'copy-success-message'; // Add ID for easier targeting
     successMessage.textContent = 'Copied!';
     successMessage.style.display = 'none'; // Hide initially
     
@@ -1488,7 +1490,29 @@ function addCopyButtonNextToEmail() {
     setTimeout(addCopyButtonNextToEmail, 500);
     setTimeout(addCopyButtonNextToEmail, 1500);
     
-    // Add a direct hook to the updateCallTracking function
+    // Hook into record call result function which handles legislator transitions
+    if (typeof window.recordCallResult === 'function') {
+      const originalRecordCallResult = window.recordCallResult;
+      
+      window.recordCallResult = function(legislator, result) {
+        console.log('Intercepted recordCallResult call');
+        
+        // Call the original function
+        const callResult = originalRecordCallResult.apply(this, arguments);
+        
+        // Add the copy button after legislator transition with multiple delays
+        // to ensure it's added during different phases of the DOM update
+        setTimeout(addCopyButtonNextToEmail, 100);
+        setTimeout(addCopyButtonNextToEmail, 500);
+        setTimeout(addCopyButtonNextToEmail, 1000);
+        
+        return callResult;
+      };
+      
+      console.log('Successfully hooked into recordCallResult function');
+    }
+    
+    // Also hook into the updateCallTracking function
     if (typeof window.updateCallTracking === 'function') {
       const originalUpdateCallTracking = window.updateCallTracking;
       
@@ -1498,6 +1522,7 @@ function addCopyButtonNextToEmail() {
         
         // Add the copy button with a delay to ensure DOM is updated
         setTimeout(addCopyButtonNextToEmail, 100);
+        setTimeout(addCopyButtonNextToEmail, 500);
         
         return result;
       };
@@ -1508,6 +1533,265 @@ function addCopyButtonNextToEmail() {
     }
   }
   
+  // Hook into the updateCallScriptText function which runs when changing legislators
+  if (typeof window.updateCallScriptText === 'function') {
+    const originalUpdateCallScriptText = window.updateCallScriptText;
+    
+    window.updateCallScriptText = function(legislator) {
+      console.log('Intercepted updateCallScriptText call');
+      
+      // Call the original function
+      const result = originalUpdateCallScriptText.apply(this, arguments);
+      
+      // Add the copy button after script text is updated
+      setTimeout(addCopyButtonNextToEmail, 100);
+      setTimeout(addCopyButtonNextToEmail, 300);
+      
+      return result;
+    };
+    
+    console.log('Successfully hooked into updateCallScriptText function');
+  } else {
+    console.warn('Could not hook into updateCallScriptText function');
+  }
+  
+// This script specifically targets the skip button issue
+document.addEventListener('DOMContentLoaded', function() {
+    // Watch for the skip button specifically
+    const skipButtonObserver = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length) {
+          const skipButton = document.querySelector('.result-btn[data-result="skip"]');
+          if (skipButton && !skipButton._hasSkipHandler) {
+            console.log('Found skip button, adding special handler');
+            
+            // Important: DO NOT replace the skip button - this breaks its original functionality
+            // Instead, add our own listener without disturbing the original
+            skipButton._hasSkipHandler = true;
+            
+            // Add our custom listener for the skip button
+            skipButton.addEventListener('click', function(event) {
+              console.log('Skip button clicked - ensuring copy button persists');
+              
+              // DO NOT prevent default or stop propagation - let the original click handler work
+              
+              // Get the current email button so we can remember where to add copy button
+              const emailParagraph = document.querySelector('.legislator-email');
+              if (emailParagraph) {
+                console.log('Found email paragraph before transition');
+                
+                // Schedule multiple attempts to add the copy button after transition
+                for (let i = 1; i <= 10; i++) {
+                  setTimeout(function() {
+                    const newEmailParagraph = document.querySelector('.legislator-email');
+                    if (newEmailParagraph && !newEmailParagraph.querySelector('.copy-script-btn')) {
+                      console.log(`Attempt ${i}: Adding copy button after skip`);
+                      
+                      // Add the copy button to the new email paragraph
+                      const copyButton = document.createElement('button');
+                      copyButton.className = 'copy-script-btn';
+                      copyButton.id = 'copy-script-button';
+                      copyButton.textContent = 'Copy Script';
+                      
+                      // Create success message
+                      const successMessage = document.createElement('span');
+                      successMessage.className = 'copy-success';
+                      successMessage.id = 'copy-success-message';
+                      successMessage.textContent = 'Copied!';
+                      successMessage.style.display = 'none';
+                      
+                      // Add them to the email paragraph
+                      newEmailParagraph.appendChild(copyButton);
+                      newEmailParagraph.appendChild(successMessage);
+                      
+                      // Add click function to the button
+                      copyButton.addEventListener('click', function() {
+                        // Find the script content
+                        const scriptContent = document.querySelector('.script-content');
+                        if (!scriptContent) {
+                          console.log('Script content not found');
+                          return;
+                        }
+                        
+                        // Get the text content from all paragraphs in the script content
+                        const paragraphs = scriptContent.querySelectorAll('p');
+                        let textToCopy = '';
+                        
+                        paragraphs.forEach(paragraph => {
+                          const tempDiv = document.createElement('div');
+                          tempDiv.innerHTML = paragraph.innerHTML;
+                          textToCopy += tempDiv.textContent + '\n\n';
+                        });
+                        
+                        // Copy to clipboard
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          navigator.clipboard.writeText(textToCopy)
+                            .then(() => {
+                              successMessage.style.display = 'inline';
+                              setTimeout(() => {
+                                successMessage.style.display = 'none';
+                              }, 2000);
+                            })
+                            .catch(err => {
+                              console.error('Failed to copy text: ', err);
+                            });
+                        } else {
+                          // Fallback
+                          const textarea = document.createElement('textarea');
+                          textarea.value = textToCopy;
+                          textarea.style.position = 'fixed';
+                          textarea.style.opacity = '0';
+                          document.body.appendChild(textarea);
+                          textarea.select();
+                          
+                          try {
+                            document.execCommand('copy');
+                            successMessage.style.display = 'inline';
+                            setTimeout(() => {
+                              successMessage.style.display = 'none';
+                            }, 2000);
+                          } catch (err) {
+                            console.error('Fallback copy failed: ', err);
+                          }
+                          
+                          document.body.removeChild(textarea);
+                        }
+                      });
+                    }
+                  }, i * 200); // Space out attempts over 2 seconds
+                }
+              }
+            });
+          }
+        }
+      });
+    });
+    
+    skipButtonObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Also check right now if there's already a skip button
+    setTimeout(function() {
+      const skipButton = document.querySelector('.result-btn[data-result="skip"]');
+      if (skipButton && !skipButton._hasSkipHandler) {
+        console.log('Found existing skip button, adding handler');
+        skipButton._hasSkipHandler = true;
+        
+        // Add event listener without replacing the button
+        skipButton.addEventListener('click', function() {
+          console.log('Existing skip button clicked');
+          
+          // Schedule attempts to add the copy button
+          for (let i = 1; i <= 10; i++) {
+            setTimeout(function() {
+              const emailParagraph = document.querySelector('.legislator-email');
+              if (emailParagraph && !emailParagraph.querySelector('.copy-script-btn')) {
+                addCopyButtonAfterSkip(emailParagraph);
+              }
+            }, i * 200);
+          }
+        });
+      }
+    }, 1000);
+  });
+  
+  
+  // Also patch the recordCallResult function specifically for skip
+  if (typeof window.recordCallResult === 'function') {
+    const originalRecordCallResult = window.recordCallResult;
+    
+    window.recordCallResult = function(legislator, result) {
+      // Special handling for skip
+      const isSkip = result === 'skip';
+      if (isSkip) {
+        console.log('recordCallResult with SKIP detected, ensuring copy button persists');
+      }
+      
+      // Call the original function to handle the transition
+      const returnValue = originalRecordCallResult.apply(this, arguments);
+      
+      // Only for skip, add additional attempts to add the copy button
+      if (isSkip) {
+        // Make multiple attempts to add the copy button after skip
+        for (let i = 1; i <= 15; i++) {
+          setTimeout(function() {
+            const emailParagraph = document.querySelector('.legislator-email');
+            if (emailParagraph && !emailParagraph.querySelector('.copy-script-btn')) {
+              console.log(`Extra attempt ${i} to add copy button after skip transition`);
+              
+              // Get reference to existing functions if available
+              if (typeof window.addCopyButtonNextToEmail === 'function') {
+                window.addCopyButtonNextToEmail();
+              } else {
+                // Fallback to basic implementation
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-script-btn';
+                copyButton.textContent = 'Copy Script';
+                emailParagraph.appendChild(copyButton);
+                
+                const successMessage = document.createElement('span');
+                successMessage.className = 'copy-success';
+                successMessage.textContent = 'Copied!';
+                successMessage.style.display = 'none';
+                emailParagraph.appendChild(successMessage);
+              }
+            }
+          }, 300 * i); // Try every 300ms for 4.5 seconds
+        }
+      }
+      
+      return returnValue;
+    };
+    
+    console.log('Successfully patched recordCallResult specifically for skip handling');
+  }
+
+  // Also hook into result buttons directly
+  function attachButtonListeners() {
+    const resultButtons = document.querySelectorAll('.result-btn');
+    if (resultButtons.length > 0) {
+      console.log(`Found ${resultButtons.length} result buttons, attaching listeners`);
+      
+      resultButtons.forEach(button => {
+        // Remove any existing listeners to avoid duplicates
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add our custom listener that ensures copy button stays
+        newButton.addEventListener('click', function(event) {
+          console.log(`Result button clicked: ${this.getAttribute('data-result')}`);
+          
+          // Let the original click event process first, then add our button
+          setTimeout(addCopyButtonNextToEmail, 200);
+          setTimeout(addCopyButtonNextToEmail, 500);
+          setTimeout(addCopyButtonNextToEmail, 800);
+        }, true); // Use capture phase to run before other handlers
+      });
+    }
+  }
+  
+  // Monitor for result buttons appearing in the DOM
+  function watchForResultButtons() {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length) {
+          // Check if any result buttons were added
+          setTimeout(attachButtonListeners, 100);
+        }
+      });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also try immediately
+    setTimeout(attachButtonListeners, 500);
+  }
+  
+  // Check for legislators and add copy button when they're loaded
+  document.addEventListener('legislatorsLoaded', function() {
+    console.log('Legislators loaded event detected');
+    setTimeout(addCopyButtonNextToEmail, 500);
+  });
+
   // Also modify the updateCallScriptText function to ensure button exists
   function enhanceUpdateCallScriptText() {
     // Store reference to the original function
