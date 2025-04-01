@@ -1369,7 +1369,7 @@ function addCopyButtonNextToEmail() {
       return;
     }
     
-    console.log('Adding copy button to email paragraph');
+    // console.log('Adding copy button to email paragraph');
     
     // Create the copy button
     const copyButton = document.createElement('button');
