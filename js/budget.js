@@ -124,10 +124,14 @@ function initializeChart(selectedCategory) {
           },
           ticks: {
             callback: function(value) {
-              return formatValue(value);
+              const customTicks = [100, 250, 500, 750, 1000, 2000, 4000, 6000, 8000, 10000];
+              return customTicks.includes(value) ? formatValue(value) : '';
             },
+            stepSize: 100,
             color: '#f3e9d2'
-          }
+          },
+          min: 0,
+          max: 10000
         }
       },
       plugins: {
