@@ -119,20 +119,17 @@ function initializeChart(selectedCategory) {
         }
         },
         y: {
-          grid: {
-            color: 'rgba(243, 233, 210, 0.1)'
-          },
-          ticks: {
-            callback: function(value) {
-              const customTicks = [100, 250, 500, 750, 1000, 2000, 4000, 6000, 8000, 10000];
-              return customTicks.includes(value) ? formatValue(value) : '';
-            },
-            stepSize: 100,
-            color: '#f3e9d2'
-          },
-          min: 0,
-          max: 10000
-        }
+    type: 'logarithmic', 
+    grid: {
+      color: 'rgba(243, 233, 210, 0.1)'
+    },
+    ticks: {
+      callback: function(value) {
+        return formatValue(value);
+      },
+      color: '#f3e9d2'
+    }
+  }
       },
       plugins: {
         tooltip: {
