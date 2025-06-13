@@ -2,6 +2,7 @@ import { showLegislatorFinder, clearMyLegislators, loadMyLegislators } from "./f
 import { categories, data, inflationFactors, lineItemDescriptions, getCategoryColor } from "./budgetConst.js";
 
 let showingInflationAdjusted = false;
+let useLogarithmicScale = false;
 
 // Helper functions
 const inflationAdjustedData = data.map(yearData => {
@@ -44,6 +45,35 @@ function addInflationToggle() {
     updateChart(selectedCategory);
     createLegend();
   });
+}
+
+function addLogarithmicToggle() {
+  const toggleContainer = document.createElement('div');
+  toggleContainer.className = 'logarithmic-toggle-container';
+  toggleContainer.innerHTML = `
+    <label class="toggle-switch">
+      <input type="checkbox" id="logarithmicToggle">
+      <span class="toggle-slider"></span>
+    </label>
+    <span class="toggle-label">Use logarithmic scale</span>
+  `;
+  
+  // Insert after inflation toggle
+  const inflationToggle = document.querySelector('.inflation-toggle-container');
+  inflationToggle.parentNode.insertBefore(toggleContainer, inflationToggle.nextSibling);
+  
+  // Add event listener
+  document.getElementById('logarithmicToggle').addEventListener('change', function() {
+    useLogarithmicScale = this.checked;
+    updateChartScale();
+  });
+}
+
+function updateChartScale() {
+  if (chart) {
+    chart.options.scales.y.type = useLogarithmicScale ? 'logarithmic' : 'linear';
+    chart.update();
+  }
 }
 
 function updateDataSource() {
@@ -119,7 +149,7 @@ function initializeChart(selectedCategory) {
         }
         },
         y: {
-    type: 'logarithmic', 
+    type: useLogarithmicScale ? 'logarithmic' : 'linear', 
     grid: {
       color: 'rgba(243, 233, 210, 0.1)'
     },
@@ -505,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialize the app
 function initialize() {
   addInflationToggle();
+  addLogarithmicToggle();
   createCategoryButtons();
   createLegend();
   initializeChart('all');
