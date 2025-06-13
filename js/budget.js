@@ -55,7 +55,7 @@ function addLogarithmicToggle() {
       <input type="checkbox" id="logarithmicToggle">
       <span class="toggle-slider"></span>
     </label>
-    <span class="toggle-label">Use logarithmic scale</span>
+    <span class="toggle-label">Change Y Axis Scale</span>
   `;
   
   // Insert after inflation toggle
