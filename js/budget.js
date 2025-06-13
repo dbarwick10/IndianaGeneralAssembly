@@ -328,7 +328,7 @@ function createLegend() {
         mainLine.appendChild(label);
 
         // Use 2025 (index 9) and the last year for comparison
-        const yearArray = dataSource[9]; // 2025 
+        const yearArray = dataSource[dataSource.length - 3]; // 2025 
         const startValue = yearArray[item];
         const endValue = dataSource[dataSource.length - 1][item]; 
         const growth = ((endValue - startValue) / startValue * 100).toFixed(1);
@@ -411,7 +411,7 @@ function createLegend() {
     titleInfo.classList.add('legend-group-title-info');
     
     // Get the total for the first (2025) and last (2027*) years from the correct data source
-    const firstYear = dataSource[9].year; // 2025
+    const firstYear = dataSource[dataSource.length - 3].year; // 2025
     const lastYear = dataSource[dataSource.length - 1].year; // 2027*
     
     const startTotal = yearTotals[firstYear][category];
@@ -449,7 +449,7 @@ function createLegend() {
     titleInfo.classList.add('legend-group-title-info');
     
     // Get the total for the first (2025) and last (2027*) years from the correct data source
-    const firstYear = dataSource[9].year; // 2025
+    const firstYear = dataSource[dataSource.length - 3].year; // 2025
     const lastYear = dataSource[dataSource.length - 1].year; // 2027*
     
     const startTotal = yearTotals[firstYear][category];
