@@ -12,7 +12,12 @@ const pool = new pg.Pool({
 // Function to initialize the database
 async function initializeDatabase() {
   try {
-    // Create call_logs table
+    try {
+      await pool.query('ALTER DATABASE railway REFRESH COLLATION VERSION');
+      console.log('✅ Collation version refreshed - warnings should stop');
+    } catch (collationError) {
+      console.log('⚠️ Could not refresh collation (this is usually fine):', collationError.message);
+    }
     await pool.query(`
       CREATE TABLE IF NOT EXISTS call_logs (
         id SERIAL PRIMARY KEY,
@@ -51,5 +56,6 @@ async function initializeDatabase() {
     console.error('Error initializing database:', error);
   }
 }
+
 
 export { pool, initializeDatabase };
