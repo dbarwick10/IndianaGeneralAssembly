@@ -85,8 +85,8 @@ app.use((req, res, next) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Save data every 5 minutes
-setInterval(saveCallData, 5 * 60 * 1000);
+// Save data every 24 hours
+setInterval(saveCallData, 24 * 60 * 60 * 1000);
 
 // Handle server shutdown
 process.on('SIGINT', () => {
@@ -100,4 +100,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} at ${new Date().toISOString()}`);
   console.log(`Server directory: ${__dirname}`);
   console.log('Ready to handle requests');
+
 });
