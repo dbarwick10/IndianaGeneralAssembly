@@ -32,8 +32,12 @@ app.use(express.static(__dirname));
 // Enable CORS
 app.use(cors(corsConfig));
 
-// Parse JSON bodies
-app.use(express.json());
+// Parse JSON bodies -- old
+// app.use(express.json());
+
+// JSON new test
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
 
 // Test the database connection and initialize
 pool.query('SELECT NOW()', (err, res) => {
@@ -102,3 +106,4 @@ app.listen(PORT, () => {
   console.log('Ready to handle requests');
 
 });
+
