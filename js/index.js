@@ -420,6 +420,8 @@ const renderStatsView = async () => {
         shape: 'square',
         clearCanvas: true,
         random: () => 0.5,
+        drawMask: false,
+        maskGapWidth: 0.3,
     };
     
     // Set canvas sizes and render both word clouds
