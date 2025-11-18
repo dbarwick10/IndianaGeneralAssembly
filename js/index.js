@@ -377,41 +377,93 @@ const renderStatsView = async () => {
             ` : ''}
 
             <div class="stat-card">
-                <h3>Bill Topics Word Cloud</h3>
-                <canvas id="wordCloudCanvas" class="word-cloud-canvas"></canvas>
+                <h3>Bill Topics - Became Law (${stats.overall.laws})</h3>
+                <canvas id="wordCloudLawsCanvas" class="word-cloud-canvas"></canvas>
             </div>
+            
+            <div class="stat-card">
+                <h3>Bill Topics - Did Not Become Law (${stats.overall.total - stats.overall.laws})</h3>
+                <canvas id="wordCloudNonLawsCanvas" class="word-cloud-canvas"></canvas>
+            </div>
+            
         </div>
     `;
 
-    // Initialize word cloud after the canvas is in the DOM
-    const canvas = document.getElementById('wordCloudCanvas');
-    const wordList = analysisData.wordCloudData || []; // Use server-generated word cloud data
+    // OLD WORDCLOUD <div class="stat-card">
+            //     <h3>Bill Topics Word Cloud</h3>
+            //     <canvas id="wordCloudCanvas" class="word-cloud-canvas"></canvas>
+            // </div>
 
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 400;
-
-    // Configure and render word cloud
-    WordCloud(canvas, {
-        list: wordList,
-        gridSize: 20, // Increased grid size for more spacing
+    // Initialize word clouds after the canvases are in the DOM
+    const canvasLaws = document.getElementById('wordCloudLawsCanvas');
+    const canvasNonLaws = document.getElementById('wordCloudNonLawsCanvas');
+    
+    const wordListLaws = analysisData.wordCloudLaws || [];
+    const wordListNonLaws = analysisData.wordCloudNonLaws || [];
+    
+    // Configure word cloud settings
+    const wordCloudConfig = {
+        gridSize: 20,
         weightFactor: 1,
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#4B5563',
-        rotateRatio: 0.2, // Reduced rotation ratio
+        rotateRatio: 0.2,
         rotationSteps: 2,
         backgroundColor: 'transparent',
         drawOutOfBound: false,
         shrinkToFit: true,
-        wait: 50, // Add small delay between words
-        minSize: 10, // Set minimum font size
-        minRotation: -Math.PI / 8, // Limit rotation range
+        wait: 50,
+        minSize: 10,
+        minRotation: -Math.PI / 8,
         maxRotation: Math.PI / 8,
-        shuffle: false, // Prevent shuffling
-        shape: 'square', // More stable than default ellipse
+        shuffle: false,
+        shape: 'square',
         clearCanvas: true,
-        random: () => 0.5, // Fixed random seed
-    });
+        random: () => 0.5,
+    };
+    
+    // Set canvas sizes and render both word clouds
+    if (canvasLaws) {
+        canvasLaws.width = canvasLaws.offsetWidth;
+        canvasLaws.height = 400;
+        WordCloud(canvasLaws, { list: wordListLaws, ...wordCloudConfig });
+    }
+    
+    if (canvasNonLaws) {
+        canvasNonLaws.width = canvasNonLaws.offsetWidth;
+        canvasNonLaws.height = 400;
+        WordCloud(canvasNonLaws, { list: wordListNonLaws, ...wordCloudConfig });
+    }
+    
+    // OLD WORDCLOUD // Initialize word cloud after the canvas is in the DOM
+    // const canvas = document.getElementById('wordCloudCanvas');
+    // const wordList = analysisData.wordCloudData || []; // Use server-generated word cloud data
+
+    // // Set canvas size
+    // canvas.width = canvas.offsetWidth;
+    // canvas.height = 400;
+
+    // // Configure and render word cloud
+    // WordCloud(canvas, {
+    //     list: wordList,
+    //     gridSize: 20, // Increased grid size for more spacing
+    //     weightFactor: 1,
+    //     fontFamily: 'Inter, system-ui, sans-serif',
+    //     color: '#4B5563',
+    //     rotateRatio: 0.2, // Reduced rotation ratio
+    //     rotationSteps: 2,
+    //     backgroundColor: 'transparent',
+    //     drawOutOfBound: false,
+    //     shrinkToFit: true,
+    //     wait: 50, // Add small delay between words
+    //     minSize: 10, // Set minimum font size
+    //     minRotation: -Math.PI / 8, // Limit rotation range
+    //     maxRotation: Math.PI / 8,
+    //     shuffle: false, // Prevent shuffling
+    //     shape: 'square', // More stable than default ellipse
+    //     clearCanvas: true,
+    //     random: () => 0.5, // Fixed random seed
+    // });
 };
 
 const renderBills = async () => {
