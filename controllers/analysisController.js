@@ -4,7 +4,8 @@ import {
     analyzeAmendments, 
     calculateAverageTiming 
   } from '../services/analysisService.js';
-  
+
+/** OLD WORDCLOUD
   /**
    * Generate a word cloud data from bill content
    * @param {Array} bills - Array of bill objects
@@ -43,7 +44,49 @@ import {
       .slice(0, 100)
       .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
   };
+  /*
+  /**
+ * Generate a word cloud data from bill content
+ * @param {Array} bills - Array of bill objects
+ * @param {Function} filterFn - Optional filter function to apply to bills
+ * @returns {Array} Array of [word, frequency] pairs
+ */
+const generateWordCloud = (bills, filterFn = null) => {
+  // Apply filter if provided
+  const filteredBills = filterFn ? bills.filter(filterFn) : bills;
   
+  // Common stop words to filter out
+  const stopWords = new Set([
+    'a', 'act', 'an', 'and', 'amend', 'indiana', 'concerning', 'code', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+    'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
+    'will', 'with', 'the', 'concerning', 'regarding', 'various', 'matters',
+    'provides', 'requires', 'establishes', 'amends', 'repeals', 'relating', 'state',
+    'county', 'prior', 'bill', 'bills', 'act', 'acts', 'law', 'laws', 'public', 'code',
+    'amend', 'certain', 'make', 'makes', 'relating', 'relates', 'relating', 'relates',
+    'town'
+  ]);
+
+  const text = filteredBills
+    .map(bill => `${bill.description || ''} ${bill.details?.title || ''}`)
+    .join(' ')
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+    .replace(/\d+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const words = text.split(' ')
+    .filter(word => word.length > 3 && !stopWords.has(word))
+    .reduce((acc, word) => {
+      acc[word] = (acc[word] || 0) + 1;
+      return acc;
+    }, {});
+
+  return Object.entries(words)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 100)
+    .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
+};
   /**
    * Analyze bills to generate statistics and processed data
    */
@@ -73,9 +116,20 @@ import {
         };
       });
   
-      // Generate word cloud data
+     /** OLD WORDCLOUD 
+     // Generate word cloud data
       const wordCloudData = generateWordCloud(processedBills);
-  
+  */
+        // Generate word cloud data - one for laws, one for non-laws
+    const wordCloudLaws = generateWordCloud(
+      processedBills, 
+      bill => bill.becomeLaw === true
+    );
+    
+    const wordCloudNonLaws = generateWordCloud(
+      processedBills, 
+      bill => bill.becomeLaw === false
+    );
       // Group bills by type
       const types = ['authored', 'coauthored', 'sponsored', 'cosponsored'];
       const statsByType = {};
@@ -160,7 +214,9 @@ import {
       
       // Generate final results object
       const result = {
-        wordCloudData,
+        // OLD WORDCLOUD wordCloudData,
+        wordCloudLaws,
+        wordCloudNonLaws,
         stats: {
           overall: {
             total: totalBills,
@@ -185,4 +241,5 @@ import {
     }
   };
   
+
   export { analyzeBills };
