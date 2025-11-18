@@ -5,46 +5,46 @@ import {
     calculateAverageTiming 
   } from '../services/analysisService.js';
 
-/** OLD WORDCLOUD
-  /**
-   * Generate a word cloud data from bill content
-   * @param {Array} bills - Array of bill objects
-   * @returns {Array} Array of [word, frequency] pairs
-   */
-  const generateWordCloud = (bills) => {
-    // Common stop words to filter out
-    const stopWords = new Set([
-      'a', 'act', 'an', 'and', 'amend', 'indiana', 'concerning', 'code', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
-      'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
-      'will', 'with', 'the', 'concerning', 'regarding', 'various', 'matters',
-      'provides', 'requires', 'establishes', 'amends', 'repeals', 'relating', 'state',
-      'county', 'prior', 'bill', 'bills', 'act', 'acts', 'law', 'laws', 'public', 'code',
-      'amend', 'certain', 'make', 'makes', 'relating', 'relates', 'relating', 'relates',
-      'town'
-    ]);
+  // OLD WORDCLOUD 
+    /**
+  //  * Generate a word cloud data from bill content
+  //  * @param {Array} bills - Array of bill objects
+  //  * @returns {Array} Array of [word, frequency] pairs
+  //  */
+  // const generateWordCloud = (bills) => {
+  //   // Common stop words to filter out
+  //   const stopWords = new Set([
+  //     'a', 'act', 'an', 'and', 'amend', 'indiana', 'concerning', 'code', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+  //     'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were',
+  //     'will', 'with', 'the', 'concerning', 'regarding', 'various', 'matters',
+  //     'provides', 'requires', 'establishes', 'amends', 'repeals', 'relating', 'state',
+  //     'county', 'prior', 'bill', 'bills', 'act', 'acts', 'law', 'laws', 'public', 'code',
+  //     'amend', 'certain', 'make', 'makes', 'relating', 'relates', 'relating', 'relates',
+  //     'town'
+  //   ]);
   
-    const text = bills
-      .map(bill => `${bill.description || ''} ${bill.details?.title || ''}`)
-      .join(' ')
-      .toLowerCase()
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
-      .replace(/\d+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+  //   const text = bills
+  //     .map(bill => `${bill.description || ''} ${bill.details?.title || ''}`)
+  //     .join(' ')
+  //     .toLowerCase()
+  //     .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+  //     .replace(/\d+/g, ' ')
+  //     .replace(/\s+/g, ' ')
+  //     .trim();
   
-    const words = text.split(' ')
-      .filter(word => word.length > 3 && !stopWords.has(word))
-      .reduce((acc, word) => {
-        acc[word] = (acc[word] || 0) + 1;
-        return acc;
-      }, {});
+  //   const words = text.split(' ')
+  //     .filter(word => word.length > 3 && !stopWords.has(word))
+  //     .reduce((acc, word) => {
+  //       acc[word] = (acc[word] || 0) + 1;
+  //       return acc;
+  //     }, {});
   
-    return Object.entries(words)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 100)
-      .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
-  };
-  /*
+  //   return Object.entries(words)
+  //     .sort((a, b) => b[1] - a[1])
+  //     .slice(0, 100)
+  //     .map(([word, freq]) => [word, Math.sqrt(freq) * 50]);
+  // };
+  
   /**
  * Generate a word cloud data from bill content
  * @param {Array} bills - Array of bill objects
@@ -243,3 +243,4 @@ const generateWordCloud = (bills, filterFn = null) => {
   
 
   export { analyzeBills };
+
