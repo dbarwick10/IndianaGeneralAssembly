@@ -4,7 +4,11 @@
         "id": "redistricting",
         "title": "Fair Redistricting in Indiana",
         "description": "Fair Redistricting in Indiana"
+      },
+      {
+        "id": "dontsee",
+        "title": "Don't see an issue?",
+        "description": "Don't see an issue?"
       }
-      
     ]
   }
