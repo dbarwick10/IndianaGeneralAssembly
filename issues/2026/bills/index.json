@@ -1,8 +1,8 @@
 {
     "issues": [
       {
-        "id": "HB 1032: Redistricting",
-        "title": "Partisan Redistricting in Indiana",
+        "id": "hb1032",
+        "title": "HB 1032: Redistricting",
         "description": "Partisan Redistricting in Indiana"
       },
       {
