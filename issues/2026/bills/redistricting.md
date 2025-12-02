@@ -13,7 +13,8 @@ Politicians in Washington are pressuring Indiana lawmakers to redraw these maps 
 ## Call Script
 Hi, my name is [NAME] and I’m a constituent from [CITY, ZIP].
 
-I’m calling to urging [REP/SEN NAME] to oppose the mid-decade congressional redistricting effort. Indiana's constitution calls for redistricting once per decade based on Census data. This mid-decade redraw appears to be driven by pressure from Washington politicians who want to benefit themselves, not Hoosiers.
+I’m calling to urge [REP/SEN NAME] to oppose the mid-decade congressional redistricting effort. Indiana's constitution calls for redistricting once per decade based on Census data. This mid-decade redraw appears to be driven by pressure from Washington politicians who want to benefit themselves, not Hoosiers.
+
 Fair maps should reflect our communities and population changes, not the White House's political interests. Voters should choose our representatives, not the other way around.
 
 Thank you for your time and consideration.

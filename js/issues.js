@@ -1326,15 +1326,7 @@ function addCopyButtonNextToEmail() {
     copyButton.textContent = 'Copy Script';
     
 
-    const successMessage = document.createElement('span');
-    successMessage.className = 'copy-success';
-    successMessage.id = 'copy-success-message'; 
-    successMessage.textContent = 'Copied!';
-    successMessage.style.display = 'none'; 
-    
-
     emailParagraph.appendChild(copyButton);
-    emailParagraph.appendChild(successMessage);
     
 
     copyButton.addEventListener('click', function() {
@@ -1361,12 +1353,9 @@ function addCopyButtonNextToEmail() {
         navigator.clipboard.writeText(textToCopy)
           .then(() => {
             console.log('Text copied to clipboard successfully');
-
-            successMessage.style.display = 'inline';
-            
-
+            copyButton.textContent = 'Copied!';
             setTimeout(() => {
-              successMessage.style.display = 'none';
+              copyButton.textContent = 'Copy Script';
             }, 2000);
           })
           .catch(err => {
@@ -1394,12 +1383,9 @@ function addCopyButtonNextToEmail() {
           const successful = document.execCommand('copy');
           if (successful) {
             console.log('Fallback: Text copied to clipboard');
-
-            successMessage.style.display = 'inline';
-            
-
+            copyButton.textContent = 'Copied!';
             setTimeout(() => {
-              successMessage.style.display = 'none';
+              copyButton.textContent = 'Copy Script';
             }, 2000);
           } else {
             console.error('Fallback: Unable to copy');
@@ -1542,15 +1528,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       copyButton.textContent = 'Copy Script';
                       
 
-                      const successMessage = document.createElement('span');
-                      successMessage.className = 'copy-success';
-                      successMessage.id = 'copy-success-message';
-                      successMessage.textContent = 'Copied!';
-                      successMessage.style.display = 'none';
-                      
-
                       newEmailParagraph.appendChild(copyButton);
-                      newEmailParagraph.appendChild(successMessage);
                       
 
                       copyButton.addEventListener('click', function() {
@@ -1575,9 +1553,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                           navigator.clipboard.writeText(textToCopy)
                             .then(() => {
-                              successMessage.style.display = 'inline';
+                              copyButton.textContent = 'Copied!';
                               setTimeout(() => {
-                                successMessage.style.display = 'none';
+                                copyButton.textContent = 'Copy Script';
                               }, 2000);
                             })
                             .catch(err => {
@@ -1594,9 +1572,9 @@ document.addEventListener('DOMContentLoaded', function() {
                           
                           try {
                             document.execCommand('copy');
-                            successMessage.style.display = 'inline';
+                            copyButton.textContent = 'Copied!';
                             setTimeout(() => {
-                              successMessage.style.display = 'none';
+                              copyButton.textContent = 'Copy Script';
                             }, 2000);
                           } catch (err) {
                             console.error('Fallback copy failed: ', err);
@@ -1675,12 +1653,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 copyButton.className = 'copy-script-btn';
                 copyButton.textContent = 'Copy Script';
                 emailParagraph.appendChild(copyButton);
-                
-                const successMessage = document.createElement('span');
-                successMessage.className = 'copy-success';
-                successMessage.textContent = 'Copied!';
-                successMessage.style.display = 'none';
-                emailParagraph.appendChild(successMessage);
               }
             }
           }, 300 * i);
