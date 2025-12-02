@@ -1317,7 +1317,7 @@ function addCopyButtonNextToEmail() {
       return;
     }
     
-    console.log('Adding copy button to email paragraph');
+    // console.log('Adding copy button to email paragraph');
     
 
     const copyButton = document.createElement('button');
@@ -1497,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mutation.addedNodes.length) {
           const skipButton = document.querySelector('.result-btn[data-result="skip"]');
           if (skipButton && !skipButton._hasSkipHandler) {
-            console.log('Found skip button, adding special handler');
+            // console.log('Found skip button, adding special handler');
             
 
 
@@ -1505,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
 
             skipButton.addEventListener('click', function(event) {
-              console.log('Skip button clicked - ensuring copy button persists');
+            //   console.log('Skip button clicked - ensuring copy button persists');
               
 
               
