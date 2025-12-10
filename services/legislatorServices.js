@@ -108,8 +108,8 @@ const formatLegislator = (legislator, chamber) => {
  */
 const formatLocalLegislator = (legislator, chamber, apiLegislators) => {
   // Try to find party info from API
-  let party = 'Unknown';
-  if (apiLegislators) {
+  let party = legislator.party || 'Unknown';
+  if (party === 'Unknown' && apiLegislators) {
     const nameParts = legislator.name.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ');
