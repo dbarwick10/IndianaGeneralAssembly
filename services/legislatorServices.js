@@ -133,7 +133,8 @@ const formatLocalLegislator = (legislator, chamber, apiLegislators) => {
     district: String(legislator.district),
     chamber: chamber,
     party: party,
-    link: `/legislators/${legislator.name.replace(/\s+/g, '_').toLowerCase()}`
+    link: `/legislators/${legislator.name.replace(/\s+/g, '_').toLowerCase()}`,
+    phone: legislator.phone
   };
 };
 
