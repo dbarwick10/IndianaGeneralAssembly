@@ -39,9 +39,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         clearBtn.addEventListener('click', clearMyLegislators);
     }
     
-
     loadMyLegislators();
-    
+    console.log('preparing copy button');
+    setTimeout(addCopyButtonNextToEmail, 100);
+    console.log('copy button added');
 
     document.addEventListener('legislatorsLoaded', updateCallScripts);
     
@@ -87,16 +88,7 @@ async function loadIssuesData() {
         
         const issuesData = await response.json();
         
-
         createIssuesSidebar(issuesData.issues);
-        
-
-
-
-            
-
-
-
 
     } catch (error) {
         console.error('Error loading issues data:', error);
@@ -109,15 +101,12 @@ async function loadIssuesData() {
     }
 }
 
-
 function createIssuesSidebar(issues) {
     const sidebarList = document.querySelector('.issues-list');
     if (!sidebarList) return;
     
-
     sidebarList.innerHTML = '';
     
-
     issues.forEach(issue => {
         const listItem = document.createElement('li');
         listItem.className = 'issue-item';
@@ -153,8 +142,6 @@ function createIssuesSidebar(issues) {
 
     handleRouting();
 }
-
-
 
 async function loadIssueContent(issueId) {
     const contentContainer = document.querySelector('.issues-content');
@@ -1506,10 +1493,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             skipButton.addEventListener('click', function(event) {
             //   console.log('Skip button clicked - ensuring copy button persists');
-              
-
-              
-
               const emailParagraph = document.querySelector('.legislator-email');
               if (emailParagraph) {
                 console.log('Found email paragraph before transition');
