@@ -225,13 +225,19 @@ const renderStatsView = async () => {
     // Get the legislator names from the search input
     const names = searchTerm.split(',').map((name) => name.trim());
     
+    // Get the current year from the year input
+    const year = document.getElementById('yearInput').value;
+    
     // Get analysis data from server
     const analysisData = await analyzeBillData(bills, names);
     
-    // Store the stats for future use
-    billStats = analysisData.stats;
+    // Debug logging
+    console.log('Analysis data received:', analysisData);
     
-    // Use server-provided stats
+    // Store the stats for future use - with better fallback handling
+    billStats = analysisData?.stats || null;
+    
+    // Use server-provided stats with comprehensive fallback
     const stats = billStats || {
         overall: { total: 0, passed: 0, laws: 0, passageRate: '0.0', lawRate: '0.0', timing: {} },
         authored: { total: 0, passed: 0, laws: 0, timing: {}, authors: { democrat: 0, republican: 0, total: 0 } },
@@ -239,15 +245,27 @@ const renderStatsView = async () => {
         sponsored: { total: 0, passed: 0, laws: 0, timing: {}, sponsors: { democrat: 0, republican: 0, total: 0 } },
         cosponsored: { total: 0, passed: 0, laws: 0, timing: {}, cosponsors: { democrat: 0, republican: 0, total: 0 } }
     };
+    
+    console.log('Using stats:', stats);
 
     const renderPassageRates = (categoryStats) => {
+        if (!categoryStats) {
+            return `
+                <div class="stat-metric">
+                    <div class="stat-value">0%</div>
+                    <div class="stat-label">No data available</div>
+                </div>`;
+        }
+        
         const chamberRate = categoryStats.passageRate || '0.0';
         const lawRate = categoryStats.lawRate || '0.0';
+        const passed = categoryStats.passed || 0;
+        const laws = categoryStats.laws || 0;
         
         return `
             <div class="stat-metric">
                 <div class="stat-value">${chamberRate}%</div>
-                <div class="stat-label">Chamber Passage Rate (${categoryStats.passed} bills)</div>
+                <div class="stat-label">Chamber Passage Rate (${passed} bills)</div>
                 <div class="percentage-bar">
                     <div class="percentage-fill" style="width: ${chamberRate}%"></div>
                 </div>
@@ -259,7 +277,7 @@ const renderStatsView = async () => {
             </div>
             <div class="stat-metric">
                 <div class="stat-value">${lawRate}%</div>
-                <div class="stat-label">Law Passage Rate (${categoryStats.laws} bills)</div>
+                <div class="stat-label">Law Passage Rate (${laws} bills)</div>
                 <div class="percentage-bar">
                     <div class="percentage-fill" style="width: ${lawRate}%"></div>
                 </div>
@@ -302,44 +320,44 @@ const renderStatsView = async () => {
             <div class="stat-card">
                 <h3>Overall Bill Status</h3>
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.overall.total}</div>
+                    <div class="stat-value">${stats.overall?.total || 0}</div>
                     <div class="stat-label">Total Bills</div>
                 </div>
                 ${renderPassageRates(stats.overall)}
             </div>
 
             <div class="stat-card">
-                <h3>Authored Bills (${stats.authored.total})</h3>
+                <h3>Authored Bills (${stats.authored?.total || 0})</h3>
                 ${renderPassageRates(stats.authored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.authored.authors?.democrat || 0}D / ${stats.authored.authors?.republican || 0}R</div>
+                    <div class="stat-value">${stats.authored?.authors?.democrat || 0}D / ${stats.authored?.authors?.republican || 0}R</div>
                     <div class="stat-label">Author Party Distribution</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <h3>Coauthored Bills (${stats.coauthored.total})</h3>
+                <h3>Coauthored Bills (${stats.coauthored?.total || 0})</h3>
                 ${renderPassageRates(stats.coauthored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.coauthored.coauthors?.democrat || 0}D / ${stats.coauthored.coauthors?.republican || 0}R</div>
+                    <div class="stat-value">${stats.coauthored?.coauthors?.democrat || 0}D / ${stats.coauthored?.coauthors?.republican || 0}R</div>
                     <div class="stat-label">Coauthor Party Distribution</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <h3>Sponsored Bills (${stats.sponsored.total})</h3>
+                <h3>Sponsored Bills (${stats.sponsored?.total || 0})</h3>
                 ${renderPassageRates(stats.sponsored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.sponsored.sponsors?.democrat || 0}D / ${stats.sponsored.sponsors?.republican || 0}R</div>
+                    <div class="stat-value">${stats.sponsored?.sponsors?.democrat || 0}D / ${stats.sponsored?.sponsors?.republican || 0}R</div>
                     <div class="stat-label">Sponsor Party Distribution</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <h3>Cosponsored Bills (${stats.cosponsored.total})</h3>
+                <h3>Cosponsored Bills (${stats.cosponsored?.total || 0})</h3>
                 ${renderPassageRates(stats.cosponsored)}
                 <div class="stat-metric">
-                    <div class="stat-value">${stats.cosponsored.cosponsors?.democrat || 0}D / ${stats.cosponsored.cosponsors?.republican || 0}R</div>
+                    <div class="stat-value">${stats.cosponsored?.cosponsors?.democrat || 0}D / ${stats.cosponsored?.cosponsors?.republican || 0}R</div>
                     <div class="stat-label">Cosponsor Party Distribution</div>
                 </div>
             </div>
@@ -347,8 +365,8 @@ const renderStatsView = async () => {
             <div class="stat-card">
                 <h3>Party Collaboration</h3>
                 ${(() => {
-                    const totalDems = (stats.coauthored.coauthors?.democrat || 0) + (stats.cosponsored.cosponsors?.democrat || 0);
-                    const totalReps = (stats.coauthored.coauthors?.republican || 0) + (stats.cosponsored.cosponsors?.republican || 0);
+                    const totalDems = (stats.coauthored?.coauthors?.democrat || 0) + (stats.cosponsored?.cosponsors?.democrat || 0);
+                    const totalReps = (stats.coauthored?.coauthors?.republican || 0) + (stats.cosponsored?.cosponsors?.republican || 0);
                     const total = totalDems + totalReps;
                     return `
                         <div class="stat-metric">
@@ -369,7 +387,7 @@ const renderStatsView = async () => {
                 })()}
             </div>
 
-            ${stats.overall.amendments?.total > 0 ? `
+            ${stats.overall?.amendments && stats.overall.amendments.total > 0 ? `
                 <div class="stat-card">
                     <h3>Amendment Status (${stats.overall.amendments.total})</h3>
                     ${renderAmendmentStats(stats.overall.amendments)}
@@ -377,29 +395,24 @@ const renderStatsView = async () => {
             ` : ''}
 
             <div class="stat-card">
-                <h3>Bill Topics - Became Law (${stats.overall.laws})</h3>
+                <h3>Bill Topics - Became Law (${stats.overall?.laws || 0})</h3>
                 <canvas id="wordCloudLawsCanvas" class="word-cloud-canvas"></canvas>
             </div>
             
             <div class="stat-card">
-                <h3>Bill Topics - Did Not Become Law (${stats.overall.total - stats.overall.laws})</h3>
+                <h3>Bill Topics - Did Not Become Law (${(stats.overall?.total || 0) - (stats.overall?.laws || 0)})</h3>
                 <canvas id="wordCloudNonLawsCanvas" class="word-cloud-canvas"></canvas>
             </div>
             
         </div>
     `;
 
-    // OLD WORDCLOUD <div class="stat-card">
-            //     <h3>Bill Topics Word Cloud</h3>
-            //     <canvas id="wordCloudCanvas" class="word-cloud-canvas"></canvas>
-            // </div>
-
     // Initialize word clouds after the canvases are in the DOM
     const canvasLaws = document.getElementById('wordCloudLawsCanvas');
     const canvasNonLaws = document.getElementById('wordCloudNonLawsCanvas');
     
-    const wordListLaws = analysisData.wordCloudLaws || [];
-    const wordListNonLaws = analysisData.wordCloudNonLaws || [];
+    const wordListLaws = analysisData?.wordCloudLaws || [];
+    const wordListNonLaws = analysisData?.wordCloudNonLaws || [];
     
     // Configure word cloud settings
     const wordCloudConfig = {
@@ -436,36 +449,6 @@ const renderStatsView = async () => {
         canvasNonLaws.height = 400;
         WordCloud(canvasNonLaws, { list: wordListNonLaws, ...wordCloudConfig });
     }
-    
-    // OLD WORDCLOUD // Initialize word cloud after the canvas is in the DOM
-    // const canvas = document.getElementById('wordCloudCanvas');
-    // const wordList = analysisData.wordCloudData || []; // Use server-generated word cloud data
-
-    // // Set canvas size
-    // canvas.width = canvas.offsetWidth;
-    // canvas.height = 400;
-
-    // // Configure and render word cloud
-    // WordCloud(canvas, {
-    //     list: wordList,
-    //     gridSize: 20, // Increased grid size for more spacing
-    //     weightFactor: 1,
-    //     fontFamily: 'Inter, system-ui, sans-serif',
-    //     color: '#4B5563',
-    //     rotateRatio: 0.2, // Reduced rotation ratio
-    //     rotationSteps: 2,
-    //     backgroundColor: 'transparent',
-    //     drawOutOfBound: false,
-    //     shrinkToFit: true,
-    //     wait: 50, // Add small delay between words
-    //     minSize: 10, // Set minimum font size
-    //     minRotation: -Math.PI / 8, // Limit rotation range
-    //     maxRotation: Math.PI / 8,
-    //     shuffle: false, // Prevent shuffling
-    //     shape: 'square', // More stable than default ellipse
-    //     clearCanvas: true,
-    //     random: () => 0.5, // Fixed random seed
-    // });
 };
 
 const renderBills = async () => {
