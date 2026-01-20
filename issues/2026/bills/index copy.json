@@ -1,6 +1,11 @@
 {
     "issues": [
       {
+        "id": "hb1032",
+        "title": "HB 1032: Redistricting",
+        "description": "Partisan Redistricting in Indiana"
+      },
+      {
         "id": "sb76",
         "title": "SB 76: Immigration Matters",
         "description": "Immigration Matters"
