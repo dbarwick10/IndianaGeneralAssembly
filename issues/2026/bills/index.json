@@ -1,9 +1,29 @@
 {
     "issues": [
       {
+        "id": "hb1423",
+        "title": "HB 1423: IPS Public Education Corporation",
+        "description": "IPS Public Education Corporation"
+      },
+      {
+        "id": "sb8",
+        "title": "SB 8: Library Budgets",
+        "description": "Library Budgets"
+      },
+      {
         "id": "sb76",
         "title": "SB 76: Immigration Matters",
         "description": "Immigration Matters"
+      },
+      {
+        "id": "sb236",
+        "title": "SB 236: Abortion Inducing Drugs",
+        "description": "Abortion Inducing Drugs"
+      },
+      {
+        "id": "sb285",
+        "title": "SB 285: Housing Matters",
+        "description": "Should being Houseless be a Crime?"
       },
       {
         "id": "dontsee",
