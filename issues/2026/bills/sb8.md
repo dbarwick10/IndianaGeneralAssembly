@@ -2,9 +2,8 @@
 
 ## Description
 
-[From the Eckhart Public Library:
-\
-An open letter from our Executive Director Valerie:](https://www.facebook.com/eckhartpubliclibrary/posts/an-open-letter-from-our-executive-director-valerie-to-our-community-we-wanted-to/1331640858998415/)
+From the Eckhart Public Library:
+[An open letter from our Executive Director Valerie:](https://www.facebook.com/eckhartpubliclibrary/posts/an-open-letter-from-our-executive-director-valerie-to-our-community-we-wanted-to/1331640858998415/)
 
 To our community,
 We wanted to offer some information about Senate Bill 8 (SB 8 ), its impact to public libraries, and what that means for our community.
