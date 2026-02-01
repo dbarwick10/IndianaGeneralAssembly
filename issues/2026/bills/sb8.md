@@ -1,11 +1,12 @@
 # Library Budgets
 
 ## Description
-
 From the Eckhart Public Library:
+
 [An open letter from our Executive Director Valerie:](https://www.facebook.com/eckhartpubliclibrary/posts/an-open-letter-from-our-executive-director-valerie-to-our-community-we-wanted-to/1331640858998415/)
 
 To our community,
+
 We wanted to offer some information about Senate Bill 8 (SB 8 ), its impact to public libraries, and what that means for our community.
 
 Public libraries are a public service; we do not operate for a profit. We rely on public funds, or tax dollars, to provide the materials and opportunities that many in our community wouldn't have access to otherwise. With the passage of SEA 1 in 2025, public library funding has already been reduced.  With the addition of Senate Bill 8, our ability to maintain and grow services is at risk.
